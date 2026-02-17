@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce - Mis Órdenes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+    <!-- Navbar (Dynamic) -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a class="text-2xl font-bold text-blue-600">E-Shop</a>
+            <div class="space-x-4 flex items-center">
+                <!-- Links rendered by JS -->
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-6 py-8">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Órdenes</h1>
+        </header>
+
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="w-full table-auto">
+                <thead class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                    <tr>
+                        <th class="py-3 px-6 text-left">Orden ID</th>
+                        <th class="py-3 px-6 text-left">Fecha</th>
+                        <th class="py-3 px-6 text-right">Total</th>
+                        <!-- <th class="py-3 px-6 text-center">Acciones</th> -->
+                    </tr>
+                </thead>
+                <tbody id="listaOrdenes" class="text-gray-600 text-sm font-light">
+                    <!-- Dynamic Content -->
+                </tbody>
+            </table>
+            <div id="emptyState" class="hidden text-center py-10">
+                <p class="text-gray-500 text-lg">No tienes órdenes aún.</p>
+                <a href="productos.html" class="text-blue-500 hover:underline mt-2 inline-block">Ir a comprar</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/ordenes.js"></script>
+</body>
+
+</html>
