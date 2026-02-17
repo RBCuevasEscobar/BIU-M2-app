@@ -1,8 +1,14 @@
-# E-Commerce Frontend
+# E-Commerce Frontend v1.0
 
 ## 🎯 Propósito del Proyecto
 
 Este frontend forma parte de una solución completa de **E-Commerce** que permite gestionar productos, carrito de compras, órdenes y usuarios con control de acceso basado en roles (RBAC).
+
+- Autor: Ramón Bolívar Cuevas Escobar
+
+- Módulo: Programming the Internet (CSE6042)
+
+- Profesor: Dr. Alexander Guevara
 
 ### Problema que Resuelve
 - **Gestión de inventario** para administradores y proveedores
@@ -19,11 +25,11 @@ Este frontend forma parte de una solución completa de **E-Commerce** que permit
 - ✅ Menú dinámico según rol del usuario
 
 ### Tipos de Usuarios
-| Rol | Permisos |
-|-----|----------|
-| **ADMIN** | Gestión completa: productos, usuarios, órdenes |
-| **SUPPLIER** | Edición de productos, visualización de órdenes |
-| **CUSTOMER** | Compra de productos, gestión de carrito, visualización de propias órdenes |
+|       Rol     | Permisos                                                                  |
+|---------------|---------------------------------------------------------------------------|
+| **ADMIN**     | Gestión completa: productos, usuarios, órdenes                            |
+| **SUPPLIER**  | Edición de productos, visualización de órdenes                            |
+| **CUSTOMER**  | Compra de productos, gestión de carrito, visualización de propias órdenes |
 
 ---
 
@@ -117,10 +123,10 @@ Uso de etiquetas semánticas para mejor accesibilidad y SEO:
 ### Responsividad
 Diseño Mobile-First con breakpoints de Tailwind:
 ```css
-sm:  /* 640px  - Tablets */
+sm:  /* 640px  - Tablets           */
 md:  /* 768px  - Tablets landscape */
-lg:  /* 1024px - Desktop */
-xl:  /* 1280px - Desktop grande */
+lg:  /* 1024px - Desktop           */
+xl:  /* 1280px - Desktop grande    */
 ```
 
 Ejemplo:
@@ -152,13 +158,13 @@ UI.showNotification('Error al guardar', 'error');
 **Archivo**: `usuarios.html` + `usuarios.js`
 
 #### Campos Validados
-| Campo | Tipo | Validación | Requerido |
-|-------|------|------------|-----------|
-| Nombre | text | No vacío | Sí |
-| Email | email | Formato email válido | Sí |
-| Contraseña | password | No vacío (solo en creación) | Condicional |
-| Rol | select | Uno de: ADMIN, SUPPLIER, CUSTOMER | Sí |
-| Fecha Nacimiento | date | Formato ISO (YYYY-MM-DD) | No |
+|       Campo       |    Tipo   |             Validación            |  Requerido  |
+|-------------------|-----------|-----------------------------------|-------------|
+| Nombre            | text      | No vacío                          | Sí          |
+| Email             | email     | Formato email válido              | Sí          |
+| Contraseña        | password  | No vacío (solo en creación)       | Condicional |
+| Rol               | select    | Uno de: ADMIN, SUPPLIER, CUSTOMER | Sí          |
+| Fecha Nacimiento  | date      | Formato ISO (YYYY-MM-DD)          | No          |
 
 #### Validaciones por Campo
 
@@ -268,14 +274,14 @@ UI.showNotification('Error al guardar usuario: ' + error.message, 'error');
 
 ## 🛠️ Tecnologías Usadas
 
-| Tecnología | Versión | Uso |
-|------------|---------|-----|
-| HTML5 | - | Estructura semántica |
-| CSS3 | - | Estilos base |
-| Tailwind CSS | 3.x | Framework utility-first |
-| JavaScript | ES6+ | Lógica de aplicación |
-| FontAwesome | 6.4.0 | Iconografía |
-| Fetch API | - | Peticiones HTTP |
+|   Tecnología   | Versión |           Uso           |
+|----------------|---------|-------------------------|
+| HTML5          | -       | Estructura semántica    |
+| CSS3           | -       | Estilos base            |
+| Tailwind CSS   | 3.x     | Framework utility-first |
+| JavaScript     | ES6+    | Lógica de aplicación    |
+| FontAwesome    | 6.4.0   | Iconografía             |
+| Fetch API      | -       | Peticiones HTTP         |
 
 ---
 
@@ -373,4 +379,4 @@ frontend/
 
 ## 📝 Licencia
 
-MIT License - Proyecto Académico
+BIU License - Proyecto Académico - Módulo Programming the Internet

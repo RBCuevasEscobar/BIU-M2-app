@@ -1,8 +1,14 @@
-# E-Commerce Backend
+# E-Commerce Backend v1.0
 
 ## 🎯 Propósito del Backend
 
 Este backend es el núcleo de la solución E-Commerce, proporcionando una **API REST** completa para la gestión de productos, usuarios, carritos de compra y órdenes, con un sistema robusto de autenticación y autorización basado en roles (RBAC).
+
+- Autor: Ramón Bolívar Cuevas Escobar
+
+- Módulo: Object-Oriented Programming (CSE6041)
+
+- Profesor: Dr. José Ignacio Requeno Jarabo
 
 ### Rol dentro de la Solución
 - **Capa de Negocio**: Validaciones, lógica de dominio, transacciones
@@ -21,7 +27,7 @@ Este backend es el núcleo de la solución E-Commerce, proporcionando una **API 
 ┌─────────────────────────────────────┐
 │  CONTROLLER LAYER (API REST)        │  ← Exposición HTTP
 ├─────────────────────────────────────┤
-│  SERVICE LAYER (Lógica de Negocio) │  ← Transacciones
+│  SERVICE LAYER (Lógica de Negocio)  │  ← Transacciones
 ├─────────────────────────────────────┤
 │  REPOSITORY LAYER (Persistencia)    │  ← JPA/Hibernate
 ├─────────────────────────────────────┤
@@ -29,6 +35,7 @@ Este backend es el núcleo de la solución E-Commerce, proporcionando una **API 
 └─────────────────────────────────────┘
          ↓
     MySQL Database
+
 ```
 
 ### Responsabilidades por Capa
@@ -447,7 +454,7 @@ classDiagram
     }
     
     class Administrador {
-        +String departamento
+        +LocalDate validoHasta
     }
     
     class Cliente {
@@ -618,4 +625,4 @@ http://localhost:8080/api
 
 ## 📚 Licencia
 
-MIT License - Proyecto Académico
+BIU License - Proyecto Académico - Módulo Object-Oriented Programming.
