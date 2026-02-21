@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    UI.renderMenuProducts();
+    UI.renderMenuOrders();
     cargarOrdenes();
 });
 

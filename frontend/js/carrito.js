@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    UI.renderMenuProducts();
+    UI.renderMenuCart();
     cargarCarrito();
     setupEventListeners();
 });
