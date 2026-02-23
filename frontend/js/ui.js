@@ -209,7 +209,7 @@ export const UI = {
                     <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
                         Mis Órdenes
                     </a>
-                    <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                    <a href="productoscustomer.html" class="text-gray-700 hover:text-blue-600 font-medium">
                         Productos
                     </a>
                 `;
@@ -290,7 +290,7 @@ export const UI = {
                     <a href="carrito.html" class="text-gray-700 hover:text-blue-600 font-medium">
                         Carrito
                     </a>
-                    <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                    <a href="productoscustomer.html" class="text-gray-700 hover:text-blue-600 font-medium">
                         Productos
                     </a>
                 `;

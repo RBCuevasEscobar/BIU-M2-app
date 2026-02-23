@@ -3,6 +3,7 @@ com\ecommerce\security\UsuarioSecurity.class
 com\ecommerce\repository\ProductoRepository.class
 com\ecommerce\model\Cliente.class
 com\ecommerce\service\UsuarioService.class
+com\ecommerce\service\AdministradorService.class
 com\ecommerce\repository\UsuarioRepository.class
 com\ecommerce\service\OrdenService.class
 com\ecommerce\model\Proveedor.class

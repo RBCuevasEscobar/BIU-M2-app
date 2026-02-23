@@ -64,7 +64,7 @@ const Auth = {
         if (role === 'ADMIN' || role === 'SUPPLIER') {
             window.location.href = 'productos.html';
         } else {
-            window.location.href = 'productos.html'; // Customers also go to store
+            window.location.href = 'productoscustomer.html'; // Customers also go to store
         }
     }
 };
