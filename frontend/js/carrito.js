@@ -20,6 +20,11 @@ function setupEventListeners() {
     if (btnCheckout) {
         btnCheckout.addEventListener('click', realizarCheckout);
     }
+
+    const btnVaciar = document.getElementById('btnVaciar');
+    if (btnVaciar) {
+        btnVaciar.addEventListener('click', vaciarCarrito);
+    }
 }
 
 async function cargarCarrito() {
@@ -141,5 +146,17 @@ async function realizarCheckout() {
         }, 1500);
     } catch (error) {
         UI.showNotification('Error en el checkout: ' + error.message, 'error');
+    }
+}
+
+async function vaciarCarrito() {
+    if (!confirm('¿Vaciar el carrito completo?')) return;
+
+    try {
+        await Api.delete('/carrito');
+        cargarCarrito();
+        UI.showNotification('Carrito vaciado');
+    } catch (error) {
+        UI.showNotification('Error al vaciar carrito', 'error');
     }
 }

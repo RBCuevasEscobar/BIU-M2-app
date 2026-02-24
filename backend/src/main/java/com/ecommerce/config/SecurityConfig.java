@@ -47,6 +47,7 @@ public class SecurityConfig {
 
                         // 🔐 CUALQUIER OTRA SOLICITUD ESTA PROTEGIDA
                         .requestMatchers("/api/usuarios").authenticated()
+                        .requestMatchers("/api/carrito").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(AbstractHttpConfigurer::disable)

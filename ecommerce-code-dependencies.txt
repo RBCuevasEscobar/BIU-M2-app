@@ -1,0 +1,99 @@
+External dependencies
+
+Source: backend\pom.xml
+- com.mysql:mysql-connector-j:9.0.0 (runtime)
+- org.projectlombok:lombok
+- org.springframework.boot:spring-boot-starter-data-jpa
+- org.springframework.boot:spring-boot-starter-security
+- org.springframework.boot:spring-boot-starter-test (test)
+- org.springframework.boot:spring-boot-starter-validation
+- org.springframework.boot:spring-boot-starter-web
+
+Source: frontend\package-lock.json (resolved)
+- frontend 1.0.0
+
+Source: frontend\package.json (devDependencies)
+- @tailwindcss/cli ^4.1.18
+- autoprefixer ^10.4.24
+- postcss ^8.5.6
+- tailwindcss ^4.1.18
+
+Internal dependency graph
+Nodes: 59
+Edges: 13
+
+Nodes:
+- .mvn\wrapper\maven-wrapper.properties
+- backend\pom.xml
+- backend\src\main\java\com\ecommerce\BackendApplication.java
+- backend\src\main\java\com\ecommerce\config\DataSeeder.java
+- backend\src\main\java\com\ecommerce\config\SecurityConfig.java
+- backend\src\main\java\com\ecommerce\config\WebConfig.java
+- backend\src\main\java\com\ecommerce\controller\AuthController.java
+- backend\src\main\java\com\ecommerce\controller\CarritoController.java
+- backend\src\main\java\com\ecommerce\controller\OrdenController.java
+- backend\src\main\java\com\ecommerce\controller\ProductoController.java
+- backend\src\main\java\com\ecommerce\controller\UsuarioController.java
+- backend\src\main\java\com\ecommerce\dto\LoginRequest.java
+- backend\src\main\java\com\ecommerce\dto\LoginResponse.java
+- backend\src\main\java\com\ecommerce\model\Administrador.java
+- backend\src\main\java\com\ecommerce\model\Carrito.java
+- backend\src\main\java\com\ecommerce\model\Cliente.java
+- backend\src\main\java\com\ecommerce\model\Orden.java
+- backend\src\main\java\com\ecommerce\model\OrdenDetalle.java
+- backend\src\main\java\com\ecommerce\model\Producto.java
+- backend\src\main\java\com\ecommerce\model\ProductoDigital.java
+- backend\src\main\java\com\ecommerce\model\ProductoFisico.java
+- backend\src\main\java\com\ecommerce\model\Proveedor.java
+- backend\src\main\java\com\ecommerce\model\Role.java
+- backend\src\main\java\com\ecommerce\model\Usuario.java
+- backend\src\main\java\com\ecommerce\repository\CarritoRepository.java
+- backend\src\main\java\com\ecommerce\repository\OrdenRepository.java
+- backend\src\main\java\com\ecommerce\repository\ProductoRepository.java
+- backend\src\main\java\com\ecommerce\repository\UsuarioRepository.java
+- backend\src\main\java\com\ecommerce\security\TokenAuthenticationFilter.java
+- backend\src\main\java\com\ecommerce\security\UsuarioSecurity.java
+- backend\src\main\java\com\ecommerce\service\AdministradorService.java
+- backend\src\main\java\com\ecommerce\service\CarritoService.java
+- backend\src\main\java\com\ecommerce\service\OrdenService.java
+- backend\src\main\java\com\ecommerce\service\ProductoService.java
+- backend\src\main\java\com\ecommerce\service\UsuarioService.java
+- backend\src\main\resources\application.properties
+- backend\target\classes\application.properties
+- backend\target\maven-status\maven-compiler-plugin\compile\default-compile\createdFiles.lst
+- backend\target\maven-status\maven-compiler-plugin\compile\default-compile\inputFiles.lst
+- frontend\carrito.html
+- frontend\css\output.css
+- frontend\css\styles.css
+- frontend\index.html
+- frontend\js\api.js
+- frontend\js\app.js
+- frontend\js\appcust.js
+- frontend\js\auth.js
+- frontend\js\carrito.js
+- frontend\js\ordenes.js
+- frontend\js\productos.js
+- frontend\js\ui.js
+- frontend\js\usuarios.js
+- frontend\js\validation.js
+- frontend\ordenes.html
+- frontend\productos.html
+- frontend\productoscustomer.html
+- frontend\register.html
+- frontend\tailwind.config.js
+- frontend\usuarios.html
+
+Edges:
+- frontend\js\auth.js -> frontend\js\api.js (import)
+- frontend\js\carrito.js -> frontend\js\api.js (import)
+- frontend\js\carrito.js -> frontend\js\auth.js (import)
+- frontend\js\carrito.js -> frontend\js\ui.js (import)
+- frontend\js\ordenes.js -> frontend\js\api.js (import)
+- frontend\js\ordenes.js -> frontend\js\auth.js (import)
+- frontend\js\ordenes.js -> frontend\js\ui.js (import)
+- frontend\js\productos.js -> frontend\js\api.js (import)
+- frontend\js\productos.js -> frontend\js\auth.js (import)
+- frontend\js\productos.js -> frontend\js\ui.js (import)
+- frontend\js\usuarios.js -> frontend\js\api.js (import)
+- frontend\js\usuarios.js -> frontend\js\auth.js (import)
+- frontend\js\usuarios.js -> frontend\js\ui.js (import)

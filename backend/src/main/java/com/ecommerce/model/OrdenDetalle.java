@@ -1,6 +1,7 @@
 package com.ecommerce.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,6 +23,7 @@ public class OrdenDetalle {
 
     @ManyToOne
     @JoinColumn(name = "orden_id", nullable = false)
+    @JsonIgnore
     private Orden orden;
 
     @ManyToOne

@@ -1,0 +1,3988 @@
+
+
+================ .mvn\wrapper\maven-wrapper.properties ================
+
+wrapperVersion=3.3.4
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.11/apache-maven-3.9.11-bin.zip
+
+
+================ backend\pom.xml ================
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.4.1</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.ecommerce</groupId>
+	<artifactId>backend</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>backend</name>
+	<description>E-Commerce Backend</description>
+	<properties>
+		<java.version>17</java.version>
+		<spring-security.version>6.3.3</spring-security.version>
+		<tomcat.version>10.1.49</tomcat.version>
+		<logback.version>1.5.12</logback.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<version>9.0.0</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+================ backend\src\main\java\com\ecommerce\BackendApplication.java ================
+
+package com.ecommerce;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class BackendApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(BackendApplication.class, args);
+    }
+
+}
+
+
+================ backend\src\main\java\com\ecommerce\config\DataSeeder.java ================
+
+package com.ecommerce.config;
+
+import com.ecommerce.model.*;
+import com.ecommerce.repository.UsuarioRepository;
+import com.ecommerce.repository.ProductoRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
+
+@Component
+public class DataSeeder implements CommandLineRunner {
+
+    private final UsuarioRepository usuarioRepository;
+    private final ProductoRepository productoRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    @Autowired
+    public DataSeeder(UsuarioRepository usuarioRepository,
+            ProductoRepository productoRepository,
+            PasswordEncoder passwordEncoder) {
+        this.usuarioRepository = usuarioRepository;
+        this.productoRepository = productoRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        if (usuarioRepository.count() == 0) {
+            crearUsuarios();
+        }
+        if (productoRepository.count() == 0) {
+            crearProductos();
+        }
+    }
+
+    private void crearUsuarios() {
+        // Admin
+        Administrador admin = new Administrador();
+        admin.setNombre("Admin User");
+        admin.setEmail("admin@example.com");
+        admin.setPassword(passwordEncoder.encode("admin123"));
+        admin.setFechaNacimiento(LocalDate.of(1980, 1, 1));
+        admin.setRole(Role.ADMIN);
+        admin.setValidUntil(LocalDate.now().plusYears(1));
+
+        usuarioRepository.save(admin);
+
+        // Supplier
+        Proveedor supplier = new Proveedor();
+        supplier.setNombre("Supplier User");
+        supplier.setEmail("supplier@example.com");
+        supplier.setPassword(passwordEncoder.encode("supplier123"));
+        supplier.setFechaNacimiento(LocalDate.of(1985, 5, 5));
+        supplier.setRole(Role.SUPPLIER);
+        supplier.setEmpresa("Supplier Company");
+        usuarioRepository.save(supplier);
+
+        // Customer
+        Cliente customer = new Cliente();
+        customer.setNombre("Customer User");
+        customer.setEmail("customer@example.com");
+        customer.setPassword(passwordEncoder.encode("customer123"));
+        customer.setFechaNacimiento(LocalDate.of(1990, 10, 10));
+        customer.setRole(Role.CUSTOMER);
+        usuarioRepository.save(customer);
+
+        System.out.println("Usuarios de prueba creados.");
+    }
+
+    private void crearProductos() {
+        ProductoFisico p1 = new ProductoFisico();
+        p1.setNombre("Laptop Gamer");
+        p1.setPrecio(1500.0);
+        p1.setPeso(2.5);
+        p1.setStock(10);
+        productoRepository.save(p1);
+
+        ProductoDigital p2 = new ProductoDigital();
+        p2.setNombre("E-Book Java");
+        p2.setPrecio(29.99);
+        p2.setUrlDescarga("http://example.com/ebook.pdf");
+        productoRepository.save(p2);
+
+        System.out.println("Productos de prueba creados.");
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\config\SecurityConfig.java ================
+
+package com.ecommerce.config;
+
+import com.ecommerce.security.TokenAuthenticationFilter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity // Enable @PreAuthorize
+public class SecurityConfig {
+
+    private final CorsConfigurationSource corsConfigurationSource;
+    private final TokenAuthenticationFilter tokenAuthenticationFilter;
+
+    public SecurityConfig(CorsConfigurationSource corsConfigurationSource,
+            TokenAuthenticationFilter tokenAuthenticationFilter) {
+        this.corsConfigurationSource = corsConfigurationSource;
+        this.tokenAuthenticationFilter = tokenAuthenticationFilter;
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .authorizeHttpRequests(auth -> auth
+                        // 🔑 PERMITIR PREFLIGHT
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // 🔓 ENDPOINTS PÚBLICOS
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/api/usuarios/cliente").permitAll()
+                        .requestMatchers("/api/usuarios/proveedor").permitAll()
+                        .requestMatchers("/api/usuarios/admin").permitAll()
+                        .requestMatchers("/api/productos").permitAll()
+
+                        // 🔐 CUALQUIER OTRA SOLICITUD ESTA PROTEGIDA
+                        .requestMatchers("/api/usuarios").authenticated()
+                        .anyRequest().authenticated())
+                .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable);
+
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\config\WebConfig.java ================
+
+package com.ecommerce.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
+
+@Configuration
+public class WebConfig {
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5500",
+                "http://127.0.0.1:5500",
+                "http://localhost:8080",
+                "http://127.0.0.1:8080",
+                "null")); // Add frontend origins
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\controller\AuthController.java ================
+
+package com.ecommerce.controller;
+
+import com.ecommerce.dto.LoginRequest;
+import com.ecommerce.service.UsuarioService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
+
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    @Autowired
+    private UsuarioService usuarioService;
+
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        try {
+            return ResponseEntity.ok(usuarioService.login(loginRequest));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).body(e.getMessage());
+        }
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\controller\CarritoController.java ================
+
+package com.ecommerce.controller;
+
+import com.ecommerce.model.Carrito;
+import com.ecommerce.service.CarritoService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/carrito")
+public class CarritoController {
+
+    @Autowired
+    private CarritoService carritoService;
+
+    @GetMapping
+    public ResponseEntity<Carrito> obtenerCarrito() {
+        return ResponseEntity.ok(carritoService.obtenerCarritoActual());
+    }
+
+    @PostMapping("/productos/{productoId}")
+    public ResponseEntity<Carrito> agregarProducto(@PathVariable Long productoId) {
+        return ResponseEntity.ok(carritoService.agregarProducto(productoId));
+    }
+
+    @DeleteMapping("/productos/{productoId}")
+    public ResponseEntity<Carrito> eliminarProducto(@PathVariable Long productoId) {
+        return ResponseEntity.ok(carritoService.eliminarProducto(productoId));
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\controller\OrdenController.java ================
+
+package com.ecommerce.controller;
+
+import com.ecommerce.model.Orden;
+import com.ecommerce.service.OrdenService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/ordenes")
+public class OrdenController {
+
+    @Autowired
+    private OrdenService ordenService;
+
+    @PostMapping("/checkout")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<Orden> checkout() {
+        return ResponseEntity.ok(ordenService.crearOrdenDesdeCarrito());
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Orden>> listarOrdenes() {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+
+        if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return ResponseEntity.ok(ordenService.listarTodas());
+        }
+        return ResponseEntity.ok(ordenService.listarOrdenesPropias());
+    }
+
+    @GetMapping("/usuario/{usuarioId}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @usuarioSecurity.isOwner(#usuarioId)")
+    public ResponseEntity<List<Orden>> listarOrdenesUsuario(@PathVariable Long usuarioId) {
+        return ResponseEntity.ok(ordenService.listarOrdenesUsuario(usuarioId));
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\controller\ProductoController.java ================
+
+package com.ecommerce.controller;
+
+import com.ecommerce.model.Producto;
+import com.ecommerce.model.ProductoFisico;
+import com.ecommerce.model.ProductoDigital;
+import com.ecommerce.service.ProductoService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/productos")
+public class ProductoController {
+
+    @Autowired
+    private ProductoService productoService;
+
+    @GetMapping
+    public List<Producto> listarProductos() {
+        return productoService.listarProductos();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Producto> obtenerProducto(@PathVariable Long id) {
+        return productoService.obtenerProducto(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/fisico")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Producto> crearProductoFisico(@RequestBody ProductoFisico producto) {
+        return ResponseEntity.ok(productoService.guardarProducto(producto));
+    }
+
+    @PostMapping("/digital")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Producto> crearProductoDigital(@RequestBody ProductoDigital producto) {
+        return ResponseEntity.ok(productoService.guardarProducto(producto));
+    }
+
+    @PutMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'SUPPLIER')")
+    public ResponseEntity<Producto> actualizarProducto(@PathVariable Long id, @RequestBody Producto productoDetalles) {
+        return ResponseEntity.ok(productoService.actualizarProducto(id, productoDetalles));
+    }
+
+    @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
+        productoService.eliminarProducto(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\controller\UsuarioController.java ================
+
+package com.ecommerce.controller;
+
+import com.ecommerce.model.Usuario;
+import com.ecommerce.model.Cliente;
+import com.ecommerce.model.Proveedor;
+import com.ecommerce.model.Administrador;
+import com.ecommerce.service.UsuarioService;
+import com.ecommerce.service.AdministradorService;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/usuarios")
+public class UsuarioController {
+
+    @Autowired
+    private UsuarioService usuarioService;
+
+    @PostMapping("/cliente")
+    public ResponseEntity<Usuario> registrarCliente(@RequestBody Cliente cliente) {
+        cliente.setRole(com.ecommerce.model.Role.CUSTOMER);
+        return ResponseEntity.ok(usuarioService.registrarUsuario(cliente));
+    }
+
+    @PostMapping("/proveedor")
+    public ResponseEntity<Usuario> registrarProveedor(@RequestBody Proveedor proveedor) {
+        proveedor.setRole(com.ecommerce.model.Role.SUPPLIER);
+        return ResponseEntity.ok(usuarioService.registrarUsuario(proveedor));
+    }
+
+    @PostMapping("/admin")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Usuario> registrarAdmin(@RequestBody Administrador admin) {
+        admin.setRole(com.ecommerce.model.Role.ADMIN);
+        return ResponseEntity.ok(usuarioService.registrarUsuario(admin));
+    }
+
+    @GetMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public List<Usuario> listarUsuarios(Authentication auth) {
+        String email = auth.getName();
+        Usuario usuario = usuarioService.buscarPorEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+        AdministradorService.validarAdminVigente(usuario);
+        return usuarioService.listarUsuarios();
+    }
+
+    @GetMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @usuarioSecurity.isOwner(#id)")
+    public ResponseEntity<Usuario> listarUsuario(@PathVariable Long id) {
+        return usuarioService.listarUsuario(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Long id, @RequestBody Usuario datosActualizados) {
+        try {
+            Usuario usuarioActualizado = usuarioService.actualizarUsuario(id, datosActualizados);
+            return ResponseEntity.ok(usuarioActualizado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) {
+        try {
+            usuarioService.eliminarUsuario(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\dto\LoginRequest.java ================
+
+package com.ecommerce.dto;
+
+public record LoginRequest(String email, String password) {
+}
+
+
+================ backend\src\main\java\com\ecommerce\dto\LoginResponse.java ================
+
+package com.ecommerce.dto;
+
+import com.ecommerce.model.Role;
+
+public record LoginResponse(Long id, String nombre, Role role, String token) {
+}
+
+
+================ backend\src\main\java\com\ecommerce\model\Administrador.java ================
+
+package com.ecommerce.model;
+
+import java.time.LocalDate;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@Entity
+@DiscriminatorValue("ADMIN")
+@Table(name = "administradores")
+public class Administrador extends Usuario {
+
+    @Column(name = "valid_until", nullable = false)
+    private LocalDate validUntil;
+
+    public Administrador(String nombre, String email, String password, LocalDate fechaNacimiento,
+            LocalDate validUntil) {
+        super(nombre, email, password, fechaNacimiento, Role.ADMIN);
+        this.validUntil = validUntil;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\model\Carrito.java ================
+
+package com.ecommerce.model;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Entidad que representa el carrito de compras de un usuario.
+ *
+ * ═══════════════════════════════════════════════════════════════
+ * CONCEPTO OOP: SOBRECARGA DE MÉTODOS (Method Overloading)
+ * ═══════════════════════════════════════════════════════════════
+ * Esta clase demuestra SOBRECARGA a nivel de dominio.
+ * Los tres métodos agregarProducto() tienen el MISMO nombre pero
+ * DIFERENTES parámetros. Java distingue cuál usar en tiempo de
+ * compilación según el tipo/número de argumentos recibidos.
+ *
+ * Firmas sobrecargadas:
+ * 1. agregarProducto(Producto producto) → versión principal
+ * 2. agregarProducto(Producto producto, int cantidad) → con cantidad
+ * 3. agregarProducto(String nombre, Double precio) → con datos inline
+ *
+ * Todos delegan internamente al método principal, manteniendo
+ * compatibilidad con el código existente.
+ * ═══════════════════════════════════════════════════════════════
+ */
+@Data
+@NoArgsConstructor
+@Entity
+@Table(name = "carritos")
+public class Carrito {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+
+    // Relación con Producto (ManyToMany para simplicidad en Fase 1, permitiendo
+    // duplicados para cantidad)
+    @ManyToMany
+    @JoinTable(name = "carrito_productos", joinColumns = @JoinColumn(name = "carrito_id"), inverseJoinColumns = @JoinColumn(name = "producto_id"))
+    private List<Producto> productos = new ArrayList<>();
+
+    // ─────────────────────────────────────────────────
+    // SOBRECARGA 1: Método principal (existente, sin cambios)
+    // Agrega un producto individual al carrito.
+    // ─────────────────────────────────────────────────
+    public void agregarProducto(Producto producto) {
+        this.productos.add(producto);
+    }
+
+    // ─────────────────────────────────────────────────
+    // SOBRECARGA 2: Agrega el mismo producto N veces.
+    // Mismo nombre, diferente firma: (Producto, int).
+    // Delega internamente al método principal (SOBRECARGA 1)
+    // para respetar el principio DRY.
+    // ─────────────────────────────────────────────────
+    public void agregarProducto(Producto producto, int cantidad) {
+        for (int i = 0; i < cantidad; i++) {
+            agregarProducto(producto); // Delegación al método principal
+        }
+    }
+
+    // ─────────────────────────────────────────────────
+    // SOBRECARGA 3: Crea un ProductoFisico genérico con
+    // nombre y precio, y lo agrega al carrito.
+    // Útil para escenarios de prueba o productos temporales.
+    // Mismo nombre, diferente firma: (String, Double).
+    // También delega al método principal (SOBRECARGA 1).
+    // ─────────────────────────────────────────────────
+    public void agregarProducto(String nombre, Double precio) {
+        ProductoFisico productoTemp = new ProductoFisico();
+        productoTemp.setNombre(nombre);
+        productoTemp.setPrecio(precio);
+        productoTemp.setStock(0);
+        productoTemp.setPeso(0.0);
+        agregarProducto(productoTemp); // Delegación al método principal
+    }
+
+    public void eliminarProducto(Producto producto) {
+        this.productos.remove(producto);
+    }
+
+    public Double getTotal() {
+        return productos.stream().mapToDouble(Producto::getPrecio).sum();
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\model\Cliente.java ================
+
+package com.ecommerce.model;
+
+import java.time.LocalDate;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@Entity
+@Table(name = "clientes")
+public class Cliente extends Usuario {
+
+    @Column(name = "direccion_envio")
+    private String direccionEnvio;
+
+    public Cliente(String nombre, String email, String password, LocalDate fechaNacimiento, String direccionEnvio) {
+        super(nombre, email, password, fechaNacimiento, Role.CUSTOMER);
+        this.direccionEnvio = direccionEnvio;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\model\Orden.java ================
+
+package com.ecommerce.model;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@Entity
+@Table(name = "ordenes")
+public class Orden {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private LocalDateTime fecha;
+
+    @Column(nullable = false)
+    private Double total;
+
+    @ManyToOne
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
+
+    @OneToMany(mappedBy = "orden", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrdenDetalle> detalles = new ArrayList<>();
+
+    public void agregarDetalle(OrdenDetalle detalle) {
+        detalles.add(detalle);
+        detalle.setOrden(this);
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\model\OrdenDetalle.java ================
+
+package com.ecommerce.model;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@Entity
+@Table(name = "orden_detalles")
+public class OrdenDetalle {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private Integer cantidad;
+
+    @Column(nullable = false)
+    private Double subtotal;
+
+    @ManyToOne
+    @JoinColumn(name = "orden_id", nullable = false)
+    private Orden orden;
+
+    @ManyToOne
+    @JoinColumn(name = "producto_id", nullable = false)
+    private Producto producto;
+
+    public OrdenDetalle(Integer cantidad, Double subtotal, Producto producto) {
+        this.cantidad = cantidad;
+        this.subtotal = subtotal;
+        this.producto = producto;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\model\Producto.java ================
+
+package com.ecommerce.model;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * Clase base abstracta para todos los tipos de producto.
+ *
+ * ═══════════════════════════════════════════════════════════════
+ * CONCEPTO OOP: ABSTRACCIÓN + SOBREESCRITURA (Method Overriding)
+ * ═══════════════════════════════════════════════════════════════
+ * Al ser abstracta, Producto define el CONTRATO que toda subclase
+ * debe cumplir: el método mostrarDetalle() es abstracto, por lo
+ * que CADA subclase está obligada a sobreescribirlo con su
+ * propia implementación específica.
+ *
+ * Jerarquía:
+ * Producto (abstracta)
+ * ├── ProductoFisico → @Override mostrarDetalle() → información de stock/peso
+ * └── ProductoDigital → @Override mostrarDetalle() → URL de descarga/vigencia
+ *
+ * Polimorfismo en acción:
+ * List<Producto> lista = Arrays.asList(
+ * new ProductoFisico("Laptop", 25000.0, 5, 2.5),
+ * new ProductoDigital("Ebook", 299.99, "http://...")
+ * );
+ * lista.forEach(p -> System.out.println(p.mostrarDetalle()));
+ * // Cada elemento imprime su propio detalle específico
+ * ═══════════════════════════════════════════════════════════════
+ */
+@Data
+@NoArgsConstructor
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
+@Table(name = "productos")
+public abstract class Producto {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String nombre;
+
+    @Column(nullable = false)
+    private Double precio;
+
+    // Constructor parametrizado (usado por subclases via super(...))
+    public Producto(String nombre, Double precio) {
+        this.nombre = nombre;
+        this.precio = precio;
+    }
+
+    /**
+     * Método abstracto que debe ser SOBREESCRITO por cada subclase.
+     *
+     * Contrato: retorna una descripción textual del producto con
+     * la información más relevante según su tipo concreto.
+     *
+     * @return Cadena con el detalle específico del tipo de producto.
+     */
+    public abstract String mostrarDetalle();
+}
+
+
+================ backend\src\main\java\com\ecommerce\model\ProductoDigital.java ================
+
+package com.ecommerce.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+/**
+ * Representa un producto de tipo digital (descargable).
+ *
+ * ═══════════════════════════════════════════════════════════════
+ * CONCEPTO OOP: SOBREESCRITURA DE MÉTODOS (Method Overriding)
+ * ═══════════════════════════════════════════════════════════════
+ * Esta clase también SOBREESCRIBE mostrarDetalle() definido en
+ * {@link Producto}, pero con información DIFERENTE a la de
+ * {@link ProductoFisico}.
+ *
+ * Esto ilustra el POLIMORFISMO de sobreescritura: el mismo
+ * mensaje (mostrarDetalle()) produce resultados distintos
+ * dependiendo del tipo concreto del objeto en tiempo de ejecución.
+ *
+ * Ejemplo de polimorfismo:
+ * Producto p1 = new ProductoFisico(...);
+ * Producto p2 = new ProductoDigital(...);
+ * p1.mostrarDetalle() → "[Físico] ..."
+ * p2.mostrarDetalle() → "[Digital] ..."
+ * ═══════════════════════════════════════════════════════════════
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@Entity
+@Table(name = "productos_digitales")
+public class ProductoDigital extends Producto {
+
+    @Column(name = "url_descarga", nullable = false)
+    private String urlDescarga;
+
+    @Column(name = "dias_expiracion")
+    private Integer diasExpiracion;
+
+    // Constructor básico (compatible con código existente)
+    public ProductoDigital(String nombre, Double precio, String urlDescarga) {
+        super(nombre, precio);
+        this.urlDescarga = urlDescarga;
+        this.diasExpiracion = null; // Sin expiración por defecto
+    }
+
+    // Constructor completo con días de expiración
+    public ProductoDigital(String nombre, Double precio, String urlDescarga, Integer diasExpiracion) {
+        super(nombre, precio);
+        this.urlDescarga = urlDescarga;
+        this.diasExpiracion = diasExpiracion;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // SOBREESCRITURA del método abstracto de Producto.
+    //
+    // A diferencia de ProductoFisico, aquí se muestra informacion
+    // relevante para un producto digital: URL de descarga y
+    // vigencia del acceso.
+    //
+    // Mismo contrato (firma + tipo de retorno), diferente
+    // implementación → POLIMORFISMO por sobreescritura.
+    // ─────────────────────────────────────────────────────────────
+    @Override
+    public String mostrarDetalle() {
+        String expiracion = (diasExpiracion != null)
+                ? diasExpiracion + " días"
+                : "Sin expiración";
+
+        return String.format(
+                "[Digital] %s | Precio: $%.2f | URL: %s | Vigencia: %s",
+                getNombre(), getPrecio(), urlDescarga, expiracion);
+    }
+
+    /**
+     * Indica si el producto tiene un período de vigencia limitado.
+     */
+    public boolean tieneExpiracion() {
+        return diasExpiracion != null && diasExpiracion > 0;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\model\ProductoFisico.java ================
+
+package com.ecommerce.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+/**
+ * Representa un producto de tipo físico (tiene stock y peso).
+ *
+ * ═══════════════════════════════════════════════════════════════
+ * CONCEPTO OOP: SOBREESCRITURA DE MÉTODOS (Method Overriding)
+ * ═══════════════════════════════════════════════════════════════
+ * Esta clase SOBREESCRIBE el método abstracto mostrarDetalle()
+ * definido en la clase padre {@link Producto}.
+ *
+ * La sobreescritura permite que cada tipo de producto devuelva
+ * información ESPECÍFICA de su propia naturaleza, aunque todos
+ * sean tratados polimórficamente como un {@code Producto}.
+ *
+ * Reglas de sobreescritura respetadas:
+ * - Misma firma: public String mostrarDetalle()
+ * - Mismo tipo de retorno: String
+ * - Anotación @Override garantiza corrección en compilación
+ * - Acceso igual o más permisivo que la clase padre (public)
+ * ═══════════════════════════════════════════════════════════════
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@Entity
+@Table(name = "productos_fisicos")
+public class ProductoFisico extends Producto {
+
+    @Column(nullable = false)
+    private Integer stock;
+
+    @Column(nullable = false)
+    private Double peso;
+
+    // Constructor parametrizado
+    public ProductoFisico(String nombre, Double precio, Integer stock, Double peso) {
+        super(nombre, precio);
+        this.stock = stock;
+        this.peso = peso;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // SOBREESCRITURA del método abstracto de Producto.
+    //
+    // @Override indica explícitamente que este método reemplaza
+    // al de la clase padre. Si el nombre estuviera mal escrito,
+    // el compilador lo detectaría como error.
+    //
+    // Esta implementación aporta información ESPECÍFICA de un
+    // producto físico: stock disponible y peso en kg.
+    // ─────────────────────────────────────────────────────────────
+    @Override
+    public String mostrarDetalle() {
+        return String.format(
+                "[Físico] %s | Precio: $%.2f | Stock: %d unidades | Peso: %.2f kg",
+                getNombre(), getPrecio(), stock, peso);
+    }
+
+    /**
+     * Indica si el producto tiene stock disponible.
+     * Información de dominio específica de ProductoFisico.
+     */
+    public boolean tieneStock() {
+        return stock != null && stock > 0;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\model\Proveedor.java ================
+
+package com.ecommerce.model;
+
+import java.time.LocalDate;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@Entity
+@Table(name = "proveedores")
+public class Proveedor extends Usuario {
+
+    @Column(nullable = false)
+    private String empresa;
+
+    public Proveedor(String nombre, String email, String password, LocalDate fechaNacimiento, String empresa) {
+        super(nombre, email, password, fechaNacimiento, Role.SUPPLIER);
+        this.empresa = empresa;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\model\Role.java ================
+
+package com.ecommerce.model;
+
+public enum Role {
+    ADMIN,
+    SUPPLIER,
+    CUSTOMER
+}
+
+
+================ backend\src\main\java\com\ecommerce\model\Usuario.java ================
+
+package com.ecommerce.model;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
+@Table(name = "usuarios")
+public abstract class Usuario {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String nombre;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(name = "fecha_nacimiento")
+    private java.time.LocalDate fechaNacimiento;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role; // ADMIN, CLIENTE, PROVEEDOR
+
+    public Usuario(String nombre, String email, String password, java.time.LocalDate fechaNacimiento, Role role) {
+        this.nombre = nombre;
+        this.email = email;
+        this.password = password;
+        this.fechaNacimiento = fechaNacimiento;
+        this.role = role;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\repository\CarritoRepository.java ================
+
+package com.ecommerce.repository;
+
+import com.ecommerce.model.Carrito;
+import com.ecommerce.model.Usuario;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface CarritoRepository extends JpaRepository<Carrito, Long> {
+    Optional<Carrito> findByUsuario(Usuario usuario);
+}
+
+
+================ backend\src\main\java\com\ecommerce\repository\OrdenRepository.java ================
+
+package com.ecommerce.repository;
+
+import com.ecommerce.model.Orden;
+import com.ecommerce.model.Usuario;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface OrdenRepository extends JpaRepository<Orden, Long> {
+    List<Orden> findByUsuario(Usuario usuario);
+}
+
+
+================ backend\src\main\java\com\ecommerce\repository\ProductoRepository.java ================
+
+package com.ecommerce.repository;
+
+import com.ecommerce.model.Producto;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface ProductoRepository extends JpaRepository<Producto, Long> {
+}
+
+
+================ backend\src\main\java\com\ecommerce\repository\UsuarioRepository.java ================
+
+package com.ecommerce.repository;
+
+import com.ecommerce.model.Usuario;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
+    Optional<Usuario> findByEmail(String email);
+
+    boolean existsByEmail(String email);
+}
+
+
+================ backend\src\main\java\com\ecommerce\security\TokenAuthenticationFilter.java ================
+
+package com.ecommerce.security;
+
+import com.ecommerce.model.Usuario;
+import com.ecommerce.repository.UsuarioRepository;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.util.Collections;
+
+@Component
+public class TokenAuthenticationFilter extends OncePerRequestFilter {
+
+    private final UsuarioRepository usuarioRepository;
+
+    public TokenAuthenticationFilter(UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
+    }
+
+    @Override
+    protected void doFilterInternal(
+            @org.springframework.lang.NonNull HttpServletRequest request,
+            @org.springframework.lang.NonNull HttpServletResponse response,
+            @org.springframework.lang.NonNull FilterChain filterChain)
+            throws ServletException, IOException {
+
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+
+            // Mock token validation: extract user ID from token
+            // Format: "mock-jwt-token-{userId}"
+            if (token.startsWith("mock-jwt-token-")) {
+                try {
+                    Long userId = Long.parseLong(token.substring(15));
+                    Usuario usuario = usuarioRepository.findById(userId).orElse(null);
+
+                    if (usuario != null) {
+                        // Create authentication token with role
+                        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(
+                                "ROLE_" + usuario.getRole().name());
+                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                usuario.getEmail(),
+                                null,
+                                Collections.singletonList(authority));
+
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
+                } catch (NumberFormatException e) {
+                    // Invalid token format, continue without authentication
+                }
+            }
+        }
+
+        filterChain.doFilter(request, response);
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\security\UsuarioSecurity.java ================
+
+package com.ecommerce.security;
+
+import com.ecommerce.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+
+@Component("usuarioSecurity")
+public class UsuarioSecurity {
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @SuppressWarnings("null")
+    public boolean isOwner(Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentEmail = authentication.getName();
+
+        return usuarioRepository.findById(id)
+                .map(user -> user.getEmail().equals(currentEmail))
+                .orElse(false);
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\service\AdministradorService.java ================
+
+package com.ecommerce.service;
+
+import com.ecommerce.model.Administrador;
+import com.ecommerce.model.Usuario;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+
+@Service
+public class AdministradorService {
+
+    public static void validarAdminVigente(Usuario usuario) {
+        if (!(usuario instanceof Administrador admin)) {
+            throw new RuntimeException("No es administrador");
+        }
+
+        if (admin.getValidUntil().isBefore(LocalDate.now())) {
+            throw new RuntimeException("Rol ADMIN expirado");
+        }
+    }
+}
+
+================ backend\src\main\java\com\ecommerce\service\CarritoService.java ================
+
+package com.ecommerce.service;
+
+import com.ecommerce.model.Carrito;
+import com.ecommerce.model.Producto;
+import com.ecommerce.model.Usuario;
+import com.ecommerce.repository.CarritoRepository;
+import com.ecommerce.repository.ProductoRepository;
+import com.ecommerce.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Servicio que gestiona las operaciones del carrito de compras.
+ *
+ * ═══════════════════════════════════════════════════════════════
+ * CONCEPTO OOP: SOBRECARGA DE MÉTODOS (Method Overloading)
+ * ═══════════════════════════════════════════════════════════════
+ * A nivel de servicio, agregarProducto() está SOBRECARGADO con
+ * tres firmas que cubren diferentes escenarios de uso:
+ *
+ * Firma 1: agregarProducto(Long productoId)
+ * → Método PRINCIPAL, usado por el controlador REST.
+ * Busca el producto en BD por ID (flujo normal).
+ *
+ * Firma 2: agregarProducto(Producto producto)
+ * → Útil cuando ya se tiene el objeto Producto en
+ * memoria (evita una consulta extra a BD).
+ * Delega a la firma 1 usando el ID del producto.
+ *
+ * Firma 3: agregarProducto(String nombre, Double precio)
+ * → Útil para pruebas o integración, crea un
+ * ProductoFisico temporal y lo agrega.
+ * Delega al método del modelo Carrito.
+ *
+ * REGLA DE SOBRECARGA: misma clase, mismo nombre, distinta firma.
+ * La resolución ocurre en TIEMPO DE COMPILACIÓN (early binding).
+ * ═══════════════════════════════════════════════════════════════
+ */
+@Service
+public class CarritoService {
+
+    @Autowired
+    private CarritoRepository carritoRepository;
+
+    @Autowired
+    private ProductoRepository productoRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    private Usuario getUsuarioActual() {
+        String email = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication().getName();
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    }
+
+    @Transactional
+    public Carrito obtenerCarritoActual() {
+        Usuario usuario = getUsuarioActual();
+        return carritoRepository.findByUsuario(usuario)
+                .orElseGet(() -> {
+                    Carrito carrito = new Carrito();
+                    carrito.setUsuario(usuario);
+                    return carritoRepository.save(carrito);
+                });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // SOBRECARGA 1 (PRINCIPAL): Agrega producto por ID.
+    // Este método es el que invoca el controlador REST existente.
+    // Es el punto de entrada estable del sistema → no se modifica.
+    // ─────────────────────────────────────────────────────────────
+    @SuppressWarnings("null")
+    @Transactional
+    public Carrito agregarProducto(Long productoId) {
+        Carrito carrito = obtenerCarritoActual();
+        Producto producto = productoRepository.findById(productoId)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        carrito.agregarProducto(producto); // Llama a SOBRECARGA 1 del modelo
+        return carritoRepository.save(carrito);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // SOBRECARGA 2: Agrega un objeto Producto ya cargado.
+    // Evita consulta a BD cuando el producto ya está en memoria.
+    // Delega INTERNAMENTE a la firma principal (SOBRECARGA 1).
+    // ─────────────────────────────────────────────────────────────
+    @Transactional
+    public Carrito agregarProducto(Producto producto) {
+        // Delegación al método principal usando el ID del producto
+        return agregarProducto(producto.getId());
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // SOBRECARGA 3: Agrega un producto dado su nombre y precio.
+    // Útil para testing o contextos especiales donde no se conoce
+    // el ID. Crea un ProductoFisico genérico y lo persiste antes
+    // de agregarlo al carrito.
+    // ─────────────────────────────────────────────────────────────
+    @Transactional
+    public Carrito agregarProducto(String nombre, Double precio) {
+        Carrito carrito = obtenerCarritoActual();
+        // Utiliza la SOBRECARGA 3 del modelo Carrito directamente
+        carrito.agregarProducto(nombre, precio);
+        return carritoRepository.save(carrito);
+    }
+
+    @SuppressWarnings("null")
+    @Transactional
+    public Carrito eliminarProducto(Long productoId) {
+        Carrito carrito = obtenerCarritoActual();
+        Producto producto = productoRepository.findById(productoId)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        carrito.eliminarProducto(producto);
+        return carritoRepository.save(carrito);
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\service\OrdenService.java ================
+
+package com.ecommerce.service;
+
+import com.ecommerce.model.*;
+import com.ecommerce.repository.OrdenRepository;
+import com.ecommerce.repository.UsuarioRepository;
+import com.ecommerce.repository.CarritoRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@Service
+public class OrdenService {
+
+    @Autowired
+    private OrdenRepository ordenRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private CarritoRepository carritoRepository;
+
+    private Usuario getUsuarioActual() {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()
+                .getName();
+        return usuarioRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    }
+
+    @Transactional
+    public Orden crearOrdenDesdeCarrito() {
+        Usuario usuario = getUsuarioActual();
+        Carrito carrito = carritoRepository.findByUsuario(usuario)
+                .orElseThrow(() -> new RuntimeException("Carrito no encontrado"));
+
+        if (carrito.getProductos().isEmpty()) {
+            throw new RuntimeException("El carrito está vacío");
+        }
+
+        Orden orden = new Orden();
+        orden.setUsuario(usuario);
+        orden.setFecha(LocalDateTime.now());
+        // Simular cálculo de total (debería ser más robusto en producción)
+
+        // Agrupar productos para contar cantidad
+        Map<Producto, Long> conteoProductos = carrito.getProductos().stream()
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        double total = 0.0;
+
+        for (Map.Entry<Producto, Long> entry : conteoProductos.entrySet()) {
+            Producto producto = entry.getKey();
+            Integer cantidad = entry.getValue().intValue();
+            Double subtotal = producto.getPrecio() * cantidad;
+
+            OrdenDetalle detalle = new OrdenDetalle(); // Ajuste constructor si es necesario
+            detalle.setCantidad(cantidad);
+            detalle.setSubtotal(subtotal);
+            detalle.setProducto(producto);
+
+            orden.agregarDetalle(detalle);
+            total += subtotal;
+        }
+
+        orden.setTotal(total);
+
+        // Limpiar carrito
+        carrito.getProductos().clear();
+        carritoRepository.save(carrito);
+
+        return ordenRepository.save(orden);
+    }
+
+    @SuppressWarnings("null")
+    public List<Orden> listarOrdenesUsuario(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        return ordenRepository.findByUsuario(usuario);
+    }
+
+    public List<Orden> listarOrdenesPropias() {
+        return ordenRepository.findByUsuario(getUsuarioActual());
+    }
+
+    public List<Orden> listarTodas() {
+        return ordenRepository.findAll();
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\service\ProductoService.java ================
+
+package com.ecommerce.service;
+
+import com.ecommerce.model.Producto;
+import com.ecommerce.repository.ProductoRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class ProductoService {
+
+    @Autowired
+    private ProductoRepository productoRepository;
+
+    @SuppressWarnings("null")
+    @Transactional
+    public Producto guardarProducto(Producto producto) {
+        return productoRepository.save(producto);
+    }
+
+    public List<Producto> listarProductos() {
+        return productoRepository.findAll();
+    }
+
+    @SuppressWarnings("null")
+    public Optional<Producto> obtenerProducto(Long id) {
+        return productoRepository.findById(id);
+    }
+
+    @SuppressWarnings("null")
+    @Transactional
+    public void eliminarProducto(Long id) {
+        productoRepository.deleteById(id);
+    }
+
+    @SuppressWarnings("null")
+    @Transactional
+    public Producto actualizarProducto(Long id, Producto productoDetalles) {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado con id: " + id));
+
+        producto.setNombre(productoDetalles.getNombre());
+        producto.setPrecio(productoDetalles.getPrecio());
+        // Add other fields as necessary, or use a mapper
+
+        return productoRepository.save(producto);
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\service\UsuarioService.java ================
+
+package com.ecommerce.service;
+
+import com.ecommerce.model.Usuario;
+import com.ecommerce.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class UsuarioService {
+
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Transactional
+    public Usuario registrarUsuario(Usuario usuario) {
+        if (usuarioRepository.existsByEmail(usuario.getEmail())) {
+            throw new RuntimeException("El email ya está registrado");
+        }
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+        return usuarioRepository.save(usuario);
+    }
+
+    public List<Usuario> listarUsuarios() {
+        return usuarioRepository.findAll();
+    }
+
+    @SuppressWarnings("null")
+    public Optional<Usuario> listarUsuario(Long id) {
+        return usuarioRepository.findById(id);
+    }
+
+    @SuppressWarnings("null")
+    public Optional<Usuario> obtenerUsuario(Long id) {
+        return usuarioRepository.findById(id);
+    }
+
+    // @SuppressWarnings("null")
+    public Optional<Usuario> buscarPorEmail(String email) {
+        return usuarioRepository.findByEmail(email);
+    }
+
+    public com.ecommerce.dto.LoginResponse login(com.ecommerce.dto.LoginRequest request) {
+        Usuario usuario = usuarioRepository.findByEmail(request.email())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        System.out.println("Las credenciales ingresadas son: " + request.email() + " " + request.password());
+
+        if (!passwordEncoder.matches(request.password(), usuario.getPassword())) {
+            throw new RuntimeException("Credenciales inválidas");
+        }
+
+        // Simulate JWT generation for Phase 2
+        String token = "mock-jwt-token-" + usuario.getId();
+        return new com.ecommerce.dto.LoginResponse(usuario.getId(), usuario.getNombre(), usuario.getRole(), token);
+    }
+
+    @SuppressWarnings("null")
+    @Transactional
+    public Usuario actualizarUsuario(Long id, Usuario datosActualizados) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Update basic fields
+        if (datosActualizados.getNombre() != null) {
+            usuario.setNombre(datosActualizados.getNombre());
+        }
+
+        if (datosActualizados.getEmail() != null && !datosActualizados.getEmail().equals(usuario.getEmail())) {
+            // Check if new email already exists
+            if (usuarioRepository.existsByEmail(datosActualizados.getEmail())) {
+                throw new RuntimeException("El email ya está registrado");
+            }
+            usuario.setEmail(datosActualizados.getEmail());
+        }
+
+        // Update password only if provided
+        if (datosActualizados.getPassword() != null && !datosActualizados.getPassword().isEmpty()) {
+            usuario.setPassword(passwordEncoder.encode(datosActualizados.getPassword()));
+        }
+
+        // Update role if provided
+        if (datosActualizados.getRole() != null) {
+            usuario.setRole(datosActualizados.getRole());
+        }
+
+        // Update birth date if provided
+        if (datosActualizados.getFechaNacimiento() != null) {
+            usuario.setFechaNacimiento(datosActualizados.getFechaNacimiento());
+        }
+
+        return usuarioRepository.save(usuario);
+    }
+
+    @SuppressWarnings("null")
+    public void eliminarUsuario(Long id) {
+        usuarioRepository.deleteById(id);
+    }
+
+}
+
+
+================ backend\src\main\resources\application.properties ================
+
+spring.application.name=backend
+# Server Configuration
+server.port=8080
+
+# Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce_db?createDatabaseIfNotExist=true
+spring.datasource.username=dbadmin
+spring.datasource.password=dbpassword
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA Configuration
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+# Error Handling
+server.error.include-message=always
+
+
+================ backend\target\classes\application.properties ================
+
+spring.application.name=backend
+# Server Configuration
+server.port=8080
+
+# Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce_db?createDatabaseIfNotExist=true
+spring.datasource.username=dbadmin
+spring.datasource.password=dbpassword
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA Configuration
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+# Error Handling
+server.error.include-message=always
+
+
+================ backend\target\maven-status\maven-compiler-plugin\compile\default-compile\createdFiles.lst ================
+
+com\ecommerce\service\ProductoService.class
+com\ecommerce\security\UsuarioSecurity.class
+com\ecommerce\repository\ProductoRepository.class
+com\ecommerce\model\Cliente.class
+com\ecommerce\service\UsuarioService.class
+com\ecommerce\service\AdministradorService.class
+com\ecommerce\repository\UsuarioRepository.class
+com\ecommerce\service\OrdenService.class
+com\ecommerce\model\Proveedor.class
+com\ecommerce\controller\OrdenController.class
+com\ecommerce\controller\AuthController.class
+com\ecommerce\model\ProductoFisico.class
+com\ecommerce\model\Usuario.class
+com\ecommerce\config\SecurityConfig.class
+com\ecommerce\security\TokenAuthenticationFilter.class
+com\ecommerce\dto\LoginRequest.class
+com\ecommerce\config\WebConfig.class
+com\ecommerce\controller\ProductoController.class
+com\ecommerce\controller\CarritoController.class
+com\ecommerce\model\Producto.class
+com\ecommerce\model\OrdenDetalle.class
+com\ecommerce\dto\LoginResponse.class
+com\ecommerce\model\Role.class
+com\ecommerce\config\DataSeeder.class
+com\ecommerce\controller\UsuarioController.class
+com\ecommerce\model\ProductoDigital.class
+com\ecommerce\model\Carrito.class
+com\ecommerce\BackendApplication.class
+com\ecommerce\model\Administrador.class
+com\ecommerce\repository\CarritoRepository.class
+com\ecommerce\repository\OrdenRepository.class
+com\ecommerce\model\Orden.class
+com\ecommerce\service\CarritoService.class
+
+
+================ backend\target\maven-status\maven-compiler-plugin\compile\default-compile\inputFiles.lst ================
+
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\BackendApplication.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\config\DataSeeder.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\config\SecurityConfig.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\config\WebConfig.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\AuthController.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\CarritoController.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\OrdenController.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\ProductoController.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\UsuarioController.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\LoginRequest.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\LoginResponse.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Administrador.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Carrito.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Cliente.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Orden.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\OrdenDetalle.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Producto.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\ProductoDigital.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\ProductoFisico.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Proveedor.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Role.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Usuario.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\CarritoRepository.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\OrdenRepository.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\ProductoRepository.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\UsuarioRepository.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\security\TokenAuthenticationFilter.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\security\UsuarioSecurity.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\service\AdministradorService.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\service\CarritoService.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\service\OrdenService.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\service\ProductoService.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\service\UsuarioService.java
+
+
+================ frontend\carrito.html ================
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce - Carrito de Compras</title>
+    <!-- Tailwind CSS -->
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <link rel="stylesheet" href="css/output.css">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <nav class="bg-white shadow-md p-4 sticky top-0 z-10">
+
+        <body class="bg-gray-100 font-sans">
+
+            <!-- Navigation Bar -->
+            <!--
+            <nav class="bg-white shadow-md">
+                <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+                    <a href="productos.html" class="text-2xl font-bold text-blue-600">E-Shop</a>
+                    <div class="space-x-4 flex items-center">
+                        -- Links rendered dynamically by JS --
+                    </div>
+                </div>
+            </nav>
+-->
+            <nav id="mainNavCart" class="bg-white shadow-md"></nav>
+
+            <main class="container mx-auto px-6 py-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-8">Tu Carrito de Compras</h1>
+
+                <div class="flex flex-col md:flex-row gap-6">
+                    <!-- Cart Items -->
+                    <div class="w-full md:w-2/3">
+                        <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-gray-50 text-gray-600 uppercase text-sm leading-normal">
+                                    <tr>
+                                        <th class="py-3 px-6">Producto</th>
+                                        <th class="py-3 px-6">Cantidad</th>
+                                        <th class="py-3 px-6">Precio</th>
+                                        <th class="py-3 px-6 text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="listaCarrito" class="text-gray-600 text-sm font-light">
+                                    <!-- Dynamic Content -->
+                                </tbody>
+                            </table>
+                            <div id="emptyCart" class="hidden p-8 text-center text-gray-500">
+                                <i class="fas fa-shopping-cart text-4xl mb-2"></i>
+                                <p>Tu carrito está vacío.</p>
+                                <a href="productoscustomer.html"
+                                    class="text-blue-500 hover:underline mt-2 inline-block">Ir a
+                                    comprar</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="w-full md:w-1/3">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-800">Resumen del Pedido</h2>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-600">Subtotal</span>
+                                <span id="subtotal" class="font-medium">$0.00</span>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-600">Impuestos (16%)</span>
+                                <span id="impuestos" class="font-medium">$0.00</span>
+                            </div>
+                            <hr class="my-4">
+                            <div class="flex justify-between mb-6">
+                                <span class="text-lg font-bold text-gray-800">Total</span>
+                                <span id="total" class="text-xl font-bold text-blue-600">$0.00</span>
+                            </div>
+                            <button
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow transition duration-300">
+                                Proceder al Pago
+                            </button>
+                            <button id="btnVaciar"
+                                class="w-full mt-3 bg-red-100 text-red-600 hover:bg-red-200 font-bold py-2 rounded-lg transition duration-300 text-sm">
+                                Vaciar Carrito
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <script type="module" src="js/carrito.js"></script>
+        </body>
+
+</html>
+
+================ frontend\index.html ================
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Phase 1</title>
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <link rel="stylesheet" href="css/output.css">
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+    <nav class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-blue-600">E-Shop</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="register.html"
+                        class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md font-medium">Registrarse</a>
+                    <a href="login.html" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Login</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">Productos Destacados</h2>
+            <p class="mt-4 text-xl text-gray-500">Explora nuestra colección de productos físicos y digitales.</p>
+        </div>
+
+        <div id="product-list"
+            class="grid grid-cols-1 gap-y-10 sm:grid-cols-2 gap-x-6 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
+            <!-- Productos cargados dinámicamente -->
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>
+
+================ frontend\ordenes.html ================
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce - Mis Órdenes</title>
+    <!--    <script src="https://cdn.tailwindcss.com"></script> -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/output.css">
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+    <!-- Navbar (Dynamic) 
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a class="text-2xl font-bold text-blue-600">E-Shop</a>
+            <div class="space-x-4 flex items-center">
+                -- Links rendered by JS --
+            </div>
+        </div>
+    </nav>
+
+-->
+
+    <nav id="mainNavOrders" class="bg-white shadow-md"></nav>
+
+    <div class="container mx-auto px-6 py-8">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Órdenes</h1>
+        </header>
+
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="w-full table-auto">
+                <thead class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                    <tr>
+                        <th class="py-3 px-6 text-left">Orden ID</th>
+                        <th class="py-3 px-6 text-left">Fecha</th>
+                        <th class="py-3 px-6 text-right">Total</th>
+                        <!-- <th class="py-3 px-6 text-center">Acciones</th> -->
+                    </tr>
+                </thead>
+                <tbody id="listaOrdenes" class="text-gray-600 text-sm font-light">
+                    <!-- Dynamic Content -->
+                </tbody>
+            </table>
+            <div id="emptyState" class="hidden text-center py-10">
+                <p class="text-gray-500 text-lg">No tienes órdenes aún.</p>
+                <a href="productos.html" class="text-blue-500 hover:underline mt-2 inline-block">Ir a comprar</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/ordenes.js"></script>
+</body>
+
+</html>
+
+================ frontend\productos.html ================
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce - Gestión de Productos</title>
+    <!-- Tailwind CSS -->
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <link rel="stylesheet" href="css/output.css">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-gray-100 font-sans flex flex-col">
+
+    <!-- Navigation Bar -->
+
+    <nav id="mainNavProducts" class="bg-white shadow-md"></nav>
+
+    <!--
+    <nav class="bg-white shadow-md sticky top-0 z-10">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold text-blue-600">E-Shop</a>
+            <div class="space-x-4 flex items-center">
+            </div>
+        </div>
+    </nav>
+-->
+    <main class="container mx-auto px-6 py-8 flex-grow">
+
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Inventario de Productos</h1>
+            <button id="btnAgregar"
+                class="hidden bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow transition duration-300 flex items-center gap-2">
+                <i class="fas fa-plus"></i> Nuevo Producto
+            </button>
+        </header>
+
+        <!-- Filters -->
+        <div class="bg-white p-4 rounded-lg shadow mb-6 flex gap-4 items-center">
+            <label class="font-medium text-gray-600">Filtrar por tipo:</label>
+            <select id="filtroTipo"
+                class="border border-gray-300 rounded px-3 py-1 focus:ring-2 focus:ring-blue-500 outline-none">
+                <option value="todos">Todos</option>
+                <option value="Fisico">Físico</option>
+                <option value="Digital">Digital</option>
+            </select>
+        </div>
+
+        <!-- Product List -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 text-gray-600 uppercase text-sm leading-normal">
+                    <tr>
+                        <th class="py-3 px-6">ID</th>
+                        <th class="py-3 px-6">Producto</th>
+                        <th class="py-3 px-6">Precio</th>
+                        <th class="py-3 px-6">Tipo</th>
+                        <th class="py-3 px-6 text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="listaProductos" class="text-gray-600 text-sm font-light">
+                    <!-- Dynamic Content -->
+                </tbody>
+            </table>
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden p-8 text-center text-gray-500">
+                <i class="fas fa-box-open text-4xl mb-2"></i>
+                <p>No hay productos registrados.</p>
+            </div>
+        </div>
+
+        <!-- Modal Form -->
+        <div id="modalProducto" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+            <div
+                class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all scale-100">
+                <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+                    <h3 id="modalTitle" class="text-lg font-semibold text-gray-800">Nuevo Producto</h3>
+                    <button id="btnCerrarModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="formProducto" class="p-6 space-y-4">
+                    <input type="hidden" id="productoId">
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Nombre</label>
+                        <input type="text" id="nombre"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Precio</label>
+                        <input type="number" id="precio" step="0.01" min="0.01"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Tipo de
+                            Producto</label>
+                        <select id="tipo"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="Fisico">Físico</option>
+                            <option value="Digital">Digital</option>
+                        </select>
+                    </div>
+
+                    <!-- Campos Físicos -->
+                    <div id="camposFisico" class="space-y-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Stock</label>
+                            <input type="number" id="stock" min="0"
+                                class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Peso (kg)</label>
+                            <input type="number" id="peso" step="0.01" min="0"
+                                class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Campos Digitales -->
+                    <div id="camposDigital" class="hidden space-y-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">URL
+                                Descarga</label>
+                            <input type="url" id="urlDescarga"
+                                class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Fecha Expiración
+                                (Días)</label>
+                            <input type="number" id="fechaExpiracion"
+                                class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Ej: 30">
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex justify-end gap-3">
+                        <button type="button" id="btnCancelar"
+                            class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Cancelar</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition shadow">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="js/productos.js"></script>
+</body>
+
+</html>
+
+================ frontend\productoscustomer.html ================
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce - Gestión de Productos para role CUSTOMER</title>
+    <!-- Tailwind CSS -->
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <link rel="stylesheet" href="css/output.css">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+    <nav class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-blue-600">E-Shop</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="carrito.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Mi Carrito
+                    </a>
+                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Mis Órdenes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">Productos Destacados</h2>
+            <p class="mt-4 text-xl text-gray-500">Explora nuestra colección de productos físicos y digitales.</p>
+        </div>
+
+        <div id="product-list-customer"
+            class="grid grid-cols-1 gap-y-10 sm:grid-cols-2 gap-x-6 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
+            <!-- Productos cargados dinámicamente -->
+        </div>
+    </main>
+
+    <script src="js/appcust.js"></script>
+</body>
+
+</html>
+
+================ frontend\register.html ================
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuario</title>
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <link rel="stylesheet" href="css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .error-msg {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .success-msg {
+            color: #10b981;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        input.invalid {
+            border-color: #ef4444;
+        }
+
+        input.valid {
+            border-color: #10b981;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Crear Cuenta</h2>
+
+        <form id="registerForm" class="space-y-4" novalidate>
+
+            <!-- Tipo de Usuario (Simplificado para demo) -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-1">Tipo de Usuario</label>
+                <select id="userType"
+                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="cliente">Cliente</option>
+                    <option value="proveedor">Proveedor</option>
+                </select>
+            </div>
+
+            <!-- Nombre -->
+            <div>
+                <label for="nombre" class="block text-gray-700 font-medium mb-1">Nombre Completo</label>
+                <input type="text" id="nombre"
+                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required>
+                <p id="error-nombre" class="error-msg">El nombre es obligatorio.</p>
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-gray-700 font-medium mb-1">Correo Electrónico</label>
+                <input type="email" id="email"
+                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required>
+                <p id="error-email" class="error-msg">Ingresa un correo válido.</p>
+            </div>
+
+            <!-- Password -->
+            <div>
+                <label for="password" class="block text-gray-700 font-medium mb-1">Contraseña</label>
+                <input type="password" id="password"
+                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required>
+                <div class="mt-1">
+                    <div class="h-1 w-full bg-gray-200 rounded">
+                        <div id="password-strength-bar" class="h-1 bg-red-500 rounded w-0 transition-all duration-300">
+                        </div>
+                    </div>
+                </div>
+                <p id="error-password" class="error-msg">Mínimo 8 caracteres, una mayúscula y un número.</p>
+            </div>
+
+            <!-- Confirm Password -->
+            <div>
+                <label for="confirmPassword" class="block text-gray-700 font-medium mb-1">Confirmar Contraseña</label>
+                <input type="password" id="confirmPassword"
+                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required>
+                <p id="error-confirmPassword" class="error-msg">Las contraseñas no coinciden.</p>
+            </div>
+
+            <!-- Fecha Nacimiento -->
+            <div>
+                <label for="fechaNacimiento" class="block text-gray-700 font-medium mb-1">Fecha de Nacimiento</label>
+                <input type="date" id="fechaNacimiento"
+                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required>
+                <p id="error-fechaNacimiento" class="error-msg">Debes ser mayor de 18 años.</p>
+            </div>
+
+            <!-- Campos Extras (Dinámicos) -->
+            <div id="extraFields"></div>
+
+            <!-- Botón -->
+            <button type="submit" id="submitBtn"
+                class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                Registrarse
+            </button>
+
+            <p id="form-message" class="text-center mt-4 font-medium"></p>
+        </form>
+
+        <p class="text-center mt-4 text-gray-600 text-sm">
+            ¿Ya tienes cuenta? <a href="login.html" class="text-blue-600 hover:underline">Inicia sesión</a>
+        </p>
+    </div>
+
+    <script src="js/validation.js"></script>
+</body>
+
+</html>
+
+================ frontend\tailwind.config.js ================
+
+module.exports = {
+    content: ["./**/*.{html,js}"],
+    theme: {
+        extend: {},
+    },
+    plugins: [],
+}
+
+
+================ frontend\usuarios.html ================
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce - Gestión de Usuarios</title>
+    <link rel="stylesheet" href="css/output.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+
+    <!-- Navigation Bar -->
+
+    <nav id="mainNavUsers" class="space-x-4 flex items-center">
+        <!-- Dynamic navigation rendered by JS -->
+    </nav>
+
+    <main class="container mx-auto px-6 py-8 flex-grow">
+
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Gestión de Usuarios</h1>
+            <button id="btnNuevoUsuario"
+                class="hidden hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow transition duration-300 flex items-center gap-2">
+                <i class="fas fa-user-plus"></i> Nuevo Usuario
+            </button>
+        </header>
+
+        <!-- User Table -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 text-gray-600 uppercase text-sm leading-normal">
+                    <tr>
+                        <th class="py-3 px-6">ID</th>
+                        <th class="py-3 px-6">Nombre</th>
+                        <th class="py-3 px-6">Email</th>
+                        <th class="py-3 px-6">Rol</th>
+                        <th class="py-3 px-6 text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="listaUsuarios" class="text-gray-600 text-sm font-light">
+                    <!-- Dynamic Content -->
+                </tbody>
+            </table>
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden p-8 text-center text-gray-500">
+                <i class="fas fa-users text-4xl mb-2"></i>
+                <p>No hay usuarios registrados.</p>
+            </div>
+        </div>
+
+        <!-- Modal Form -->
+        <div id="modalUsuario" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+            <div
+                class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all scale-100">
+                <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+                    <h3 id="modalTitle" class="text-lg font-semibold text-gray-800">Nuevo Usuario</h3>
+                    <button id="btnCerrarModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="formUsuario" class="p-6 space-y-4">
+                    <input type="hidden" id="usuarioId">
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Nombre</label>
+                        <input type="text" id="nombre"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                        <input type="email" id="email"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Contraseña</label>
+                        <input type="password" id="password"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Dejar vacío para mantener la actual">
+                        <p class="text-xs text-gray-500 mt-1">Solo requerida al crear nuevo usuario</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Rol</label>
+                        <select id="role"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                            <option value="">Seleccionar rol...</option>
+                            <option value="ADMIN">Administrador</option>
+                            <option value="SUPPLIER">Proveedor</option>
+                            <option value="CUSTOMER">Cliente</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Fecha de Nacimiento</label>
+                        <input type="date" id="fechaNacimiento"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="pt-4 flex justify-end gap-3">
+                        <button type="button" id="btnCancelar"
+                            class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Cancelar</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition shadow">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="js/usuarios.js"></script>
+</body>
+
+</html>
+
+================ frontend\css\output.css ================
+
+/*! tailwindcss v4.1.18 | MIT License | https://tailwindcss.com */
+@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-scale-x:1;--tw-scale-y:1;--tw-scale-z:1;--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-space-y-reverse:0;--tw-space-x-reverse:0;--tw-border-style:solid;--tw-leading:initial;--tw-font-weight:initial;--tw-shadow:0 0 #0000;--tw-shadow-color:initial;--tw-shadow-alpha:100%;--tw-inset-shadow:0 0 #0000;--tw-inset-shadow-color:initial;--tw-inset-shadow-alpha:100%;--tw-ring-color:initial;--tw-ring-shadow:0 0 #0000;--tw-inset-ring-color:initial;--tw-inset-ring-shadow:0 0 #0000;--tw-ring-inset:initial;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-offset-shadow:0 0 #0000;--tw-blur:initial;--tw-brightness:initial;--tw-contrast:initial;--tw-grayscale:initial;--tw-hue-rotate:initial;--tw-invert:initial;--tw-opacity:initial;--tw-saturate:initial;--tw-sepia:initial;--tw-drop-shadow:initial;--tw-drop-shadow-color:initial;--tw-drop-shadow-alpha:100%;--tw-drop-shadow-size:initial;--tw-duration:initial}}}@layer theme{:root,:host{--font-sans:ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";--font-mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;--color-red-100:oklch(93.6% .032 17.717);--color-red-200:oklch(88.5% .062 18.334);--color-red-500:oklch(63.7% .237 25.331);--color-red-600:oklch(57.7% .245 27.325);--color-red-700:oklch(50.5% .213 27.518);--color-red-800:oklch(44.4% .177 26.899);--color-yellow-500:oklch(79.5% .184 86.047);--color-yellow-700:oklch(55.4% .135 66.442);--color-green-100:oklch(96.2% .044 156.743);--color-green-500:oklch(72.3% .219 149.579);--color-green-600:oklch(62.7% .194 149.214);--color-green-800:oklch(44.8% .119 151.328);--color-blue-100:oklch(93.2% .032 255.585);--color-blue-500:oklch(62.3% .214 259.815);--color-blue-600:oklch(54.6% .245 262.881);--color-blue-700:oklch(48.8% .243 264.376);--color-blue-800:oklch(42.4% .199 265.638);--color-purple-100:oklch(94.6% .033 307.174);--color-purple-800:oklch(43.8% .218 303.724);--color-gray-50:oklch(98.5% .002 247.839);--color-gray-100:oklch(96.7% .003 264.542);--color-gray-200:oklch(92.8% .006 264.531);--color-gray-300:oklch(87.2% .01 258.338);--color-gray-400:oklch(70.7% .022 261.325);--color-gray-500:oklch(55.1% .027 264.364);--color-gray-600:oklch(44.6% .03 256.802);--color-gray-700:oklch(37.3% .034 259.733);--color-gray-800:oklch(27.8% .033 256.848);--color-gray-900:oklch(21% .034 264.665);--color-black:#000;--color-white:#fff;--spacing:.25rem;--container-sm:24rem;--container-md:28rem;--container-7xl:80rem;--text-xs:.75rem;--text-xs--line-height:calc(1/.75);--text-sm:.875rem;--text-sm--line-height:calc(1.25/.875);--text-lg:1.125rem;--text-lg--line-height:calc(1.75/1.125);--text-xl:1.25rem;--text-xl--line-height:calc(1.75/1.25);--text-2xl:1.5rem;--text-2xl--line-height:calc(2/1.5);--text-3xl:1.875rem;--text-3xl--line-height:calc(2.25/1.875);--text-4xl:2.25rem;--text-4xl--line-height:calc(2.5/2.25);--font-weight-light:300;--font-weight-medium:500;--font-weight-semibold:600;--font-weight-bold:700;--font-weight-extrabold:800;--leading-normal:1.5;--radius-md:.375rem;--radius-lg:.5rem;--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4,0,.2,1);--default-font-family:var(--font-sans);--default-mono-font-family:var(--font-mono)}}@layer base{*,:after,:before,::backdrop{box-sizing:border-box;border:0 solid;margin:0;padding:0}::file-selector-button{box-sizing:border-box;border:0 solid;margin:0;padding:0}html,:host{-webkit-text-size-adjust:100%;tab-size:4;line-height:1.5;font-family:var(--default-font-family,ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji");font-feature-settings:var(--default-font-feature-settings,normal);font-variation-settings:var(--default-font-variation-settings,normal);-webkit-tap-highlight-color:transparent}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:var(--default-mono-font-family,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace);font-feature-settings:var(--default-mono-font-feature-settings,normal);font-variation-settings:var(--default-mono-font-variation-settings,normal);font-size:1em}small{font-size:80%}sub,sup{vertical-align:baseline;font-size:75%;line-height:0;position:relative}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}:-moz-focusring{outline:auto}progress{vertical-align:baseline}summary{display:list-item}ol,ul,menu{list-style:none}img,svg,video,canvas,audio,iframe,embed,object{vertical-align:middle;display:block}img,video{max-width:100%;height:auto}button,input,select,optgroup,textarea{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}::file-selector-button{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}:where(select:is([multiple],[size])) optgroup{font-weight:bolder}:where(select:is([multiple],[size])) optgroup option{padding-inline-start:20px}::file-selector-button{margin-inline-end:4px}::placeholder{opacity:1}@supports (not ((-webkit-appearance:-apple-pay-button))) or (contain-intrinsic-size:1px){::placeholder{color:currentColor}@supports (color:color-mix(in lab, red, red)){::placeholder{color:color-mix(in oklab,currentcolor 50%,transparent)}}}textarea{resize:vertical}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-date-and-time-value{min-height:1lh;text-align:inherit}::-webkit-datetime-edit{display:inline-flex}::-webkit-datetime-edit-fields-wrapper{padding:0}::-webkit-datetime-edit{padding-block:0}::-webkit-datetime-edit-year-field{padding-block:0}::-webkit-datetime-edit-month-field{padding-block:0}::-webkit-datetime-edit-day-field{padding-block:0}::-webkit-datetime-edit-hour-field{padding-block:0}::-webkit-datetime-edit-minute-field{padding-block:0}::-webkit-datetime-edit-second-field{padding-block:0}::-webkit-datetime-edit-millisecond-field{padding-block:0}::-webkit-datetime-edit-meridiem-field{padding-block:0}::-webkit-calendar-picker-indicator{line-height:1}:-moz-ui-invalid{box-shadow:none}button,input:where([type=button],[type=reset],[type=submit]){appearance:button}::file-selector-button{appearance:button}::-webkit-inner-spin-button{height:auto}::-webkit-outer-spin-button{height:auto}[hidden]:where(:not([hidden=until-found])){display:none!important}}@layer components;@layer utilities{.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.static{position:static}.sticky{position:sticky}.inset-0{inset:calc(var(--spacing)*0)}.inset-y-0{inset-block:calc(var(--spacing)*0)}.top-0{top:calc(var(--spacing)*0)}.top-5{top:calc(var(--spacing)*5)}.right-5{right:calc(var(--spacing)*5)}.left-0{left:calc(var(--spacing)*0)}.z-10{z-index:10}.z-50{z-index:50}.container{width:100%}@media (min-width:40rem){.container{max-width:40rem}}@media (min-width:48rem){.container{max-width:48rem}}@media (min-width:64rem){.container{max-width:64rem}}@media (min-width:80rem){.container{max-width:80rem}}@media (min-width:96rem){.container{max-width:96rem}}.mx-1{margin-inline:calc(var(--spacing)*1)}.mx-4{margin-inline:calc(var(--spacing)*4)}.mx-auto{margin-inline:auto}.my-4{margin-block:calc(var(--spacing)*4)}.mt-1{margin-top:calc(var(--spacing)*1)}.mt-2{margin-top:calc(var(--spacing)*2)}.mt-3{margin-top:calc(var(--spacing)*3)}.mt-4{margin-top:calc(var(--spacing)*4)}.mb-1{margin-bottom:calc(var(--spacing)*1)}.mb-2{margin-bottom:calc(var(--spacing)*2)}.mb-4{margin-bottom:calc(var(--spacing)*4)}.mb-6{margin-bottom:calc(var(--spacing)*6)}.mb-8{margin-bottom:calc(var(--spacing)*8)}.mb-12{margin-bottom:calc(var(--spacing)*12)}.ml-2{margin-left:calc(var(--spacing)*2)}.block{display:block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.inline{display:inline}.inline-block{display:inline-block}.h-1{height:calc(var(--spacing)*1)}.h-8{height:calc(var(--spacing)*8)}.h-12{height:calc(var(--spacing)*12)}.h-16{height:calc(var(--spacing)*16)}.h-full{height:100%}.min-h-screen{min-height:100vh}.w-0{width:calc(var(--spacing)*0)}.w-8{width:calc(var(--spacing)*8)}.w-12{width:calc(var(--spacing)*12)}.w-full{width:100%}.max-w-7xl{max-width:var(--container-7xl)}.max-w-md{max-width:var(--container-md)}.max-w-sm{max-width:var(--container-sm)}.flex-grow{flex-grow:1}.table-auto{table-layout:auto}.border-collapse{border-collapse:collapse}.scale-100{--tw-scale-x:100%;--tw-scale-y:100%;--tw-scale-z:100%;scale:var(--tw-scale-x)var(--tw-scale-y)}.transform{transform:var(--tw-rotate-x,)var(--tw-rotate-y,)var(--tw-rotate-z,)var(--tw-skew-x,)var(--tw-skew-y,)}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-between{justify-content:space-between}.justify-center{justify-content:center}.justify-end{justify-content:flex-end}.gap-2{gap:calc(var(--spacing)*2)}.gap-3{gap:calc(var(--spacing)*3)}.gap-4{gap:calc(var(--spacing)*4)}.gap-6{gap:calc(var(--spacing)*6)}:where(.space-y-4>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*4)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*4)*calc(1 - var(--tw-space-y-reverse)))}.gap-x-6{column-gap:calc(var(--spacing)*6)}:where(.space-x-4>:not(:last-child)){--tw-space-x-reverse:0;margin-inline-start:calc(calc(var(--spacing)*4)*var(--tw-space-x-reverse));margin-inline-end:calc(calc(var(--spacing)*4)*calc(1 - var(--tw-space-x-reverse)))}.gap-y-10{row-gap:calc(var(--spacing)*10)}.overflow-hidden{overflow:hidden}.rounded{border-radius:.25rem}.rounded-full{border-radius:3.40282e38px}.rounded-lg{border-radius:var(--radius-lg)}.rounded-md{border-radius:var(--radius-md)}.rounded-t-lg{border-top-left-radius:var(--radius-lg);border-top-right-radius:var(--radius-lg)}.border{border-style:var(--tw-border-style);border-width:1px}.border-b{border-bottom-style:var(--tw-border-style);border-bottom-width:1px}.border-gray-200{border-color:var(--color-gray-200)}.border-gray-300{border-color:var(--color-gray-300)}.bg-black{background-color:var(--color-black)}.bg-blue-100{background-color:var(--color-blue-100)}.bg-blue-600{background-color:var(--color-blue-600)}.bg-gray-50{background-color:var(--color-gray-50)}.bg-gray-100{background-color:var(--color-gray-100)}.bg-gray-200{background-color:var(--color-gray-200)}.bg-green-100{background-color:var(--color-green-100)}.bg-green-500{background-color:var(--color-green-500)}.bg-purple-100{background-color:var(--color-purple-100)}.bg-red-100{background-color:var(--color-red-100)}.bg-red-500{background-color:var(--color-red-500)}.bg-white{background-color:var(--color-white)}.bg-yellow-500{background-color:var(--color-yellow-500)}.p-4{padding:calc(var(--spacing)*4)}.p-6{padding:calc(var(--spacing)*6)}.p-8{padding:calc(var(--spacing)*8)}.px-2{padding-inline:calc(var(--spacing)*2)}.px-3{padding-inline:calc(var(--spacing)*3)}.px-4{padding-inline:calc(var(--spacing)*4)}.px-6{padding-inline:calc(var(--spacing)*6)}.py-1{padding-block:calc(var(--spacing)*1)}.py-2{padding-block:calc(var(--spacing)*2)}.py-3{padding-block:calc(var(--spacing)*3)}.py-4{padding-block:calc(var(--spacing)*4)}.py-8{padding-block:calc(var(--spacing)*8)}.py-10{padding-block:calc(var(--spacing)*10)}.py-12{padding-block:calc(var(--spacing)*12)}.pt-4{padding-top:calc(var(--spacing)*4)}.pr-3{padding-right:calc(var(--spacing)*3)}.pl-3{padding-left:calc(var(--spacing)*3)}.pl-10{padding-left:calc(var(--spacing)*10)}.text-center{text-align:center}.text-left{text-align:left}.text-right{text-align:right}.font-sans{font-family:var(--font-sans)}.text-2xl{font-size:var(--text-2xl);line-height:var(--tw-leading,var(--text-2xl--line-height))}.text-3xl{font-size:var(--text-3xl);line-height:var(--tw-leading,var(--text-3xl--line-height))}.text-4xl{font-size:var(--text-4xl);line-height:var(--tw-leading,var(--text-4xl--line-height))}.text-lg{font-size:var(--text-lg);line-height:var(--tw-leading,var(--text-lg--line-height))}.text-sm{font-size:var(--text-sm);line-height:var(--tw-leading,var(--text-sm--line-height))}.text-xl{font-size:var(--text-xl);line-height:var(--tw-leading,var(--text-xl--line-height))}.text-xs{font-size:var(--text-xs);line-height:var(--tw-leading,var(--text-xs--line-height))}.leading-normal{--tw-leading:var(--leading-normal);line-height:var(--leading-normal)}.font-bold{--tw-font-weight:var(--font-weight-bold);font-weight:var(--font-weight-bold)}.font-extrabold{--tw-font-weight:var(--font-weight-extrabold);font-weight:var(--font-weight-extrabold)}.font-light{--tw-font-weight:var(--font-weight-light);font-weight:var(--font-weight-light)}.font-medium{--tw-font-weight:var(--font-weight-medium);font-weight:var(--font-weight-medium)}.font-semibold{--tw-font-weight:var(--font-weight-semibold);font-weight:var(--font-weight-semibold)}.whitespace-nowrap{white-space:nowrap}.text-blue-500{color:var(--color-blue-500)}.text-blue-600{color:var(--color-blue-600)}.text-blue-800{color:var(--color-blue-800)}.text-gray-400{color:var(--color-gray-400)}.text-gray-500{color:var(--color-gray-500)}.text-gray-600{color:var(--color-gray-600)}.text-gray-700{color:var(--color-gray-700)}.text-gray-800{color:var(--color-gray-800)}.text-gray-900{color:var(--color-gray-900)}.text-green-500{color:var(--color-green-500)}.text-green-600{color:var(--color-green-600)}.text-green-800{color:var(--color-green-800)}.text-purple-800{color:var(--color-purple-800)}.text-red-500{color:var(--color-red-500)}.text-red-600{color:var(--color-red-600)}.text-red-800{color:var(--color-red-800)}.text-white{color:var(--color-white)}.text-yellow-500{color:var(--color-yellow-500)}.uppercase{text-transform:uppercase}.opacity-0{opacity:0}.shadow{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a),0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px var(--tw-shadow-color,#0000001a),0 4px 6px -4px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px var(--tw-shadow-color,#0000001a),0 2px 4px -2px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a),0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px var(--tw-shadow-color,#0000001a),0 8px 10px -6px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.blur{--tw-blur:blur(8px);filter:var(--tw-blur,)var(--tw-brightness,)var(--tw-contrast,)var(--tw-grayscale,)var(--tw-hue-rotate,)var(--tw-invert,)var(--tw-saturate,)var(--tw-sepia,)var(--tw-drop-shadow,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter,display,content-visibility,overlay,pointer-events;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-all{transition-property:all;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-opacity{transition-property:opacity;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-shadow{transition-property:box-shadow;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.duration-200{--tw-duration:.2s;transition-duration:.2s}.duration-300{--tw-duration:.3s;transition-duration:.3s}.outline-none{--tw-outline-style:none;outline-style:none}@media (hover:hover){.hover\:scale-110:hover{--tw-scale-x:110%;--tw-scale-y:110%;--tw-scale-z:110%;scale:var(--tw-scale-x)var(--tw-scale-y)}.hover\:bg-blue-700:hover{background-color:var(--color-blue-700)}.hover\:bg-gray-50:hover{background-color:var(--color-gray-50)}.hover\:bg-gray-100:hover{background-color:var(--color-gray-100)}.hover\:bg-gray-200:hover{background-color:var(--color-gray-200)}.hover\:bg-gray-300:hover{background-color:var(--color-gray-300)}.hover\:bg-red-200:hover{background-color:var(--color-red-200)}.hover\:text-blue-600:hover{color:var(--color-blue-600)}.hover\:text-gray-600:hover{color:var(--color-gray-600)}.hover\:text-red-700:hover{color:var(--color-red-700)}.hover\:text-yellow-700:hover{color:var(--color-yellow-700)}.hover\:underline:hover{text-decoration-line:underline}.hover\:shadow-md:hover{--tw-shadow:0 4px 6px -1px var(--tw-shadow-color,#0000001a),0 2px 4px -2px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}}.focus\:ring-2:focus{--tw-ring-shadow:var(--tw-ring-inset,)0 0 0 calc(2px + var(--tw-ring-offset-width))var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.focus\:ring-blue-500:focus{--tw-ring-color:var(--color-blue-500)}.focus\:outline-none:focus{--tw-outline-style:none;outline-style:none}.disabled\:cursor-not-allowed:disabled{cursor:not-allowed}.disabled\:opacity-50:disabled{opacity:.5}@media (min-width:40rem){.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.sm\:px-6{padding-inline:calc(var(--spacing)*6)}.sm\:text-4xl{font-size:var(--text-4xl);line-height:var(--tw-leading,var(--text-4xl--line-height))}}@media (min-width:48rem){.md\:w-1\/3{width:33.3333%}.md\:w-2\/3{width:66.6667%}.md\:flex-row{flex-direction:row}}@media (min-width:64rem){.lg\:h-60{height:calc(var(--spacing)*60)}.lg\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.lg\:px-8{padding-inline:calc(var(--spacing)*8)}}@media (min-width:80rem){.xl\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.xl\:gap-x-8{column-gap:calc(var(--spacing)*8)}}}body{background-color:var(--color-gray-50);font-family:var(--font-sans);color:var(--color-gray-800)}@property --tw-scale-x{syntax:"*";inherits:false;initial-value:1}@property --tw-scale-y{syntax:"*";inherits:false;initial-value:1}@property --tw-scale-z{syntax:"*";inherits:false;initial-value:1}@property --tw-rotate-x{syntax:"*";inherits:false}@property --tw-rotate-y{syntax:"*";inherits:false}@property --tw-rotate-z{syntax:"*";inherits:false}@property --tw-skew-x{syntax:"*";inherits:false}@property --tw-skew-y{syntax:"*";inherits:false}@property --tw-space-y-reverse{syntax:"*";inherits:false;initial-value:0}@property --tw-space-x-reverse{syntax:"*";inherits:false;initial-value:0}@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}@property --tw-leading{syntax:"*";inherits:false}@property --tw-font-weight{syntax:"*";inherits:false}@property --tw-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:"*";inherits:false}@property --tw-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-inset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:"*";inherits:false}@property --tw-inset-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-ring-color{syntax:"*";inherits:false}@property --tw-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:"*";inherits:false}@property --tw-inset-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:"*";inherits:false}@property --tw-ring-offset-width{syntax:"<length>";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:"*";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-blur{syntax:"*";inherits:false}@property --tw-brightness{syntax:"*";inherits:false}@property --tw-contrast{syntax:"*";inherits:false}@property --tw-grayscale{syntax:"*";inherits:false}@property --tw-hue-rotate{syntax:"*";inherits:false}@property --tw-invert{syntax:"*";inherits:false}@property --tw-opacity{syntax:"*";inherits:false}@property --tw-saturate{syntax:"*";inherits:false}@property --tw-sepia{syntax:"*";inherits:false}@property --tw-drop-shadow{syntax:"*";inherits:false}@property --tw-drop-shadow-color{syntax:"*";inherits:false}@property --tw-drop-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-drop-shadow-size{syntax:"*";inherits:false}@property --tw-duration{syntax:"*";inherits:false}
+
+================ frontend\css\styles.css ================
+
+@import "tailwindcss";
+
+/* Custom Styles if needed (minimal, using Tailwind classes mostly) */
+body {
+    @apply bg-gray-50 text-gray-800 font-sans;
+}
+
+================ frontend\js\api.js ================
+
+const API_BASE_URL = 'http://localhost:8080/api';
+
+class Api {
+    static async request(endpoint, method = 'GET', body = null, options = {}) {
+        const isPublic = options.public === true;
+
+        const headers = {};
+
+        // Solo agregar token si NO es endpoint público
+        if (!isPublic) {
+            const token = localStorage.getItem('token');
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+        }
+
+        if (body) {
+            headers['Content-Type'] = 'application/json';
+        }
+
+        const fetchOptions = {
+            method,
+            headers,
+        };
+
+        if (body) {
+            fetchOptions.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
+
+        // ❗ Manejo de seguridad SOLO para endpoints protegidos
+        if (!isPublic && (response.status === 401 || response.status === 403)) {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+            throw new Error('Sesión expirada o no autorizada');
+        }
+
+        if (response.status === 204) {
+            return null;
+        }
+
+        if (!response.ok) {
+            let message = `Error ${response.status}`;
+
+            try {
+                const errorData = await response.json();
+                if (errorData && errorData.message) {
+                    message = errorData.message;
+                }
+            } catch {
+                // Ignorar errores de parseo
+            }
+
+            throw new Error(message);
+        }
+
+        return response.json();
+    }
+
+    static get(endpoint) {
+        return this.request(endpoint, 'GET');
+    }
+
+    static post(endpoint, body, options = {}) {
+        return this.request(endpoint, 'POST', body, options);
+    }
+
+    static put(endpoint, body) {
+        return this.request(endpoint, 'PUT', body);
+    }
+
+    static delete(endpoint) {
+        return this.request(endpoint, 'DELETE');
+    }
+}
+
+export default Api;
+
+================ frontend\js\app.js ================
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const productList = document.getElementById('product-list');
+
+    try {
+        const response = await fetch('http://localhost:8080/api/productos');
+        if (!response.ok) throw new Error('Error fetching products');
+
+        const products = await response.json();
+
+        productList.innerHTML = products.map(product => `
+            <div class="group relative bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div class="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-gray-200 lg:aspect-none lg:h-60">
+                    <div class="flex items-center justify-center h-full text-gray-400">
+                        <!-- Placeholder Image -->
+                        <svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <a href="#">
+                            <span aria-hidden="true" class="absolute inset-0"></span>
+                            ${product.nombre}
+                        </a>
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500">${product.tipo || (product.stock !== undefined ? 'Físico' : 'Digital')}</p>
+                    <p class="mt-2 text-xl font-bold text-gray-900">${product.precio.toFixed(2)}</p>
+<!--                   
+                    <button class="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Agregar al Carrito</button>
+-->
+                    </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error(error);
+        productList.innerHTML = '<p class="text-center text-red-500">No se pudieron cargar los productos. Asegúrate de que el backend esté corriendo.</p>';
+    }
+});
+
+
+================ frontend\js\appcust.js ================
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const productList = document.getElementById('product-list-customer');
+
+    try {
+        const response = await fetch('http://localhost:8080/api/productos');
+        if (!response.ok) throw new Error('Error fetching products');
+
+        const products = await response.json();
+
+        productList.innerHTML = products.map(product => `
+            <div class="group relative bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div class="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-gray-200 lg:aspect-none lg:h-60">
+                    <div class="flex items-center justify-center h-full text-gray-400">
+                        <!-- Placeholder Image -->
+                        <svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <a href="#">
+                            <span aria-hidden="true" class="absolute inset-0"></span>
+                            ${product.nombre}
+                        </a>
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500">${product.tipo || (product.stock !== undefined ? 'Físico' : 'Digital')}</p>
+                    <p class="mt-2 text-xl font-bold text-gray-900">${product.precio.toFixed(2)}</p>
+                    <button class="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Agregar al Carrito</button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error(error);
+        productList.innerHTML = '<p class="text-center text-red-500">No se pudieron cargar los productos. Asegúrate de que el backend esté corriendo.</p>';
+    }
+});
+
+
+================ frontend\js\auth.js ================
+
+import Api from './api.js';
+
+const Auth = {
+    login: async (email, password) => {
+        try {
+            console.log('Login attempt:', { email, password });
+            const response = await Api.post(
+                '/auth/login',
+                { email, password },
+                { public: true } // 🔑 CLAVE
+            );
+            // Save session
+            localStorage.setItem('user', JSON.stringify(response));
+            localStorage.setItem('token', response.token);
+
+            Auth.redirectBasedOnRole(response.role);
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    logout: () => {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        window.location.href = 'index.html';
+    },
+
+    getCurrentUser: () => {
+        const userStr = localStorage.getItem('user');
+        return userStr ? JSON.parse(userStr) : null;
+    },
+
+    getToken: () => {
+        return localStorage.getItem('token');
+    },
+
+    isAuthenticated: () => {
+        return !!Auth.getToken();
+    },
+
+    requireAuth: (allowedRoles = []) => {
+        const user = Auth.getCurrentUser();
+
+        if (user.role === 'ADMIN') {
+            const validUntil = new Date(user.validUntil);
+            if (validUntil < new Date()) {
+                alert('Tu rol de administrador ha expirado');
+                Auth.logout();
+            }
+        }
+
+        if (!user) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+            alert('Acceso no autorizado para su rol.');
+            window.location.href = 'index.html'; // Fallback
+        }
+    },
+
+    redirectBasedOnRole: (role) => {
+        if (role === 'ADMIN' || role === 'SUPPLIER') {
+            window.location.href = 'productos.html';
+        } else {
+            window.location.href = 'productoscustomer.html'; // Customers also go to store
+        }
+    }
+};
+
+// Handle Login Form
+const loginForm = document.getElementById('loginForm');
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorMessage = document.getElementById('errorMessage');
+
+        try {
+            await Auth.login(email, password);
+        } catch (error) {
+            console.error(error.message);
+            errorMessage.textContent = 'Credenciales inválidas o error de conexión';
+            errorMessage.classList.remove('hidden');
+        }
+    });
+}
+
+// Global logout exposure
+window.logout = Auth.logout;
+
+export default Auth;
+
+
+================ frontend\js\carrito.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Auth Check
+    if (!Auth.isAuthenticated()) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    UI.renderMenuCart();
+    cargarCarrito();
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    // Phase 2: Checkout implementation
+    const btnCheckout = document.getElementById('btnCheckout');
+    if (btnCheckout) {
+        btnCheckout.addEventListener('click', realizarCheckout);
+    }
+}
+
+async function cargarCarrito() {
+    try {
+        const carrito = await Api.get('/carrito');
+        renderizarCarrito(carrito);
+    } catch (error) {
+        // If 404, it might mean empty logic so we show empty state
+        if (error.message && error.message.includes('404')) {
+            renderizarCarrito({ productos: [] });
+        } else {
+            // UI.showNotification('Error al cargar el carrito ' + error.message, 'error');
+            // Fallback for empty
+            renderizarCarrito({ productos: [] });
+        }
+    }
+}
+
+function renderizarCarrito(carrito) {
+    const tbody = document.getElementById('listaCarrito');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    // Group products
+    const productosMap = new Map();
+    const productos = carrito.productos || [];
+
+    productos.forEach(p => {
+        if (productosMap.has(p.id)) {
+            productosMap.get(p.id).cantidad++;
+        } else {
+            productosMap.set(p.id, { ...p, cantidad: 1 });
+        }
+    });
+
+    let subtotal = 0;
+
+    const emptyCartMsg = document.getElementById('emptyCart');
+    if (productosMap.size === 0) {
+        if (emptyCartMsg) emptyCartMsg.classList.remove('hidden');
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">El carrito está vacío</td></tr>';
+        actualizarTotales(0);
+        return;
+    }
+    if (emptyCartMsg) emptyCartMsg.classList.add('hidden');
+
+    productosMap.forEach(p => {
+        const totalProducto = p.precio * p.cantidad;
+        subtotal += totalProducto;
+
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-200';
+        row.innerHTML = `
+            <td class="py-3 px-6 text-left font-medium">${p.nombre}</td>
+            <td class="py-3 px-6 text-left">${UI.formatCurrency(p.precio)}</td>
+            <td class="py-3 px-6 text-center">
+                <div class="flex items-center justify-center gap-2">
+                    <button class="bg-gray-200 px-2 rounded hover:bg-gray-300" onclick="window.eliminarDelCarrito(${p.id})">-</button>
+                    <span>${p.cantidad}</span>
+                    <button class="bg-gray-200 px-2 rounded hover:bg-gray-300" onclick="window.agregarAlCarrito(${p.id})">+</button>
+                </div>
+            </td>
+            <td class="py-3 px-6 text-right font-bold">${UI.formatCurrency(totalProducto)}</td>
+            <td class="py-3 px-6 text-center">
+                <button class="text-red-500 hover:text-red-700" onclick="window.eliminarDelCarrito(${p.id})">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    actualizarTotales(subtotal);
+}
+
+function actualizarTotales(subtotal) {
+    const impuestos = subtotal * 0.15; // 15% tax
+    const total = subtotal + impuestos;
+
+    const elSub = document.getElementById('subtotal');
+    const elImp = document.getElementById('impuestos');
+    const elTot = document.getElementById('total');
+
+    if (elSub) elSub.textContent = UI.formatCurrency(subtotal);
+    if (elImp) elImp.textContent = UI.formatCurrency(impuestos);
+    if (elTot) elTot.textContent = UI.formatCurrency(total);
+}
+
+window.agregarAlCarrito = async (productoId) => {
+    try {
+        await Api.post(`/carrito/productos/${productoId}`);
+        cargarCarrito();
+        UI.showNotification('Cantidad actualizada');
+    } catch (error) {
+        UI.showNotification('Error al actualizar', 'error');
+    }
+};
+
+window.eliminarDelCarrito = async (productoId) => {
+    try {
+        await Api.delete(`/carrito/productos/${productoId}`);
+        cargarCarrito();
+        UI.showNotification('Producto eliminado');
+    } catch (error) {
+        UI.showNotification('Error al eliminar', 'error');
+    }
+};
+
+async function realizarCheckout() {
+    if (!confirm('¿Confirmar compra?')) return;
+
+    try {
+        await Api.post('/ordenes/checkout');
+        // Redirect or show success
+        UI.showNotification('¡Compra realizada con éxito!', 'success');
+        setTimeout(() => {
+            window.location.href = 'ordenes.html';
+        }, 1500);
+    } catch (error) {
+        UI.showNotification('Error en el checkout: ' + error.message, 'error');
+    }
+}
+
+
+================ frontend\js\ordenes.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (!Auth.isAuthenticated()) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    UI.renderMenuOrders();
+    cargarOrdenes();
+});
+
+async function cargarOrdenes() {
+    try {
+        const ordenes = await Api.get('/ordenes');
+        renderizarOrdenes(ordenes);
+    } catch (error) {
+        UI.showNotification('Error al cargar órdenes', 'error');
+    }
+}
+
+function renderizarOrdenes(ordenes) {
+    const tbody = document.getElementById('listaOrdenes');
+    tbody.innerHTML = '';
+
+    if (!ordenes || ordenes.length === 0) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        return;
+    }
+    document.getElementById('emptyState').classList.add('hidden');
+
+    ordenes.forEach(orden => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-200 hover:bg-gray-100';
+
+        // Format date
+        const fecha = new Date(orden.fecha).toLocaleDateString('es-ES', {
+            year: 'numeric', month: 'long', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+
+        row.innerHTML = `
+            <td class="py-3 px-6 text-left whitespace-nowrap font-medium">#${orden.id}</td>
+            <td class="py-3 px-6 text-left">${fecha}</td>
+            <td class="py-3 px-6 text-right font-bold text-gray-700">${UI.formatCurrency(orden.total)}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+
+================ frontend\js\productos.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Auth Check
+    if (!Auth.isAuthenticated()) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    UI.renderMenuProducts();
+    setupRoleBasedUI();
+    cargarProductos();
+    setupEventListeners();
+});
+
+function setupRoleBasedUI() {
+    const btnAgregar = document.getElementById('btnAgregar');
+
+    if (!btnAgregar) {
+        console.warn('btnAgregar no existe en el DOM');
+        return;
+    }
+
+    const user = Auth.getCurrentUser();
+
+    if (user && user.role === 'ADMIN') {
+        document.getElementById('btnAgregar').classList.remove('hidden');
+        document.getElementById('btnAgregar').classList.add('flex');
+    }
+}
+
+const form = document.getElementById('formProducto');
+const modal = document.getElementById('modalProducto');
+const tipoSelect = document.getElementById('tipo');
+
+function setupEventListeners() {
+    // Modal controls
+    document.getElementById('btnAgregar').addEventListener('click', () => abrirModal());
+    document.getElementById('btnCerrarModal').addEventListener('click', () => UI.toggleModal('modalProducto', false));
+    document.getElementById('btnCancelar').addEventListener('click', () => UI.toggleModal('modalProducto', false));
+
+    // Close modal on outside click
+    UI.setupModalCloser('modalProducto');
+
+    // Dynamic Form Fields
+    tipoSelect.addEventListener('change', toggleCamposTipo);
+
+    // Form Submit
+    form.addEventListener('submit', guardarProducto);
+
+    // Filter
+    document.getElementById('filtroTipo').addEventListener('change', (e) => {
+        cargarProductos(e.target.value);
+    });
+}
+
+function toggleCamposTipo() {
+    const tipo = tipoSelect.value;
+    const camposFisico = document.getElementById('camposFisico');
+    const camposDigital = document.getElementById('camposDigital');
+
+    if (tipo === 'Fisico') {
+        camposFisico.classList.remove('hidden');
+        camposDigital.classList.add('hidden');
+    } else {
+        camposFisico.classList.add('hidden');
+        camposDigital.classList.remove('hidden');
+    }
+}
+
+async function cargarProductos(filtro = 'todos') {
+    try {
+        const productos = await Api.get('/productos');
+        renderizarTabla(productos, filtro);
+    } catch (error) {
+        UI.showNotification('Error al cargar productos', 'error');
+    }
+}
+
+function renderizarTabla(productos, filtro) {
+    const tbody = document.getElementById('listaProductos');
+    tbody.innerHTML = '';
+
+    const user = Auth.getCurrentUser();
+    const role = user ? user.role : '';
+
+    const filtrados = filtro === 'todos'
+        ? productos
+        : productos.filter(p => (filtro === 'Fisico' && p.peso !== undefined) || (filtro === 'Digital' && p.urlDescarga !== undefined));
+
+    if (filtrados.length === 0) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        return;
+    }
+    document.getElementById('emptyState').classList.add('hidden');
+
+    filtrados.forEach(p => {
+        const esFisico = p.peso !== undefined;
+        const tipoBadge = esFisico
+            ? '<span class="bg-blue-100 text-blue-800 py-1 px-3 rounded-full text-xs">Físico</span>'
+            : '<span class="bg-purple-100 text-purple-800 py-1 px-3 rounded-full text-xs">Digital</span>';
+
+        let buttons = '';
+
+        if (role === 'ADMIN') {
+            buttons += `
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transform hover:scale-110 transition duration-300" onclick="window.editarProducto(${p.id})">
+                    <i class="fas fa-edit text-yellow-500"></i>
+                </button>
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transform hover:scale-110 transition duration-300 ml-2" onclick="window.eliminarProducto(${p.id})">
+                    <i class="fas fa-trash-alt text-red-500"></i>
+                </button>
+            `;
+        } else if (role === 'SUPPLIER') {
+            buttons += `
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transform hover:scale-110 transition duration-300" onclick="window.editarProducto(${p.id})">
+                    <i class="fas fa-edit text-yellow-500"></i>
+                </button>
+            `;
+        } else if (role === 'CUSTOMER') {
+            buttons += `
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transform hover:scale-110 transition duration-300 ml-2" onclick="window.agregarAlCarrito(${p.id})" title="Agregar al Carrito">
+                    <i class="fas fa-cart-plus text-green-500"></i>
+                </button>
+            `;
+        }
+
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-200 hover:bg-gray-100';
+        row.innerHTML = `
+            <td class="py-3 px-6 text-left whitespace-nowrap font-medium">${p.id}</td>
+            <td class="py-3 px-6 text-left">
+                <div class="flex items-center">
+                    <span class="font-medium">${p.nombre}</span>
+                </div>
+            </td>
+            <td class="py-3 px-6 text-left font-bold text-gray-700">${UI.formatCurrency(p.precio)}</td>
+            <td class="py-3 px-6 text-left">${tipoBadge}</td>
+            <td class="py-3 px-6 text-center">
+                <div class="flex item-center justify-center">
+                    ${buttons}
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function abrirModal(producto = null) {
+    form.reset();
+    document.getElementById('productoId').value = '';
+    document.getElementById('modalTitle').textContent = 'Nuevo Producto';
+
+    if (producto) {
+        document.getElementById('modalTitle').textContent = 'Editar Producto';
+        document.getElementById('productoId').value = producto.id;
+        document.getElementById('nombre').value = producto.nombre;
+        document.getElementById('precio').value = producto.precio;
+
+        // Determine type based on properties
+        const esFisico = producto.peso !== undefined;
+        tipoSelect.value = esFisico ? 'Fisico' : 'Digital';
+        toggleCamposTipo();
+
+        if (esFisico) {
+            document.getElementById('stock').value = producto.stock || 0;
+            document.getElementById('peso').value = producto.peso || 0;
+        } else {
+            document.getElementById('urlDescarga').value = producto.urlDescarga || '';
+            // Expiration might need handling if it's a date or int in backend
+        }
+    } else {
+        toggleCamposTipo(); // Reset to default
+    }
+
+    UI.toggleModal('modalProducto', true);
+}
+
+async function guardarProducto(e) {
+    e.preventDefault();
+    const id = document.getElementById('productoId').value;
+    const nombre = document.getElementById('nombre').value;
+    const precio = parseFloat(document.getElementById('precio').value);
+    const tipo = tipoSelect.value;
+
+    let producto = { nombre, precio };
+
+    if (tipo === 'Fisico') {
+        producto.stock = parseInt(document.getElementById('stock').value) || 0;
+        producto.peso = parseFloat(document.getElementById('peso').value) || 0;
+    } else {
+        producto.urlDescarga = document.getElementById('urlDescarga').value;
+        // producto.fechaExpiracion = ...
+    }
+
+    try {
+        if (id) {
+            await Api.put(`/productos/${id}`, producto);
+            UI.showNotification('Producto actualizado correctamente');
+        } else {
+            const endpoint = tipo === 'Fisico' ? '/productos/fisico' : '/productos/digital';
+            await Api.post(endpoint, producto);
+            UI.showNotification('Producto creado correctamente');
+        }
+        UI.toggleModal('modalProducto', false);
+        cargarProductos();
+    } catch (error) {
+        UI.showNotification('Error al guardar producto', 'error');
+    }
+}
+
+// Global functions for inline HTML events
+window.editarProducto = async (id) => {
+    try {
+        const producto = await Api.get(`/productos/${id}`);
+        abrirModal(producto);
+    } catch (error) {
+        UI.showNotification('Error al obtener producto', 'error');
+    }
+};
+
+window.eliminarProducto = async (id) => {
+    if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+
+    try {
+        await Api.delete(`/productos/${id}`);
+        UI.showNotification('Producto eliminado');
+        cargarProductos();
+    } catch (error) {
+        UI.showNotification('Error al eliminar producto', 'error');
+    }
+};
+
+window.agregarAlCarrito = async (productoId) => {
+    try {
+        await Api.post(`/carrito/productos/${productoId}`);
+        UI.showNotification('Producto agregado al carrito');
+    } catch (error) {
+        UI.showNotification('Error al agregar al carrito: ' + error.message, 'error');
+    }
+};
+
+
+================ frontend\js\ui.js ================
+
+export const UI = {
+    renderMenuProducts() {
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        const navContainer = document.getElementById('mainNavProducts');
+
+        if (!navContainer) return;
+
+        navContainer.innerHTML = '';
+
+        // Contenedor principal FLEX
+        const wrapper = document.createElement('div');
+        wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
+
+        // === IZQUIERDA (Logo) ===
+        const left = document.createElement('div');
+        left.className = 'flex items-center';
+
+        left.innerHTML = `
+            <a class="text-2xl font-bold text-blue-600">
+                E-Shop
+            </a>
+        `;
+
+        // === DERECHA (Opciones dinámicas) ===
+        const right = document.createElement('div');
+        right.className = 'flex items-center gap-6';
+
+        if (!user) {
+            right.innerHTML = `
+                <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                    Iniciar Sesión
+                </a>
+                <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                    Registrarse
+                </a>
+            `;
+        } else {
+            /*
+                        // Link común
+                        right.innerHTML += `
+                            <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                                Productos
+                            </a>
+                        `;
+            */
+            // === ROLE BASED LINKS ===
+            if (user.role === 'CUSTOMER') {
+                right.innerHTML += `
+                    <a href="carrito.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                       Carrito
+                    </a>
+                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Mis Órdenes
+                    </a>
+                `;
+            }
+
+            if (user.role === 'ADMIN') {
+                right.innerHTML += `
+                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Gestión de Órdenes
+                    </a>
+                    <a href="usuarios.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Gestión deUsuarios
+                    </a>
+                `;
+            }
+
+            if (user.role === 'SUPPLIER') {
+                right.innerHTML += `
+                    <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Mis Productos
+                    </a>
+                `;
+            }
+
+            // Saludo
+            right.innerHTML += `
+                <span class="text-sm text-gray-500">
+                    Hola, ${user.nombre}
+                </span>
+            `;
+
+            // Logout
+            right.innerHTML += `
+                <button onclick="window.logout()" 
+                    class="text-red-500 hover:text-red-700 font-medium">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            `;
+        }
+
+        wrapper.appendChild(left);
+        wrapper.appendChild(right);
+        navContainer.appendChild(wrapper);
+    },
+
+    renderMenuUsers() {
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        const navContainer = document.getElementById('mainNavUsers');
+
+        if (!navContainer) return;
+
+        navContainer.innerHTML = '';
+
+        // Contenedor principal FLEX
+        const wrapper = document.createElement('div');
+        wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
+
+        // === IZQUIERDA (Logo) ===
+        const left = document.createElement('div');
+        left.className = 'flex items-center';
+
+        left.innerHTML = `
+            <a class="text-2xl font-bold text-blue-600">
+                E-Shop
+            </a>
+        `;
+
+        // === DERECHA (Opciones dinámicas) ===
+        const right = document.createElement('div');
+        right.className = 'flex items-center gap-6';
+
+        if (!user) {
+            right.innerHTML = `
+                <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                    Iniciar Sesión
+                </a>
+                <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                    Registrarse
+                </a>
+            `;
+        } else {
+
+            if (user.role === 'ADMIN') {
+                right.innerHTML += `
+                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Gestión de Órdenes
+                    </a>
+                    <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Gestión deProductos
+                    </a>
+                `;
+            }
+
+            // Saludo
+            right.innerHTML += `
+                <span class="text-sm text-gray-500">
+                    Hola, ${user.nombre}
+                </span>
+            `;
+
+            // Logout
+            right.innerHTML += `
+                <button onclick="window.logout()" 
+                    class="text-red-500 hover:text-red-700 font-medium">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            `;
+        }
+
+        wrapper.appendChild(left);
+        wrapper.appendChild(right);
+        navContainer.appendChild(wrapper);
+    },
+
+    renderMenuCart() {
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        const navContainer = document.getElementById('mainNavCart');
+
+        if (!navContainer) return;
+
+        navContainer.innerHTML = '';
+
+        // Contenedor principal FLEX
+        const wrapper = document.createElement('div');
+        wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
+
+        // === IZQUIERDA (Logo) ===
+        const left = document.createElement('div');
+        left.className = 'flex items-center';
+
+        left.innerHTML = `
+            <a class="text-2xl font-bold text-blue-600">
+                E-Shop
+            </a>
+        `;
+
+        // === DERECHA (Opciones dinámicas) ===
+        const right = document.createElement('div');
+        right.className = 'flex items-center gap-6';
+
+        if (!user) {
+            right.innerHTML = `
+                <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                    Iniciar Sesión
+                </a>
+                <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                    Registrarse
+                </a>
+            `;
+        } else {
+
+            if (user.role === 'CUSTOMER') {
+                right.innerHTML += `
+                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Mis Órdenes
+                    </a>
+                    <a href="productoscustomer.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Productos
+                    </a>
+                `;
+            }
+
+            if (user.role === 'ADMIN') {
+                right.innerHTML += `
+                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Gestión de Órdenes
+                    </a>
+                    <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Gestión de Productos
+                    </a>
+                `;
+            }
+
+            // Saludo
+            right.innerHTML += `
+                <span class="text-sm text-gray-500">
+                    Hola, ${user.nombre}
+                </span>
+            `;
+
+            // Logout
+            right.innerHTML += `
+                <button onclick="window.logout()" 
+                    class="text-red-500 hover:text-red-700 font-medium">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            `;
+        }
+
+        wrapper.appendChild(left);
+        wrapper.appendChild(right);
+        navContainer.appendChild(wrapper);
+    },
+
+    renderMenuOrders() {
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        const navContainer = document.getElementById('mainNavOrders');
+
+        if (!navContainer) return;
+
+        navContainer.innerHTML = '';
+
+        // Contenedor principal FLEX
+        const wrapper = document.createElement('div');
+        wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
+
+        // === IZQUIERDA (Logo) ===
+        const left = document.createElement('div');
+        left.className = 'flex items-center';
+
+        left.innerHTML = `
+            <a class="text-2xl font-bold text-blue-600">
+                E-Shop
+            </a>
+        `;
+
+        // === DERECHA (Opciones dinámicas) ===
+        const right = document.createElement('div');
+        right.className = 'flex items-center gap-6';
+
+        if (!user) {
+            right.innerHTML = `
+                <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                    Iniciar Sesión
+                </a>
+                <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                    Registrarse
+                </a>
+            `;
+        } else {
+
+            if (user.role === 'CUSTOMER') {
+                right.innerHTML += `
+                    <a href="carrito.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Carrito
+                    </a>
+                    <a href="productoscustomer.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Productos
+                    </a>
+                `;
+            }
+
+            if (user.role === 'ADMIN') {
+                right.innerHTML += `
+                    <a href="usuarios.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Gestión de Usuarios
+                    </a>
+                    <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Gestión de Productos
+                    </a>
+                `;
+            }
+
+            // Saludo
+            right.innerHTML += `
+                <span class="text-sm text-gray-500">
+                    Hola, ${user.nombre}
+                </span>
+            `;
+
+            // Logout
+            right.innerHTML += `
+                <button onclick="window.logout()" 
+                    class="text-red-500 hover:text-red-700 font-medium">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            `;
+        }
+
+        wrapper.appendChild(left);
+        wrapper.appendChild(right);
+        navContainer.appendChild(wrapper);
+    },
+
+    showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-5 right-5 px-6 py-3 rounded shadow-lg text-white z-50 transition-opacity duration-300 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.classList.add('opacity-0');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    },
+
+    toggleModal(modalId, show = true) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            if (show) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+    },
+
+    setupModalCloser(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.toggleModal(modalId, false);
+                }
+            });
+        }
+    },
+
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+    }
+};
+
+
+================ frontend\js\usuarios.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    // CRITICAL: Only ADMIN can access this page
+    if (!Auth.isAuthenticated()) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const user = Auth.getCurrentUser();
+    if (user.role !== 'ADMIN') {
+        // Redirect non-admin users
+        window.location.href = 'productos.html';
+        return;
+    }
+
+    UI.renderMenuUsers();
+    cargarUsuarios();
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    document.getElementById('btnNuevoUsuario').addEventListener('click', () => abrirModal());
+    document.getElementById('btnCerrarModal').addEventListener('click', cerrarModal);
+    document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
+    document.getElementById('formUsuario').addEventListener('submit', guardarUsuario);
+    UI.setupModalCloser('modalUsuario');
+}
+
+async function cargarUsuarios() {
+    try {
+        const usuarios = await Api.get('/usuarios');
+        renderizarUsuarios(usuarios);
+    } catch (error) {
+        UI.showNotification('Error al cargar usuarios: ' + error.message, 'error');
+    }
+}
+
+function renderizarUsuarios(usuarios) {
+    const tbody = document.getElementById('listaUsuarios');
+    tbody.innerHTML = '';
+
+    if (!usuarios || usuarios.length === 0) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        return;
+    }
+    document.getElementById('emptyState').classList.add('hidden');
+
+    usuarios.forEach(usuario => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-200 hover:bg-gray-50';
+
+        // Get role display name
+        const roleNames = {
+            'ADMIN': 'Administrador',
+            'SUPPLIER': 'Proveedor',
+            'CUSTOMER': 'Cliente'
+        };
+        const roleDisplay = roleNames[usuario.role] || usuario.role;
+
+        // Get role color
+        const roleColors = {
+            'ADMIN': 'bg-red-100 text-red-800',
+            'SUPPLIER': 'bg-blue-100 text-blue-800',
+            'CUSTOMER': 'bg-green-100 text-green-800'
+        };
+        const roleColor = roleColors[usuario.role] || 'bg-gray-100 text-gray-800';
+
+        row.innerHTML = `
+            <td class="py-3 px-6 font-medium">#${usuario.id}</td>
+            <td class="py-3 px-6">${usuario.nombre}</td>
+            <td class="py-3 px-6">${usuario.email}</td>
+            <td class="py-3 px-6">
+                <span class="px-2 py-1 rounded text-xs font-semibold ${roleColor}">
+                    ${roleDisplay}
+                </span>
+            </td>
+            <td class="py-3 px-6 text-center">
+                <button onclick="window.editarUsuario(${usuario.id})" 
+                    class="text-yellow-500 hover:text-yellow-700 mx-1" title="Editar">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="window.eliminarUsuario(${usuario.id})" 
+                    class="text-red-500 hover:text-red-700 mx-1" title="Eliminar">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function abrirModal(usuario = null) {
+    const modal = document.getElementById('modalUsuario');
+    const form = document.getElementById('formUsuario');
+    const title = document.getElementById('modalTitle');
+    const passwordField = document.getElementById('password');
+
+    form.reset();
+
+    if (usuario) {
+        // Edit mode
+        title.textContent = 'Editar Usuario';
+        document.getElementById('usuarioId').value = usuario.id;
+        document.getElementById('nombre').value = usuario.nombre;
+        document.getElementById('email').value = usuario.email;
+        document.getElementById('role').value = usuario.role;
+
+        if (usuario.fechaNacimiento) {
+            document.getElementById('fechaNacimiento').value = usuario.fechaNacimiento;
+        }
+
+        passwordField.removeAttribute('required');
+    } else {
+        // Create mode
+        title.textContent = 'Nuevo Usuario';
+        document.getElementById('usuarioId').value = '';
+        passwordField.setAttribute('required', 'required');
+    }
+
+    UI.toggleModal('modalUsuario', true);
+}
+
+function cerrarModal() {
+    UI.toggleModal('modalUsuario', false);
+}
+
+async function guardarUsuario(e) {
+    e.preventDefault();
+
+    const usuarioId = document.getElementById('usuarioId').value;
+    const datosUsuario = {
+        nombre: document.getElementById('nombre').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        role: document.getElementById('role').value,
+        fechaNacimiento: document.getElementById('fechaNacimiento').value || null
+    };
+
+    // Remove empty password on edit
+    if (usuarioId && !datosUsuario.password) {
+        delete datosUsuario.password;
+    }
+
+    try {
+        if (usuarioId) {
+            // Update existing user
+            await Api.put(`/usuarios/${usuarioId}`, datosUsuario);
+            UI.showNotification('Usuario actualizado exitosamente', 'success');
+        } else {
+            // Create new user based on role
+            let endpoint = '/usuarios/cliente'; // default
+            if (datosUsuario.role === 'ADMIN') {
+                endpoint = '/usuarios/admin';
+            } else if (datosUsuario.role === 'SUPPLIER') {
+                endpoint = '/usuarios/proveedor';
+            }
+
+            await Api.post(endpoint, datosUsuario);
+            UI.showNotification('Usuario creado exitosamente', 'success');
+        }
+
+        cerrarModal();
+        cargarUsuarios();
+    } catch (error) {
+        UI.showNotification('Error al guardar usuario: ' + error.message, 'error');
+    }
+}
+
+// Global functions for inline onclick handlers
+window.editarUsuario = async (id) => {
+    try {
+        const usuario = await Api.get(`/usuarios/${id}`);
+        abrirModal(usuario);
+    } catch (error) {
+        UI.showNotification('Error al cargar usuario', 'error');
+    }
+};
+
+window.eliminarUsuario = async (id) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
+        return;
+    }
+
+    try {
+        await Api.delete(`/usuarios/${id}`);
+        UI.showNotification('Usuario eliminado exitosamente', 'success');
+        cargarUsuarios();
+    } catch (error) {
+        UI.showNotification('Error al eliminar usuario: ' + error.message, 'error');
+    }
+};
+
+
+================ frontend\js\validation.js ================
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('registerForm');
+    const inputs = form.querySelectorAll('input');
+    const userTypeSelect = document.getElementById('userType');
+    const extraFieldsContainer = document.getElementById('extraFields');
+    const submitBtn = document.getElementById('submitBtn');
+    const message = document.getElementById('form-message');
+
+    // Estado de validación
+    const validationState = {
+        nombre: false,
+        email: false,
+        password: false,
+        confirmPassword: false,
+        fechaNacimiento: false
+    };
+
+    // Regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/; // Min 8, 1 Mayus, 1 Num
+
+    // Campos extra dinámicos
+    userTypeSelect.addEventListener('change', () => {
+        const type = userTypeSelect.value;
+        extraFieldsContainer.innerHTML = '';
+        if (type === 'cliente') {
+            extraFieldsContainer.innerHTML = `
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1">Dirección de Envío</label>
+                    <input type="text" id="direccionEnvio" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+            `;
+        } else if (type === 'proveedor') {
+            extraFieldsContainer.innerHTML = `
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1">Nombre de la Empresa</label>
+                    <input type="text" id="empresa" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+            `;
+        }
+    });
+    // Trigger inicial
+    userTypeSelect.dispatchEvent(new Event('change'));
+
+    // Validar Inputs
+    inputs.forEach(input => {
+        input.addEventListener('input', () => validateInput(input));
+        input.addEventListener('blur', () => validateInput(input));
+    });
+
+    function validateInput(input) {
+        const id = input.id;
+        const value = input.value.trim();
+        let isValid = false;
+        const errorMsg = document.getElementById(`error-${id}`);
+
+        if (!errorMsg) return; // Si es un campo dinámico sin error msg explícito (por ahora)
+
+        switch (id) {
+            case 'nombre':
+                isValid = value.length > 2;
+                break;
+            case 'email':
+                isValid = emailRegex.test(value);
+                break;
+            case 'password':
+                isValid = passwordRegex.test(value);
+                updatePasswordStrength(value);
+                // Revalidar confirmación si cambia password
+                const confirmInput = document.getElementById('confirmPassword');
+                if (confirmInput.value) validateInput(confirmInput);
+                break;
+            case 'confirmPassword':
+                const pass = document.getElementById('password').value;
+                isValid = value === pass && value.length > 0;
+                break;
+            case 'fechaNacimiento':
+                const date = new Date(value);
+                const age = new Date().getFullYear() - date.getFullYear();
+                isValid = age >= 18;
+                break;
+            default:
+                isValid = true;
+        }
+
+        if (id in validationState) {
+            validationState[id] = isValid;
+        }
+
+        if (isValid) {
+            input.classList.remove('invalid');
+            input.classList.add('valid');
+            errorMsg.style.display = 'none';
+        } else {
+            input.classList.remove('valid');
+            input.classList.add('invalid');
+            errorMsg.style.display = 'block';
+        }
+
+        checkFormValidity();
+    }
+
+    function updatePasswordStrength(password) {
+        const bar = document.getElementById('password-strength-bar');
+        if (!password) {
+            bar.style.width = '0%';
+            return;
+        }
+        let strength = 0;
+        if (password.length >= 8) strength++;
+        if (/[A-Z]/.test(password)) strength++;
+        if (/[0-9]/.test(password)) strength++;
+        if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+        const percent = (strength / 4) * 100;
+        bar.style.width = `${percent}%`;
+
+        if (strength <= 1) bar.className = 'h-1 rounded transition-all duration-300 bg-red-500';
+        else if (strength === 2) bar.className = 'h-1 rounded transition-all duration-300 bg-yellow-500';
+        else if (strength >= 3) bar.className = 'h-1 rounded transition-all duration-300 bg-green-500';
+    }
+
+    function checkFormValidity() {
+        const allValid = Object.values(validationState).every(v => v);
+        submitBtn.disabled = !allValid;
+    }
+
+    // Submit
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const type = userTypeSelect.value;
+        const data = {
+            nombre: document.getElementById('nombre').value,
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+            fechaNacimiento: document.getElementById('fechaNacimiento').value
+        };
+
+        if (type === 'cliente') {
+            data.direccionEnvio = document.getElementById('direccionEnvio').value;
+        } else if (type === 'proveedor') {
+            data.empresa = document.getElementById('empresa').value;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:8080/api/usuarios/${type}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                message.textContent = 'Registro exitoso!';
+                message.className = 'text-center mt-4 font-medium text-green-600';
+                form.reset();
+                setTimeout(() => window.location.href = 'index.html', 2000);
+            } else {
+                message.textContent = 'Error en el registro.';
+                message.className = 'text-center mt-4 font-medium text-red-600';
+            }
+        } catch (error) {
+            console.error(error);
+            message.textContent = 'Error de conexión.';
+            message.className = 'text-center mt-4 font-medium text-red-600';
+        }
+    });
+});

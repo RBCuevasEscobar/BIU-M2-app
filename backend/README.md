@@ -294,6 +294,139 @@ public class UsuarioService {
 
 ---
 
+### 5. Sobrecarga de Métodos (Method Overloading)
+
+**Definición**: Múltiples métodos con el **mismo nombre** pero **diferente lista de parámetros** dentro de la misma clase. El compilador resuelve cuál usar en **tiempo de compilación** (static binding).
+
+**Reglas de Sobrecarga**:
+- Diferente número de parámetros, O
+- Diferente tipo de parámetros, O
+- Diferente orden de tipos de parámetros
+- El tipo de retorno **no** diferencia sobrecargas
+
+**Implementación en `Carrito` (modelo)**:
+```java
+// SOBRECARGA 1 – Principal (existente)
+public void agregarProducto(Producto producto) {
+    this.productos.add(producto);
+}
+
+// SOBRECARGA 2 – Agrega N veces el mismo producto
+public void agregarProducto(Producto producto, int cantidad) {
+    for (int i = 0; i < cantidad; i++) {
+        agregarProducto(producto); // Delega a SOBRECARGA 1
+    }
+}
+
+// SOBRECARGA 3 – Crea un producto inline por nombre y precio
+public void agregarProducto(String nombre, Double precio) {
+    ProductoFisico temp = new ProductoFisico();
+    temp.setNombre(nombre);
+    temp.setPrecio(precio);
+    agregarProducto(temp); // Delega a SOBRECARGA 1
+}
+```
+
+**Implementación en `CarritoService` (servicio)**:
+```java
+// SOBRECARGA 1 – Principal: busca en BD por ID (usa el controlador REST)
+public Carrito agregarProducto(Long productoId) { /*...*/ }
+
+// SOBRECARGA 2 – Recibe objeto Producto ya cargado en memoria
+public Carrito agregarProducto(Producto producto) {
+    return agregarProducto(producto.getId()); // Delega a SOBRECARGA 1
+}
+
+// SOBRECARGA 3 – Solo nombre y precio (útil para testing/integración)
+public Carrito agregarProducto(String nombre, Double precio) {
+    // Usa la sobrecarga del modelo Carrito directamente
+    carrito.agregarProducto(nombre, precio);
+}
+```
+
+**Beneficios**:
+- ✅ API expresiva: el llamador elige la firma más conveniente
+- ✅ Delegación interna → principio DRY
+- ✅ Compatible hacia atrás: la firma original no se modifica
+- ✅ Resolución en tiempo de compilación → sin overhead en ejecución
+
+---
+
+### 6. Sobreescritura de Métodos (Method Overriding)
+
+**Definición**: Una subclase **redefine** un método heredado de su superclase. La decisión de cuál método ejecutar ocurre en **tiempo de ejecución** (dynamic binding / late binding).
+
+**Reglas de Sobreescritura**:
+- Mismo nombre de método
+- Misma lista de parámetros
+- Mismo tipo de retorno (o covariante)
+- Acceso igual o más permisivo (no más restrictivo)
+- Anotación `@Override` recomendada (el compilador valida)
+
+**Contrato en clase abstracta `Producto`**:
+```java
+@Entity
+public abstract class Producto {
+    // Método abstracto → OBLIGA a sobreescritura en subclases
+    public abstract String mostrarDetalle();
+}
+```
+
+**Sobreescritura en `ProductoFisico`**:
+```java
+@Entity
+public class ProductoFisico extends Producto {
+    @Override  // ← Garantiza sobreescritura correcta
+    public String mostrarDetalle() {
+        return String.format(
+            "[Físico] %s | Precio: $%.2f | Stock: %d unidades | Peso: %.2f kg",
+            getNombre(), getPrecio(), stock, peso
+        );
+    }
+}
+// Salida ejemplo: "[Físico] Laptop | Precio: $25000.00 | Stock: 5 unidades | Peso: 2.50 kg"
+```
+
+**Sobreescritura en `ProductoDigital`**:
+```java
+@Entity
+public class ProductoDigital extends Producto {
+    @Override  // ← Misma firma, diferente implementación
+    public String mostrarDetalle() {
+        String expiracion = (diasExpiracion != null)
+            ? diasExpiracion + " días" : "Sin expiración";
+        return String.format(
+            "[Digital] %s | Precio: $%.2f | URL: %s | Vigencia: %s",
+            getNombre(), getPrecio(), urlDescarga, expiracion
+        );
+    }
+}
+// Salida ejemplo: "[Digital] Ebook | Precio: $299.99 | URL: http://... | Vigencia: 30 días"
+```
+
+**Polimorfismo en acción (late binding)**:
+```java
+List<Producto> lista = Arrays.asList(
+    new ProductoFisico("Laptop", 25000.0, 5, 2.5),
+    new ProductoDigital("Ebook", 299.99, "http://...", 30)
+);
+
+// El JVM decide EN TIEMPO DE EJECUCIÓN cuál mostrarDetalle() llamar
+lista.forEach(p -> System.out.println(p.mostrarDetalle()));
+// → [Físico] Laptop | Precio: $25000.00 | Stock: 5 unidades | Peso: 2.50 kg
+// → [Digital] Ebook | Precio: $299.99 | URL: http://... | Vigencia: 30 días
+```
+
+| Característica | Sobrecarga | Sobreescritura |
+|---|---|---|
+| Clase | Misma | Padre → Hijo |
+| Parámetros | Distintos | Iguales |
+| Retorno | Cualquiera | Igual o covariante |
+| Binding | Estático (compilación) | Dinámico (ejecución) |
+| @Override | No aplica | Recomendado |
+
+---
+
 ## 📦 Clases Clave
 
 ### Clase: Usuario
@@ -417,16 +550,20 @@ private Usuario usuario;          // OneToOne - Carrito pertenece a 1 usuario
 private List<Producto> productos; // ManyToMany - Múltiples productos
 ```
 
-**Métodos**:
+**Métodos Sobrecargados** (ver sección 5 para detalles OOP):
 ```java
-// Agregar producto al carrito
-carrito.getProductos().add(producto);
+// SOBRECARGA 1 – Por objeto Producto (método principal)
+void agregarProducto(Producto producto)
 
-// Eliminar producto
-carrito.getProductos().remove(producto);
+// SOBRECARGA 2 – Por objeto Producto + cantidad repeticiones
+void agregarProducto(Producto producto, int cantidad)
 
-// Vaciar carrito
-carrito.getProductos().clear();
+// SOBRECARGA 3 – Por nombre y precio (crea producto temporal)
+void agregarProducto(String nombre, Double precio)
+
+// Eliminar y calcular total
+void eliminarProducto(Producto producto)
+Double getTotal()
 ```
 
 **Constructor**:
