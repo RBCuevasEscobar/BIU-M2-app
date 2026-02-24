@@ -1,13 +1,19 @@
 
 import Api from './api.js';
 import { UI } from './ui.js';
+import Auth from './auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+
+    UI.renderMenuProductsCustomer();
+
     const productList = document.getElementById('product-list-customer');
 
     try {
 
         const products = await Api.get('/productos');
+        if (!products) throw new Error('Error fetching products');
+
 
         productList.innerHTML = products.map(product => `
             <div class="group relative bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -49,5 +55,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             UI.showNotification('No se pudo agregar al carrito', 'error');
         }
     });
+
+    window.logout = () => {
+        Auth.logout();
+    };
 
 });
