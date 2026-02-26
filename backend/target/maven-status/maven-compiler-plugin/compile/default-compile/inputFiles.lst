@@ -9,6 +9,8 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\UsuarioController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\LoginRequest.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\LoginResponse.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\ProductUpdateRequest.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\UsuarioUpdateRequest.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Administrador.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Carrito.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Cliente.java

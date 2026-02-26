@@ -9,7 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    UI.renderMenuProducts();
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'products'
+    });
     setupRoleBasedUI();
     cargarProductos();
     setupEventListeners();

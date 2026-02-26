@@ -1,5 +1,6 @@
 package com.ecommerce.service;
 
+import com.ecommerce.dto.UsuarioUpdateRequest;
 import com.ecommerce.model.Usuario;
 import com.ecommerce.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,36 +64,36 @@ public class UsuarioService {
 
     @SuppressWarnings("null")
     @Transactional
-    public Usuario actualizarUsuario(Long id, Usuario datosActualizados) {
+    public Usuario actualizarUsuario(Long id, UsuarioUpdateRequest datosActualizados) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         // Update basic fields
-        if (datosActualizados.getNombre() != null) {
-            usuario.setNombre(datosActualizados.getNombre());
+        if (datosActualizados.nombre() != null) {
+            usuario.setNombre(datosActualizados.nombre());
         }
 
-        if (datosActualizados.getEmail() != null && !datosActualizados.getEmail().equals(usuario.getEmail())) {
+        if (datosActualizados.email() != null && !datosActualizados.email().equals(usuario.getEmail())) {
             // Check if new email already exists
-            if (usuarioRepository.existsByEmail(datosActualizados.getEmail())) {
+            if (usuarioRepository.existsByEmail(datosActualizados.email())) {
                 throw new RuntimeException("El email ya está registrado");
             }
-            usuario.setEmail(datosActualizados.getEmail());
+            usuario.setEmail(datosActualizados.email());
         }
 
         // Update password only if provided
-        if (datosActualizados.getPassword() != null && !datosActualizados.getPassword().isEmpty()) {
-            usuario.setPassword(passwordEncoder.encode(datosActualizados.getPassword()));
+        if (datosActualizados.password() != null && !datosActualizados.password().isEmpty()) {
+            usuario.setPassword(passwordEncoder.encode(datosActualizados.password()));
         }
 
         // Update role if provided
-        if (datosActualizados.getRole() != null) {
-            usuario.setRole(datosActualizados.getRole());
+        if (datosActualizados.role() != null) {
+            usuario.setRole(datosActualizados.role());
         }
 
         // Update birth date if provided
-        if (datosActualizados.getFechaNacimiento() != null) {
-            usuario.setFechaNacimiento(datosActualizados.getFechaNacimiento());
+        if (datosActualizados.fechaNacimiento() != null) {
+            usuario.setFechaNacimiento(datosActualizados.fechaNacimiento());
         }
 
         return usuarioRepository.save(usuario);

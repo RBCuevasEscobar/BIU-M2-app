@@ -3,6 +3,7 @@ package com.ecommerce.controller;
 import com.ecommerce.model.Usuario;
 import com.ecommerce.model.Cliente;
 import com.ecommerce.model.Proveedor;
+import com.ecommerce.dto.UsuarioUpdateRequest;
 import com.ecommerce.model.Administrador;
 import com.ecommerce.service.UsuarioService;
 import com.ecommerce.service.AdministradorService;
@@ -59,10 +60,9 @@ public class UsuarioController {
 
     @PutMapping("/{id}")
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Long id, @RequestBody Usuario datosActualizados) {
+    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Long id, @RequestBody UsuarioUpdateRequest dto) {
         try {
-            Usuario usuarioActualizado = usuarioService.actualizarUsuario(id, datosActualizados);
-            return ResponseEntity.ok(usuarioActualizado);
+            return ResponseEntity.ok(usuarioService.actualizarUsuario(id, dto));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
         }

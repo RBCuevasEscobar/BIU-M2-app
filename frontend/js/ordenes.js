@@ -8,7 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    UI.renderMenuOrders();
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'orders'
+    });
     cargarOrdenes();
 });
 

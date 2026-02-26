@@ -1,5 +1,6 @@
 package com.ecommerce.controller;
 
+import com.ecommerce.dto.ProductUpdateRequest;
 import com.ecommerce.model.Producto;
 import com.ecommerce.model.ProductoFisico;
 import com.ecommerce.model.ProductoDigital;
@@ -43,7 +44,8 @@ public class ProductoController {
 
     @PutMapping("/{id}")
     @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'SUPPLIER')")
-    public ResponseEntity<Producto> actualizarProducto(@PathVariable Long id, @RequestBody Producto productoDetalles) {
+    public ResponseEntity<Producto> actualizarProducto(@PathVariable Long id,
+            @RequestBody ProductUpdateRequest productoDetalles) {
         return ResponseEntity.ok(productoService.actualizarProducto(id, productoDetalles));
     }
 

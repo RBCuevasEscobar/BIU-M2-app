@@ -1,5 +1,6 @@
 package com.ecommerce.service;
 
+import com.ecommerce.dto.ProductUpdateRequest;
 import com.ecommerce.model.Producto;
 import com.ecommerce.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,12 +39,12 @@ public class ProductoService {
 
     @SuppressWarnings("null")
     @Transactional
-    public Producto actualizarProducto(Long id, Producto productoDetalles) {
+    public Producto actualizarProducto(Long id, ProductUpdateRequest productoDetalles) {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado con id: " + id));
 
-        producto.setNombre(productoDetalles.getNombre());
-        producto.setPrecio(productoDetalles.getPrecio());
+        producto.setNombre(productoDetalles.nombre());
+        producto.setPrecio(productoDetalles.precio());
         // Add other fields as necessary, or use a mapper
 
         return productoRepository.save(producto);

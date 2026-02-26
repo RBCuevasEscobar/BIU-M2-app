@@ -5,7 +5,10 @@ import Auth from './auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-    UI.renderMenuProductsCustomer();
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'products'
+    });
 
     const productList = document.getElementById('product-list-customer');
 

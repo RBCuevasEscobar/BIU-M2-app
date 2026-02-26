@@ -1016,6 +1016,7 @@ public class SecurityConfig {
 
                         // 🔐 CUALQUIER OTRA SOLICITUD ESTA PROTEGIDA
                         .requestMatchers("/api/usuarios").authenticated()
+                        .requestMatchers("/api/usuarios/**").authenticated()
                         .requestMatchers("/api/carrito").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -2516,27 +2517,6 @@ spring.jpa.show-sql=true
 server.error.include-message=always
 
 
-================ backend\target\classes\application.properties ================
-
-spring.application.name=backend
-# Server Configuration
-server.port=8080
-
-# Database Configuration
-spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce_db?createDatabaseIfNotExist=true
-spring.datasource.username=dbadmin
-spring.datasource.password=dbpassword
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-
-# JPA Configuration
-spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-
-# Error Handling
-server.error.include-message=always
-
-
 ================ backend\target\maven-status\maven-compiler-plugin\compile\default-compile\createdFiles.lst ================
 
 com\ecommerce\service\ProductoService.class
@@ -2739,14 +2719,20 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
         </div>
     </nav>
 
+    <!--
     <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+-->
+    <main class="w-full px-6 py-12">
         <div class="text-center mb-12">
             <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">Productos Destacados</h2>
             <p class="mt-4 text-xl text-gray-500">Explora nuestra colección de productos físicos y digitales.</p>
         </div>
-
+        <!--
         <div id="product-list"
             class="grid grid-cols-1 gap-y-10 sm:grid-cols-2 gap-x-6 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
+-->
+        <div id="product-list"
+            class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             <!-- Productos cargados dinámicamente -->
         </div>
     </main>
@@ -4148,17 +4134,8 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 
     <!-- Navigation Bar -->
 
-    <nav id="mainNavProducts" class="bg-white shadow-md"></nav>
+    <nav id="mainNav"></nav>
 
-    <!--
-    <nav class="bg-white shadow-md sticky top-0 z-10">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-bold text-blue-600">E-Shop</a>
-            <div class="space-x-4 flex items-center">
-            </div>
-        </div>
-    </nav>
--->
     <main class="container mx-auto px-6 py-8 flex-grow">
 
         <header class="flex justify-between items-center mb-8">
@@ -4304,35 +4281,18 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-100 font-sans flex flex-col">
 
-    <nav class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <h1 class="text-2xl font-bold text-blue-600">E-Shop</h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="carrito.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Mi Carrito
-                    </a>
-                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Mis Órdenes
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <nav id="mainNav" class="bg-white shadow"></nav>
 
-    <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <main class="w-full px-6 py-12">
         <div class="text-center mb-12">
             <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">Productos Destacados</h2>
             <p class="mt-4 text-xl text-gray-500">Explora nuestra colección de productos físicos y digitales.</p>
         </div>
-
+        <!-- Productos cargados dinámicamente -->
         <div id="product-list-customer"
-            class="grid grid-cols-1 gap-y-10 sm:grid-cols-2 gap-x-6 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
-            <!-- Productos cargados dinámicamente -->
+            class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         </div>
     </main>
 
@@ -4886,7 +4846,7 @@ module.exports = {
 
     <!-- Navigation Bar -->
 
-    <nav id="mainNavUsers" class="space-x-4 flex items-center">
+    <nav id="mainNav" class="space-x-4 flex items-center">
         <!-- Dynamic navigation rendered by JS -->
     </nav>
 
@@ -5138,13 +5098,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 import Api from './api.js';
 import { UI } from './ui.js';
+import Auth from './auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'products'
+    });
+
     const productList = document.getElementById('product-list-customer');
 
     try {
 
         const products = await Api.get('/productos');
+        if (!products) throw new Error('Error fetching products');
+
 
         productList.innerHTML = products.map(product => `
             <div class="group relative bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -5186,6 +5155,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             UI.showNotification('No se pudo agregar al carrito', 'error');
         }
     });
+
+    window.logout = () => {
+        Auth.logout();
+    };
 
 });
 
@@ -5522,7 +5495,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    UI.renderMenuProducts();
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'products'
+    });
     setupRoleBasedUI();
     cargarProductos();
     setupEventListeners();
@@ -5759,93 +5735,53 @@ window.agregarAlCarrito = async (productoId) => {
 ================ frontend\js\ui.js ================
 
 export const UI = {
-    renderMenuProducts() {
+
+    renderNavBar({ containerId, context }) {
+        const navContainer = document.getElementById(containerId);
+        if (!navContainer) return;
+
         const userStr = localStorage.getItem('user');
         const user = userStr ? JSON.parse(userStr) : null;
-        const navContainer = document.getElementById('mainNavProducts');
-
-        if (!navContainer) return;
 
         navContainer.innerHTML = '';
 
-        // Contenedor principal FLEX
         const wrapper = document.createElement('div');
         wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
 
-        // === IZQUIERDA (Logo) ===
+        // === LOGO ===
         const left = document.createElement('div');
-        left.className = 'flex items-center';
-
         left.innerHTML = `
             <a class="text-2xl font-bold text-blue-600">
                 E-Shop
             </a>
         `;
 
-        // === DERECHA (Opciones dinámicas) ===
+        // === LINKS ===
         const right = document.createElement('div');
         right.className = 'flex items-center gap-6';
 
         if (!user) {
             right.innerHTML = `
-                <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                    Iniciar Sesión
-                </a>
+                <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">Iniciar Sesión</a>
                 <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
                     Registrarse
                 </a>
             `;
         } else {
-            /*
-                        // Link común
-                        right.innerHTML += `
-                            <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                                Productos
-                            </a>
-                        `;
-            */
-            // === ROLE BASED LINKS ===
-            if (user.role === 'CUSTOMER') {
+            const links = this.getLinksByRoleAndContext(user.role, context);
+            links.forEach(l => {
                 right.innerHTML += `
-                    <a href="carrito.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                       Carrito
-                    </a>
-                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Mis Órdenes
+                    <a href="${l.href}" class="text-gray-700 hover:text-blue-600 font-medium">
+                        ${l.label}
                     </a>
                 `;
-            }
+            });
 
-            if (user.role === 'ADMIN') {
-                right.innerHTML += `
-                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Gestión de Órdenes
-                    </a>
-                    <a href="usuarios.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Gestión deUsuarios
-                    </a>
-                `;
-            }
-
-            if (user.role === 'SUPPLIER') {
-                right.innerHTML += `
-                    <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Mis Productos
-                    </a>
-                `;
-            }
-
-            // Saludo
             right.innerHTML += `
                 <span class="text-sm text-gray-500">
                     Hola, ${user.nombre}
                 </span>
-            `;
-
-            // Logout
-            right.innerHTML += `
-                <button onclick="window.logout()" 
-                    class="text-red-500 hover:text-red-700 font-medium">
+                <button onclick="window.logout()" class="text-red-500 hover:text-red-700 font-medium">
                     <i class="fas fa-sign-out-alt"></i> Salir
                 </button>
             `;
@@ -5855,6 +5791,160 @@ export const UI = {
         wrapper.appendChild(right);
         navContainer.appendChild(wrapper);
     },
+
+    getLinksByRoleAndContext(role, context) {
+        const config = {
+            CUSTOMER: {
+                products: [
+                    { label: 'Carrito', href: 'carrito.html' },
+                    { label: 'Mis Órdenes', href: 'ordenes.html' }
+                ],
+                cart: [
+                    { label: 'Productos', href: 'productoscustomer.html' },
+                    { label: 'Mis Órdenes', href: 'ordenes.html' }
+                ],
+                orders: [
+                    { label: 'Productos', href: 'productoscustomer.html' },
+                    { label: 'Carrito', href: 'carrito.html' }
+                ]
+            },
+            ADMIN: {
+                products: [
+                    { label: 'Gestión Órdenes', href: 'ordenes.html' },
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' }
+                ],
+                users: [
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' }
+                ],
+                orders: [
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    { label: 'Gestion Productos', href: 'productos.html' }
+                ]
+            },
+            SUPPLIER: {
+                products: [
+                    { label: 'Mis Productos', href: 'productos.html' }
+                ]
+            }
+        };
+
+        return config[role]?.[context] || [];
+    },
+
+    // === Helpers existentes (SIN CAMBIOS) ===
+    showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-5 right-5 px-6 py-3 rounded shadow-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.classList.add('opacity-0');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    },
+
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('es-MX', {
+            style: 'currency',
+            currency: 'MXN'
+        }).format(amount);
+    },
+
+    /*
+        renderMenuProducts() {
+            const userStr = localStorage.getItem('user');
+            const user = userStr ? JSON.parse(userStr) : null;
+            const navContainer = document.getElementById('mainNavProducts');
+    
+            if (!navContainer) return;
+    
+            navContainer.innerHTML = '';
+    
+            // Contenedor principal FLEX
+            const wrapper = document.createElement('div');
+            wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
+    
+            // === IZQUIERDA (Logo) ===
+            const left = document.createElement('div');
+            left.className = 'flex items-center';
+    
+            left.innerHTML = `
+                <a class="text-2xl font-bold text-blue-600">
+                    E-Shop
+                </a>
+            `;
+    
+            // === DERECHA (Opciones dinámicas) ===
+            const right = document.createElement('div');
+            right.className = 'flex items-center gap-6';
+    
+            if (!user) {
+                right.innerHTML = `
+                    <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Iniciar Sesión
+                    </a>
+                    <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                        Registrarse
+                    </a>
+                `;
+            } else {
+               // === ROLE BASED LINKS ===
+                if (user.role === 'CUSTOMER') {
+                    right.innerHTML += `
+                        <a href="carrito.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                           Carrito
+                        </a>
+                        <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                            Mis Órdenes
+                        </a>
+                    `;
+                }
+    
+                if (user.role === 'ADMIN') {
+                    right.innerHTML += `
+                        <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                            Gestión de Órdenes
+                        </a>
+                        <a href="usuarios.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                            Gestión deUsuarios
+                        </a>
+                    `;
+                }
+    
+                if (user.role === 'SUPPLIER') {
+                    right.innerHTML += `
+                        <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                            Mis Productos
+                        </a>
+                    `;
+                }
+    
+                // Saludo
+                right.innerHTML += `
+                    <span class="text-sm text-gray-500">
+                        Hola, ${user.nombre}
+                    </span>
+                `;
+    
+                // Logout
+                right.innerHTML += `
+                    <button onclick="window.logout()" 
+                        class="text-red-500 hover:text-red-700 font-medium">
+                        <i class="fas fa-sign-out-alt"></i> Salir
+                    </button>
+                `;
+            }
+    
+            wrapper.appendChild(left);
+            wrapper.appendChild(right);
+            navContainer.appendChild(wrapper);
+        },
+    
+    */
 
     renderMenuUsers() {
         const userStr = localStorage.getItem('user');
@@ -6088,20 +6178,92 @@ export const UI = {
         navContainer.appendChild(wrapper);
     },
 
-    showNotification(message, type = 'success') {
-        const notification = document.createElement('div');
-        notification.className = `fixed top-5 right-5 px-6 py-3 rounded shadow-lg text-white z-50 transition-opacity duration-300 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'
-            }`;
-        notification.textContent = message;
+    renderMenuProductsCustomer() {
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        const navContainer = document.getElementById('mainNavProductsCustomer');
 
-        document.body.appendChild(notification);
+        if (!navContainer) return;
 
-        setTimeout(() => {
-            notification.classList.add('opacity-0');
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
+        navContainer.innerHTML = '';
+
+        // Contenedor principal FLEX
+        const wrapper = document.createElement('div');
+        wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
+
+        // === IZQUIERDA (Logo) ===
+        const left = document.createElement('div');
+        left.className = 'flex items-center';
+
+        left.innerHTML = `
+            <a class="text-2xl font-bold text-blue-600">
+                E-Shop
+            </a>
+        `;
+
+        // === DERECHA (Opciones dinámicas) ===
+        const right = document.createElement('div');
+        right.className = 'flex items-center gap-6';
+
+        if (!user) {
+            right.innerHTML = `
+                <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                    Iniciar Sesión
+                </a>
+                <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                    Registrarse
+                </a>
+            `;
+        } else {
+
+            // === ROLE BASED LINKS ===
+            if (user.role === 'CUSTOMER') {
+                right.innerHTML += `
+                    <a href="carrito.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                       Carrito
+                    </a>
+                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
+                        Mis Órdenes
+                    </a>
+                `;
+            }
+
+            // Saludo
+            right.innerHTML += `
+                <span class="text-sm text-gray-500">
+                    Hola, ${user.nombre}
+                </span>
+            `;
+
+            // Logout
+            right.innerHTML += `
+                <button onclick="window.logout()" 
+                    class="text-red-500 hover:text-red-700 font-medium">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            `;
+        }
+
+        wrapper.appendChild(left);
+        wrapper.appendChild(right);
+        navContainer.appendChild(wrapper);
     },
 
+    /*   
+       showNotification(message, type = 'success') {
+           const notification = document.createElement('div');
+           notification.className = `fixed top-5 right-5 px-6 py-3 rounded shadow-lg text-white z-50 transition-opacity duration-300 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'
+               }`;
+           notification.textContent = message;
+   
+           document.body.appendChild(notification);
+   
+           setTimeout(() => {
+               notification.classList.add('opacity-0');
+               setTimeout(() => notification.remove(), 300);
+           }, 3000);
+       },
+   */
     toggleModal(modalId, show = true) {
         const modal = document.getElementById(modalId);
         if (modal) {
@@ -6126,9 +6288,9 @@ export const UI = {
         }
     },
 
-    formatCurrency(amount) {
-        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
-    }
+    //    formatCurrency(amount) {
+    //        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+    //    }
 };
 
 
@@ -6152,7 +6314,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    UI.renderMenuUsers();
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'users'
+    });
     cargarUsuarios();
     setupEventListeners();
 });

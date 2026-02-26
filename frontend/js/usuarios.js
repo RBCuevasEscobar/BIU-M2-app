@@ -16,7 +16,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    UI.renderMenuUsers();
+    // 🔹 Mostrar botón solo para ADMIN
+    const btnNuevo = document.getElementById('btnNuevoUsuario');
+    if (btnNuevo) {
+        document.getElementById('btnNuevoUsuario').classList.remove('hidden');
+        document.getElementById('btnNuevoUsuario').classList.add('flex');
+    }
+
+
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'users'
+    });
     cargarUsuarios();
     setupEventListeners();
 });

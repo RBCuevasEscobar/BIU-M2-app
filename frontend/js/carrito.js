@@ -9,7 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    UI.renderMenuCart();
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'cart'
+    });
     cargarCarrito();
     setupEventListeners();
 });
