@@ -1,4 +1,4 @@
-# E-Commerce Backend v1.0
+# E-Commerce Backend v2.0
 
 ## 🎯 Propósito del Backend
 

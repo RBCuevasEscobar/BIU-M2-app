@@ -1,4 +1,4 @@
-# E-Commerce Frontend v1.0
+# E-Commerce Frontend v2.0
 
 ## 🎯 Propósito del Proyecto
 
