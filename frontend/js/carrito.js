@@ -18,10 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupEventListeners() {
-    // Phase 2: Checkout implementation
-    const btnCheckout = document.getElementById('btnCheckout');
-    if (btnCheckout) {
-        btnCheckout.addEventListener('click', realizarCheckout);
+    // Phase 2: Order implementation
+    const btnOrder = document.getElementById('btnOrder');
+    if (btnOrder) {
+        btnOrder.addEventListener('click', realizarOrder);
     }
 
     const btnVaciar = document.getElementById('btnVaciar');
@@ -46,15 +46,55 @@ async function cargarCarrito() {
     }
 }
 
+function actualizarEstadoAccionesCarrito(hayProductos) {
+    const btnOrder = document.getElementById('btnOrder');
+    const btnVaciar = document.getElementById('btnVaciar');
+
+    [btnOrder, btnVaciar].forEach(btn => {
+        if (!btn) return;
+
+        btn.disabled = !hayProductos;
+
+        if (!hayProductos) {
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    });
+}
+
 function renderizarCarrito(carrito) {
     const tbody = document.getElementById('listaCarrito');
     if (!tbody) return;
 
+    const emptyCartMsg = document.getElementById('emptyCart');
+
     tbody.innerHTML = '';
 
-    // Group products
-    const productosMap = new Map();
     const productos = carrito.productos || [];
+
+    // ✅ Caso carrito vacío
+    if (productos.length === 0) {
+        if (emptyCartMsg) emptyCartMsg.classList.remove('hidden');
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-4 text-gray-500">
+                    El carrito está vacío
+                </td>
+            </tr>
+        `;
+
+        actualizarTotales(0);
+        actualizarEstadoAccionesCarrito(false);
+        return;
+    }
+
+    // ✅ Hay productos
+    if (emptyCartMsg) emptyCartMsg.classList.add('hidden');
+
+    // Agrupar productos
+    const productosMap = new Map();
 
     productos.forEach(p => {
         if (productosMap.has(p.id)) {
@@ -65,15 +105,6 @@ function renderizarCarrito(carrito) {
     });
 
     let subtotal = 0;
-
-    const emptyCartMsg = document.getElementById('emptyCart');
-    if (productosMap.size === 0) {
-        if (emptyCartMsg) emptyCartMsg.classList.remove('hidden');
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">El carrito está vacío</td></tr>';
-        actualizarTotales(0);
-        return;
-    }
-    if (emptyCartMsg) emptyCartMsg.classList.add('hidden');
 
     productosMap.forEach(p => {
         const totalProducto = p.precio * p.cantidad;
@@ -102,6 +133,7 @@ function renderizarCarrito(carrito) {
     });
 
     actualizarTotales(subtotal);
+    actualizarEstadoAccionesCarrito(true);
 }
 
 function actualizarTotales(subtotal) {
@@ -137,18 +169,18 @@ window.eliminarDelCarrito = async (productoId) => {
     }
 };
 
-async function realizarCheckout() {
-    if (!confirm('¿Confirmar compra?')) return;
+async function realizarOrder() {
+    if (!confirm('¿Confirmar pedido?')) return;
 
     try {
         await Api.post('/ordenes/checkout');
         // Redirect or show success
-        UI.showNotification('¡Compra realizada con éxito!', 'success');
+        UI.showNotification('¡Pedido realizado con éxito!', 'success');
         setTimeout(() => {
             window.location.href = 'ordenes.html';
         }, 1500);
     } catch (error) {
-        UI.showNotification('Error en el checkout: ' + error.message, 'error');
+        UI.showNotification('Error en la generacion del pedido: ' + error.message, 'error');
     }
 }
 
