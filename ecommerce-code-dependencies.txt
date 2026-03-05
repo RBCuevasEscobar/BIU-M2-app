@@ -19,8 +19,8 @@ Source: frontend\package.json (devDependencies)
 - tailwindcss ^4.1.18
 
 Internal dependency graph
-Nodes: 62
-Edges: 16
+Nodes: 77
+Edges: 19
 
 Nodes:
 - .mvn\wrapper\maven-wrapper.properties
@@ -32,23 +32,34 @@ Nodes:
 - backend\src\main\java\com\ecommerce\config\WebConfig.java
 - backend\src\main\java\com\ecommerce\controller\AuthController.java
 - backend\src\main\java\com\ecommerce\controller\CarritoController.java
+- backend\src\main\java\com\ecommerce\controller\DireccionController.java
 - backend\src\main\java\com\ecommerce\controller\OrdenController.java
 - backend\src\main\java\com\ecommerce\controller\ProductoController.java
 - backend\src\main\java\com\ecommerce\controller\UsuarioController.java
+- backend\src\main\java\com\ecommerce\dto\DireccionDTO.java
+- backend\src\main\java\com\ecommerce\dto\DireccionRequestDTO.java
 - backend\src\main\java\com\ecommerce\dto\LoginRequest.java
 - backend\src\main\java\com\ecommerce\dto\LoginResponse.java
+- backend\src\main\java\com\ecommerce\dto\ProductUpdateRequest.java
+- backend\src\main\java\com\ecommerce\dto\ProductoDTO.java
+- backend\src\main\java\com\ecommerce\dto\ProductoImagenDTO.java
+- backend\src\main\java\com\ecommerce\dto\ProductoRequestDTO.java
+- backend\src\main\java\com\ecommerce\dto\UsuarioUpdateRequest.java
 - backend\src\main\java\com\ecommerce\model\Administrador.java
 - backend\src\main\java\com\ecommerce\model\Carrito.java
 - backend\src\main\java\com\ecommerce\model\Cliente.java
+- backend\src\main\java\com\ecommerce\model\Direccion.java
 - backend\src\main\java\com\ecommerce\model\Orden.java
 - backend\src\main\java\com\ecommerce\model\OrdenDetalle.java
 - backend\src\main\java\com\ecommerce\model\Producto.java
 - backend\src\main\java\com\ecommerce\model\ProductoDigital.java
 - backend\src\main\java\com\ecommerce\model\ProductoFisico.java
+- backend\src\main\java\com\ecommerce\model\ProductoImagen.java
 - backend\src\main\java\com\ecommerce\model\Proveedor.java
 - backend\src\main\java\com\ecommerce\model\Role.java
 - backend\src\main\java\com\ecommerce\model\Usuario.java
 - backend\src\main\java\com\ecommerce\repository\CarritoRepository.java
+- backend\src\main\java\com\ecommerce\repository\DireccionRepository.java
 - backend\src\main\java\com\ecommerce\repository\OrdenRepository.java
 - backend\src\main\java\com\ecommerce\repository\ProductoRepository.java
 - backend\src\main\java\com\ecommerce\repository\UsuarioRepository.java
@@ -56,22 +67,26 @@ Nodes:
 - backend\src\main\java\com\ecommerce\security\UsuarioSecurity.java
 - backend\src\main\java\com\ecommerce\service\AdministradorService.java
 - backend\src\main\java\com\ecommerce\service\CarritoService.java
+- backend\src\main\java\com\ecommerce\service\DireccionService.java
 - backend\src\main\java\com\ecommerce\service\OrdenService.java
 - backend\src\main\java\com\ecommerce\service\ProductoService.java
 - backend\src\main\java\com\ecommerce\service\UsuarioService.java
 - backend\src\main\resources\application.properties
+- backend\target\classes\application.properties
 - backend\target\maven-status\maven-compiler-plugin\compile\default-compile\createdFiles.lst
 - backend\target\maven-status\maven-compiler-plugin\compile\default-compile\inputFiles.lst
 - frontend\README.md
 - frontend\carrito.html
 - frontend\css\output.css
 - frontend\css\styles.css
+- frontend\direcciones.html
 - frontend\index.html
 - frontend\js\api.js
 - frontend\js\app.js
 - frontend\js\appcust.js
 - frontend\js\auth.js
 - frontend\js\carrito.js
+- frontend\js\direcciones.js
 - frontend\js\ordenes.js
 - frontend\js\productos.js
 - frontend\js\ui.js
@@ -94,6 +109,9 @@ Edges:
 - frontend\js\carrito.js -> frontend\js\api.js (import)
 - frontend\js\carrito.js -> frontend\js\auth.js (import)
 - frontend\js\carrito.js -> frontend\js\ui.js (import)
+- frontend\js\direcciones.js -> frontend\js\api.js (import)
+- frontend\js\direcciones.js -> frontend\js\auth.js (import)
+- frontend\js\direcciones.js -> frontend\js\ui.js (import)
 - frontend\js\ordenes.js -> frontend\js\api.js (import)
 - frontend\js\ordenes.js -> frontend\js\auth.js (import)
 - frontend\js\ordenes.js -> frontend\js\ui.js (import)

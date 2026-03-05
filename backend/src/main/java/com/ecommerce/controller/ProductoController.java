@@ -1,12 +1,13 @@
 package com.ecommerce.controller;
 
-import com.ecommerce.dto.ProductUpdateRequest;
-import com.ecommerce.model.Producto;
-import com.ecommerce.model.ProductoFisico;
-import com.ecommerce.model.ProductoDigital;
+import com.ecommerce.dto.ProductoDTO;
+import com.ecommerce.dto.ProductoRequestDTO;
 import com.ecommerce.service.ProductoService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,38 +20,34 @@ public class ProductoController {
     private ProductoService productoService;
 
     @GetMapping
-    public List<Producto> listarProductos() {
+    public List<ProductoDTO> listarProductos() {
         return productoService.listarProductos();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Producto> obtenerProducto(@PathVariable Long id) {
+    public ResponseEntity<ProductoDTO> obtenerProducto(@PathVariable Long id) {
         return productoService.obtenerProducto(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/fisico")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Producto> crearProductoFisico(@RequestBody ProductoFisico producto) {
-        return ResponseEntity.ok(productoService.guardarProducto(producto));
-    }
-
-    @PostMapping("/digital")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Producto> crearProductoDigital(@RequestBody ProductoDigital producto) {
-        return ResponseEntity.ok(productoService.guardarProducto(producto));
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProductoDTO> crearProducto(@Valid @RequestBody ProductoRequestDTO request) {
+        return ResponseEntity.ok(productoService.guardarProducto(request));
     }
 
     @PutMapping("/{id}")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'SUPPLIER')")
-    public ResponseEntity<Producto> actualizarProducto(@PathVariable Long id,
-            @RequestBody ProductUpdateRequest productoDetalles) {
-        return ResponseEntity.ok(productoService.actualizarProducto(id, productoDetalles));
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPPLIER')")
+    public ResponseEntity<ProductoDTO> actualizarProducto(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductoRequestDTO request,
+            Authentication auth) {
+        return ResponseEntity.ok(productoService.actualizarProducto(id, request, auth.getName()));
     }
 
     @DeleteMapping("/{id}")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
         productoService.eliminarProducto(id);
         return ResponseEntity.noContent().build();

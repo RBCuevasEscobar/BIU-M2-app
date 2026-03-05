@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce - Mis Direcciones</title>
+    <link rel="stylesheet" href="css/output.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Char counter */
+        .char-counter {
+            font-size: 0.70rem;
+            color: #6b7280;
+            text-align: right;
+            margin-top: 2px;
+        }
+
+        .char-counter.warn {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        /* Tarjeta de dirección */
+        .direccion-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            position: relative;
+            transition: box-shadow 0.2s;
+        }
+
+        .direccion-card.preferida {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px #dbeafe;
+        }
+
+        .badge-preferida {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 0.70rem;
+            font-weight: 600;
+            padding: 0.15rem 0.6rem;
+            border-radius: 9999px;
+        }
+
+        /* Teléfonos */
+        .tel-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f3f4f6;
+            border-radius: 0.4rem;
+            padding: 0.3rem 0.6rem;
+        }
+
+        /* Modal scroll */
+        .modal-body {
+            max-height: 78vh;
+            overflow-y: auto;
+        }
+
+        /* Grid responsivo con container queries */
+        @container (min-width: 640px) {
+            .form-grid-2 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+
+    <nav id="mainNav"></nav>
+
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        <header class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">
+                <i class="fas fa-map-marker-alt text-blue-500 mr-2"></i> Mis Direcciones
+            </h1>
+            <button id="btnNuevaDireccion"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition flex items-center gap-2">
+                <i class="fas fa-plus"></i> Nueva Dirección
+            </button>
+        </header>
+
+        <!-- Lista de direcciones -->
+        <section id="listaDirecciones" class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            aria-label="Lista de direcciones">
+            <!-- Renderizado dinámicamente -->
+        </section>
+
+        <!-- Estado vacío -->
+        <div id="emptyState" class="hidden text-center py-16 text-gray-400">
+            <i class="fas fa-map-marker-slash text-5xl mb-3"></i>
+            <p class="text-lg">No tienes direcciones registradas.</p>
+            <p class="text-sm mt-1">Agrega tu primera dirección para poder realizar compras.</p>
+        </div>
+    </main>
+
+    <!-- ═══════════════ MODAL CREAR / EDITAR DIRECCIÓN ═══════════════ -->
+    <div id="modalDireccion" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
+            <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+                <h2 id="modalTitle" class="text-lg font-semibold text-gray-800">Nueva Dirección</h2>
+                <button id="btnCerrarModal" class="text-gray-400 hover:text-gray-600" aria-label="Cerrar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body px-6 py-5">
+                <form id="formDireccion" itemscope itemtype="https://schema.org/PostalAddress">
+                    <input type="hidden" id="direccionId">
+
+                    <!-- Alias + Preferida -->
+                    <div class="flex gap-4 items-end mb-4">
+                        <div class="flex-1">
+                            <label for="alias" class="block text-sm font-medium text-gray-700 mb-1">Alias<span
+                                    class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="alias" name="alias" required maxlength="20"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
+                                placeholder="Casa, Trabajo, etc.">
+                            <div class="char-counter" id="contadorAlias">0 / 20</div>
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer pb-6">
+                            <input type="checkbox" id="preferida" name="preferida" class="w-4 h-4 accent-blue-600">
+                            <span class="text-sm font-medium text-gray-700">Dirección preferida</span>
+                        </label>
+                    </div>
+
+                    <!-- Calle + Número exterior -->
+                    <div class="form-grid-2 mb-4">
+                        <div>
+                            <label for="calle" class="block text-sm font-medium text-gray-700 mb-1">
+                                Calle<span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="calle" name="calle" required maxlength="25"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
+                                itemprop="streetAddress" placeholder="Nombre de la calle">
+                            <div class="char-counter" id="contadorCalle">0 / 25</div>
+                        </div>
+                        <div>
+                            <label for="numeroExterior" class="block text-sm font-medium text-gray-700 mb-1">
+                                Núm. Exterior<span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="numeroExterior" name="numeroExterior" required maxlength="10"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
+                                placeholder="123">
+                            <div class="char-counter" id="contadorNumExt">0 / 10</div>
+                        </div>
+                    </div>
+
+                    <!-- Número interior + Referencia -->
+                    <div class="form-grid-2 mb-4">
+                        <div>
+                            <label for="numeroInterior" class="block text-sm font-medium text-gray-700 mb-1">Núm.
+                                Interior</label>
+                            <input type="text" id="numeroInterior" name="numeroInterior" maxlength="10"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
+                                placeholder="Apto 4B (opcional)">
+                            <div class="char-counter" id="contadorNumInt">0 / 10</div>
+                        </div>
+                        <div>
+                            <label for="referencia"
+                                class="block text-sm font-medium text-gray-700 mb-1">Referencia</label>
+                            <input type="text" id="referencia" name="referencia" maxlength="75"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
+                                placeholder="Entre qué calles, color de fachada…">
+                            <div class="char-counter" id="contadorRef">0 / 75</div>
+                        </div>
+                    </div>
+
+                    <!-- Colonia + Ciudad + Municipio -->
+                    <div class="form-grid-2 mb-4">
+                        <div>
+                            <label for="colonia" class="block text-sm font-medium text-gray-700 mb-1">
+                                Colonia<span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="colonia" name="colonia" required maxlength="40"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
+                                itemprop="addressLocality" placeholder="Colonia">
+                            <div class="char-counter" id="contadorColonia">0 / 40</div>
+                        </div>
+                        <div>
+                            <label for="ciudad" class="block text-sm font-medium text-gray-700 mb-1">
+                                Ciudad<span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="ciudad" name="ciudad" required maxlength="45"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
+                                itemprop="addressRegion" placeholder="Ciudad">
+                            <div class="char-counter" id="contadorCiudad">0 / 45</div>
+                        </div>
+                        <div>
+                            <label for="municipio" class="block text-sm font-medium text-gray-700 mb-1">
+                                Municipio / Alcaldía<span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="municipio" name="municipio" required maxlength="45"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
+                                itemprop="addressRegion" placeholder="Municipio o alcaldía">
+                            <div class="char-counter" id="contadorMunicipio">0 / 45</div>
+                        </div>
+                    </div>
+
+                    <!-- Estado + CP -->
+                    <div class="form-grid-2 mb-4">
+                        <div>
+                            <label for="estado" class="block text-sm font-medium text-gray-700 mb-1">
+                                Estado<span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="estado" name="estado" required maxlength="25"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
+                                itemprop="addressCountry" placeholder="Estado o provincia">
+                            <div class="char-counter" id="contadorEstado">0 / 25</div>
+                        </div>
+                        <div>
+                            <label for="codigoPostal" class="block text-sm font-medium text-gray-700 mb-1">
+                                Código Postal<span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="codigoPostal" name="codigoPostal" required pattern="^\d{5}$"
+                                maxlength="5" minlength="5"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
+                                itemprop="postalCode" placeholder="12345">
+                            <p class="text-xs text-gray-400 mt-0.5">Exactamente 5 dígitos</p>
+                        </div>
+                    </div>
+
+                    <!-- Teléfonos -->
+                    <fieldset class="border border-gray-200 rounded-lg p-4 mb-4">
+                        <legend class="text-sm font-semibold text-gray-700 px-2">
+                            <i class="fas fa-phone text-blue-400 mr-1"></i>
+                            Teléfonos<span class="text-red-500">*</span>
+                        </legend>
+
+                        <div id="telefonosContainer" class="flex flex-col gap-2 mb-3"></div>
+                        <p id="sinTelefonos" class="text-xs text-red-400 italic mb-2 hidden">
+                            Debe agregar al menos un teléfono.
+                        </p>
+
+                        <div class="flex gap-2">
+                            <input type="tel" id="nuevoTelefono" pattern="^\d{10}$" maxlength="10"
+                                class="flex-1 border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
+                                placeholder="10 dígitos, ej: 5512345678" aria-label="Número de teléfono a agregar">
+                            <button type="button" id="btnAgregarTel"
+                                class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg text-sm font-medium transition">
+                                <i class="fas fa-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </fieldset>
+
+                    <!-- Botones -->
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" id="btnCancelar"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow text-sm font-medium">
+                            <i class="fas fa-save mr-1"></i> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/direcciones.js"></script>
+</body>
+
+</html>

@@ -3,6 +3,8 @@ package com.ecommerce.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Clase base abstracta para todos los tipos de producto.
@@ -45,6 +47,15 @@ public abstract class Producto {
 
     @Column(nullable = false)
     private Double precio;
+
+    @Column(length = 250)
+    private String descripcion;
+
+    @Column(length = 150)
+    private String proveedor;
+
+    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductoImagen> imagenes = new ArrayList<>();
 
     // Constructor parametrizado (usado por subclases via super(...))
     public Producto(String nombre, Double precio) {

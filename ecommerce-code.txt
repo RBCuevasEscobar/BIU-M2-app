@@ -88,7 +88,7 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
 
 ================ backend\README.md ================
 
-# E-Commerce Backend v1.0
+# E-Commerce Backend v2.0
 
 ## 🎯 Propósito del Backend
 
@@ -854,6 +854,128 @@ http://localhost:8080/api
 
 BIU License - Proyecto Académico - Módulo Object-Oriented Programming.
 
+---
+
+## 🔄 Phase 2 – Nuevas Funcionalidades
+
+### Extensión de la Entidad `Producto`
+
+#### Nuevos Atributos Obligatorios
+```java
+public abstract class Producto {
+    // ... campos existentes ...
+    @Column(length = 250)
+    private String descripcion;      // Máx. 250 caracteres
+
+    @Column(length = 150)
+    private String proveedor;        // Nombre/empresa del proveedor. Solo ADMIN puede asignar.
+
+    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductoImagen> imagenes = new ArrayList<>();
+}
+```
+
+#### Entidad `ProductoImagen`
+```java
+@Entity
+@Table(name = "producto_imagenes")
+public class ProductoImagen {
+    @Id @GeneratedValue
+    private Long id;
+
+    @Column(nullable = false)
+    private String imagenUrl;   // URL de la imagen
+
+    @Column(nullable = false)
+    private Boolean isDefault;  // Una sola imagen por defecto por producto
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "producto_id")
+    private Producto producto;
+}
+```
+
+**Reglas de negocio de imágenes:**
+- Mínimo una imagen por producto
+- Exactamente una imagen marcada como `isDefault = true`
+- Solo ADMIN puede crear productos; ADMIN + SUPPLIER pueden editar
+- SUPPLIER no puede ver ni modificar el campo `proveedor`
+
+---
+
+### Nueva Entidad `Direccion`
+
+```java
+@Entity
+@Table(name = "direcciones")
+public class Direccion {
+    private Long id;
+    private Boolean preferida;         // Única dirección preferida por usuario
+    private String alias;              // Etiqueta (Casa, Trabajo…)
+    private String calle;              // Máx. 25 caracteres
+    private String numeroExterior;     // Máx. 10 caracteres
+    private String numeroInterior;     // Máx. 10 caracteres (opcional)
+    private String referencia;         // Máx. 35 caracteres (opcional)
+    private String colonia;            // Máx. 40 caracteres
+    private String municipio;          // Máx. 45 caracteres
+    private String estado;             // Máx. 25 caracteres
+    private String codigoPostal;       // Exactamente 5 dígitos
+
+    @ElementCollection
+    private List<String> telefonos;    // Mín. 1 teléfono, formato: 10 dígitos
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+}
+```
+
+**Reglas de negocio de direcciones:**
+- Mínimo 1 dirección permitida por usuario; máximo 5
+- Solo 1 dirección `preferida` por usuario; al marcar una nueva, la anterior se desmarca automáticamente
+- Cada teléfono debe tener exactamente 10 dígitos numéricos
+- ADMIN puede gestionar direcciones de cualquier usuario
+- CUSTOMER puede crear/editar/eliminar sus propias direcciones
+- SUPPLIER puede crear/editar sus propias direcciones, pero NO eliminar
+
+---
+
+### Nuevos Endpoints API
+
+#### Direcciones (`/api/direcciones`)
+| Método | Endpoint | Rol Requerido | Descripción |
+|--------|----------|---------------|-------------|
+| `POST` | `/api/direcciones` | ADMIN, CUSTOMER, SUPPLIER | Crear dirección propia |
+| `PUT` | `/api/direcciones/{id}` | ADMIN, CUSTOMER, SUPPLIER | Actualizar dirección |
+| `GET` | `/api/direcciones/mis-direcciones` | ADMIN, CUSTOMER, SUPPLIER | Listar mis direcciones |
+| `GET` | `/api/direcciones/{id}` | ADMIN, CUSTOMER, SUPPLIER | Obtener dirección por ID |
+| `GET` | `/api/direcciones/usuario/{usuarioId}` | ADMIN, CUSTOMER, SUPPLIER | Listar por usuario |
+| `GET` | `/api/direcciones` | ADMIN | Todas las direcciones |
+| `DELETE` | `/api/direcciones/{id}` | ADMIN, CUSTOMER | Eliminar dirección |
+| `POST` | `/api/direcciones/usuario/{usuarioId}` | ADMIN | Crear para otro usuario |
+
+#### Productos (actualizados)
+| Método | Endpoint | Campos Nuevos |
+|--------|----------|---------------|
+| `POST` | `/api/productos` | `descripcion`, `proveedor`, `imagenesUrls[]`, `defaultImageIndex` |
+| `PUT` | `/api/productos/{id}` | `descripcion`, `imagenesUrls[]`, `defaultImageIndex` (proveedor: solo ADMIN) |
+| `GET` | `/api/productos` | Respuesta incluye `imagenes[]`, `descripcion`, `proveedor` |
+
+---
+
+### `UsuarioService` – Método Añadido
+
+```java
+/**
+ * Busca un usuario por ID; lanza excepción si no existe.
+ * Usado por DireccionController para operaciones sobre destinatarios específicos.
+ */
+public Usuario buscarPorId(Long id) {
+    return usuarioRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
+}
+```
+
 
 ================ backend\src\main\java\com\ecommerce\BackendApplication.java ================
 
@@ -921,7 +1043,6 @@ public class DataSeeder implements CommandLineRunner {
         admin.setFechaNacimiento(LocalDate.of(1980, 1, 1));
         admin.setRole(Role.ADMIN);
         admin.setValidUntil(LocalDate.now().plusYears(1));
-
         usuarioRepository.save(admin);
 
         // Supplier
@@ -947,20 +1068,79 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void crearProductos() {
+        // ── Producto Físico 1: Laptop Gamer ─────────────────────────────
         ProductoFisico p1 = new ProductoFisico();
-        p1.setNombre("Laptop Gamer");
+        p1.setNombre("Laptop Gamer Pro");
         p1.setPrecio(1500.0);
         p1.setPeso(2.5);
         p1.setStock(10);
+        p1.setDescripcion(
+                "Laptop gamer de alto rendimiento con procesador Intel Core i9, 32GB RAM, SSD 1TB y GPU RTX 4070.");
+        p1.setProveedor("Supplier Company");
+        // Imágenes asociadas
+        p1.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=600", true, p1));
+        p1.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600", false, p1));
+        p1.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=600", false, p1));
         productoRepository.save(p1);
 
-        ProductoDigital p2 = new ProductoDigital();
-        p2.setNombre("E-Book Java");
-        p2.setPrecio(29.99);
-        p2.setUrlDescarga("http://example.com/ebook.pdf");
+        // ── Producto Físico 2: Mouse RGB ─────────────────────────────────
+        ProductoFisico p2 = new ProductoFisico();
+        p2.setNombre("Mouse RGB Ergonómico");
+        p2.setPrecio(89.99);
+        p2.setPeso(0.15);
+        p2.setStock(50);
+        p2.setDescripcion(
+                "Mouse inalámbrico ergonómico con iluminación RGB, 6 botones programables y batería de larga duración.");
+        p2.setProveedor("Supplier Company");
+        p2.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1527814050087-3793815479db?w=600", true, p2));
+        p2.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=600", false, p2));
         productoRepository.save(p2);
 
-        System.out.println("Productos de prueba creados.");
+        // ── Producto Físico 3: Teclado Mecánico ──────────────────────────
+        ProductoFisico p3 = new ProductoFisico();
+        p3.setNombre("Teclado Mecánico TKL");
+        p3.setPrecio(149.99);
+        p3.setPeso(0.9);
+        p3.setStock(25);
+        p3.setDescripcion(
+                "Teclado mecánico tenkeyless con switches Cherry MX Red, retroiluminación RGB por tecla y marco de aluminio.");
+        p3.setProveedor("Supplier Company");
+        p3.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=600", true, p3));
+        productoRepository.save(p3);
+
+        // ── Producto Digital 1: E-Book Java ──────────────────────────────
+        ProductoDigital p4 = new ProductoDigital();
+        p4.setNombre("E-Book: Java Avanzado");
+        p4.setPrecio(29.99);
+        p4.setUrlDescarga("https://example.com/downloads/java-avanzado.pdf");
+        p4.setDescripcion(
+                "Guía completa de Java avanzado: patrones de diseño, programación funcional, concurrencia y Spring Boot.");
+        p4.setProveedor("Supplier Company");
+        p4.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=600", true, p4));
+        p4.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600", false, p4));
+        productoRepository.save(p4);
+
+        // ── Producto Digital 2: Curso Spring Boot ────────────────────────
+        ProductoDigital p5 = new ProductoDigital();
+        p5.setNombre("Curso: Spring Boot REST API");
+        p5.setPrecio(59.99);
+        p5.setUrlDescarga("https://example.com/downloads/spring-boot-rest.zip");
+        p5.setDescripcion(
+                "Curso completo en video sobre desarrollo de APIs RESTful con Spring Boot, seguridad JWT y despliegue en AWS.");
+        p5.setProveedor("Supplier Company");
+        p5.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600", true, p5));
+        productoRepository.save(p5);
+
+        System.out.println("Productos de prueba con imágenes y descripciones creados.");
     }
 }
 
@@ -1140,6 +1320,102 @@ public class CarritoController {
 }
 
 
+================ backend\src\main\java\com\ecommerce\controller\DireccionController.java ================
+
+package com.ecommerce.controller;
+
+import com.ecommerce.dto.DireccionDTO;
+import com.ecommerce.dto.DireccionRequestDTO;
+import com.ecommerce.model.Usuario;
+import com.ecommerce.service.DireccionService;
+import com.ecommerce.service.UsuarioService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/direcciones")
+public class DireccionController {
+
+    @Autowired
+    private DireccionService direccionService;
+
+    @Autowired
+    private UsuarioService usuarioService;
+
+    private Usuario getAuthenticatedUser(Authentication auth) {
+        return usuarioService.buscarPorEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER', 'SUPPLIER')")
+    public ResponseEntity<DireccionDTO> crearMiDireccion(@Valid @RequestBody DireccionRequestDTO request,
+            Authentication auth) {
+        Usuario accionUsuario = getAuthenticatedUser(auth);
+        return ResponseEntity.ok(direccionService.crearDireccion(accionUsuario, request));
+    }
+
+    @PostMapping("/usuario/{usuarioId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<DireccionDTO> crearDireccionParaUsuario(@PathVariable Long usuarioId,
+            @Valid @RequestBody DireccionRequestDTO request) {
+        Usuario targetUser = usuarioService.buscarPorId(usuarioId);
+        return ResponseEntity.ok(direccionService.crearDireccion(targetUser, request));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER', 'SUPPLIER')")
+    public ResponseEntity<DireccionDTO> actualizarDireccion(@PathVariable Long id,
+            @Valid @RequestBody DireccionRequestDTO request, Authentication auth) {
+        Usuario accionUsuario = getAuthenticatedUser(auth);
+        return ResponseEntity.ok(direccionService.actualizarDireccion(id, request, accionUsuario));
+    }
+
+    @GetMapping("/mis-direcciones")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER', 'SUPPLIER')")
+    public ResponseEntity<List<DireccionDTO>> listarMisDirecciones(Authentication auth) {
+        Usuario accionUsuario = getAuthenticatedUser(auth);
+        return ResponseEntity.ok(direccionService.listarMisDirecciones(accionUsuario));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER', 'SUPPLIER')")
+    public ResponseEntity<DireccionDTO> obtenerDireccion(@PathVariable Long id, Authentication auth) {
+        Usuario accionUsuario = getAuthenticatedUser(auth);
+        return ResponseEntity.ok(direccionService.obtenerDireccion(id, accionUsuario));
+    }
+
+    @GetMapping("/usuario/{usuarioId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER', 'SUPPLIER')")
+    public ResponseEntity<List<DireccionDTO>> listarDireccionesDeUsuario(@PathVariable Long usuarioId,
+            Authentication auth) {
+        Usuario accionUsuario = getAuthenticatedUser(auth);
+        return ResponseEntity.ok(direccionService.listarDireccionesPorUsuarioId(usuarioId, accionUsuario));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<DireccionDTO>> listarTodasLasDirecciones(Authentication auth) {
+        Usuario accionUsuario = getAuthenticatedUser(auth);
+        return ResponseEntity.ok(direccionService.listarTodasLasDirecciones(accionUsuario));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
+    public ResponseEntity<Void> eliminarDireccion(@PathVariable Long id, Authentication auth) {
+        Usuario accionUsuario = getAuthenticatedUser(auth);
+        direccionService.eliminarDireccion(id, accionUsuario);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+
 ================ backend\src\main\java\com\ecommerce\controller\OrdenController.java ================
 
 package com.ecommerce.controller;
@@ -1188,12 +1464,14 @@ public class OrdenController {
 
 package com.ecommerce.controller;
 
-import com.ecommerce.model.Producto;
-import com.ecommerce.model.ProductoFisico;
-import com.ecommerce.model.ProductoDigital;
+import com.ecommerce.dto.ProductoDTO;
+import com.ecommerce.dto.ProductoRequestDTO;
 import com.ecommerce.service.ProductoService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -1206,37 +1484,34 @@ public class ProductoController {
     private ProductoService productoService;
 
     @GetMapping
-    public List<Producto> listarProductos() {
+    public List<ProductoDTO> listarProductos() {
         return productoService.listarProductos();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Producto> obtenerProducto(@PathVariable Long id) {
+    public ResponseEntity<ProductoDTO> obtenerProducto(@PathVariable Long id) {
         return productoService.obtenerProducto(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/fisico")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Producto> crearProductoFisico(@RequestBody ProductoFisico producto) {
-        return ResponseEntity.ok(productoService.guardarProducto(producto));
-    }
-
-    @PostMapping("/digital")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Producto> crearProductoDigital(@RequestBody ProductoDigital producto) {
-        return ResponseEntity.ok(productoService.guardarProducto(producto));
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProductoDTO> crearProducto(@Valid @RequestBody ProductoRequestDTO request) {
+        return ResponseEntity.ok(productoService.guardarProducto(request));
     }
 
     @PutMapping("/{id}")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'SUPPLIER')")
-    public ResponseEntity<Producto> actualizarProducto(@PathVariable Long id, @RequestBody Producto productoDetalles) {
-        return ResponseEntity.ok(productoService.actualizarProducto(id, productoDetalles));
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPPLIER')")
+    public ResponseEntity<ProductoDTO> actualizarProducto(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductoRequestDTO request,
+            Authentication auth) {
+        return ResponseEntity.ok(productoService.actualizarProducto(id, request, auth.getName()));
     }
 
     @DeleteMapping("/{id}")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
         productoService.eliminarProducto(id);
         return ResponseEntity.noContent().build();
@@ -1251,6 +1526,7 @@ package com.ecommerce.controller;
 import com.ecommerce.model.Usuario;
 import com.ecommerce.model.Cliente;
 import com.ecommerce.model.Proveedor;
+import com.ecommerce.dto.UsuarioUpdateRequest;
 import com.ecommerce.model.Administrador;
 import com.ecommerce.service.UsuarioService;
 import com.ecommerce.service.AdministradorService;
@@ -1307,10 +1583,9 @@ public class UsuarioController {
 
     @PutMapping("/{id}")
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Long id, @RequestBody Usuario datosActualizados) {
+    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Long id, @RequestBody UsuarioUpdateRequest dto) {
         try {
-            Usuario usuarioActualizado = usuarioService.actualizarUsuario(id, datosActualizados);
-            return ResponseEntity.ok(usuarioActualizado);
+            return ResponseEntity.ok(usuarioService.actualizarUsuario(id, dto));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
         }
@@ -1326,6 +1601,105 @@ public class UsuarioController {
             return ResponseEntity.notFound().build();
         }
     }
+}
+
+
+================ backend\src\main\java\com\ecommerce\dto\DireccionDTO.java ================
+
+package com.ecommerce.dto;
+
+import com.ecommerce.model.Direccion;
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+public class DireccionDTO {
+    private Long id;
+    private Boolean preferida;
+    private String alias;
+    private String calle;
+    private String numeroExterior;
+    private String numeroInterior;
+    private String referencia;
+    private String colonia;
+    private String municipio;
+    private String estado;
+    private String codigoPostal;
+    private List<String> telefonos;
+
+    public static DireccionDTO fromEntity(Direccion direccion) {
+        DireccionDTO dto = new DireccionDTO();
+        dto.setId(direccion.getId());
+        dto.setPreferida(direccion.getPreferida());
+        dto.setAlias(direccion.getAlias());
+        dto.setCalle(direccion.getCalle());
+        dto.setNumeroExterior(direccion.getNumeroExterior());
+        dto.setNumeroInterior(direccion.getNumeroInterior());
+        dto.setReferencia(direccion.getReferencia());
+        dto.setColonia(direccion.getColonia());
+        dto.setMunicipio(direccion.getMunicipio());
+        dto.setEstado(direccion.getEstado());
+        dto.setCodigoPostal(direccion.getCodigoPostal());
+        dto.setTelefonos(direccion.getTelefonos());
+        return dto;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\dto\DireccionRequestDTO.java ================
+
+package com.ecommerce.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+public class DireccionRequestDTO {
+
+    private Boolean preferida;
+
+    @Size(max = 20)
+    private String alias;
+
+    @NotBlank
+    @Size(max = 25)
+    private String calle;
+
+    @NotBlank
+    @Size(max = 10)
+    private String numeroExterior;
+
+    @Size(max = 10)
+    private String numeroInterior;
+
+    @Size(max = 35)
+    private String referencia;
+
+    @NotBlank
+    @Size(max = 40)
+    private String colonia;
+
+    @NotBlank
+    @Size(max = 45)
+    private String municipio;
+
+    @NotBlank
+    @Size(max = 25)
+    private String estado;
+
+    @NotBlank
+    @Pattern(regexp = "^\\d{5}$", message = "El código postal debe tener exactamente 5 dígitos")
+    private String codigoPostal;
+
+    @NotNull
+    @Size(min = 1, message = "Debe proporcionar al menos un teléfono")
+    private List<@Pattern(regexp = "^\\d{10}$", message = "El teléfono debe tener exactamente 10 dígitos") String> telefonos;
 }
 
 
@@ -1346,6 +1720,156 @@ import com.ecommerce.model.Role;
 public record LoginResponse(Long id, String nombre, Role role, String token) {
 }
 
+
+================ backend\src\main\java\com\ecommerce\dto\ProductoDTO.java ================
+
+package com.ecommerce.dto;
+
+import com.ecommerce.model.Producto;
+import com.ecommerce.model.ProductoDigital;
+import com.ecommerce.model.ProductoFisico;
+import lombok.Data;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Data
+public class ProductoDTO {
+    private Long id;
+    private String nombre;
+    private Double precio;
+    private String descripcion;
+    private String proveedor;
+    private String tipo;
+
+    // Attributos Fisico
+    private Integer stock;
+    private Double peso;
+
+    // Attributos Digital
+    private String urlDescarga;
+
+    private List<ProductoImagenDTO> imagenes;
+
+    public static ProductoDTO fromEntity(Producto producto) {
+        ProductoDTO dto = new ProductoDTO();
+        dto.setId(producto.getId());
+        dto.setNombre(producto.getNombre());
+        dto.setPrecio(producto.getPrecio());
+        dto.setDescripcion(producto.getDescripcion());
+        dto.setProveedor(producto.getProveedor());
+
+        if (producto instanceof ProductoFisico pf) {
+            dto.setTipo("Fisico");
+            dto.setStock(pf.getStock());
+            dto.setPeso(pf.getPeso());
+        } else if (producto instanceof ProductoDigital pd) {
+            dto.setTipo("Digital");
+            dto.setUrlDescarga(pd.getUrlDescarga());
+        }
+
+        if (producto.getImagenes() != null) {
+            dto.setImagenes(producto.getImagenes().stream()
+                    .map(img -> new ProductoImagenDTO(img.getId(), img.getImagenUrl(), img.getIsDefault()))
+                    .collect(Collectors.toList()));
+        }
+
+        return dto;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\dto\ProductoImagenDTO.java ================
+
+package com.ecommerce.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProductoImagenDTO {
+    private Long id;
+    private String imagenUrl;
+    private Boolean isDefault;
+}
+
+
+================ backend\src\main\java\com\ecommerce\dto\ProductoRequestDTO.java ================
+
+package com.ecommerce.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+import java.util.List;
+
+@Data
+public class ProductoRequestDTO {
+    @NotBlank
+    private String nombre;
+
+    @NotNull
+    private Double precio;
+
+    @Size(max = 250)
+    private String descripcion;
+
+    @Size(max = 150)
+    private String proveedor;
+
+    @NotBlank
+    private String tipo; // "Fisico" o "Digital"
+
+    // Campos físicos
+    private Integer stock;
+    private Double peso;
+
+    // Campos digitales
+    private String urlDescarga;
+
+    // Lista de URLs de imágenes
+    @NotNull
+    @Size(min = 1, message = "El producto debe tener al menos una imagen")
+    private List<String> imagenesUrls;
+
+    // Indice de la imagen default en imagenesUrls
+    private Integer defaultImageIndex;
+}
+
+
+================ backend\src\main\java\com\ecommerce\dto\ProductUpdateRequest.java ================
+
+package com.ecommerce.dto;
+
+public record ProductUpdateRequest(
+        String nombre,
+        String descripcion,
+        Double precio,
+        Integer stock,
+        String categoria,
+        String imagen) {
+}
+
+
+================ backend\src\main\java\com\ecommerce\dto\UsuarioUpdateRequest.java ================
+
+// src/main/java/com/ecommerce/dto/UsuarioUpdateRequest.java
+package com.ecommerce.dto;
+
+import java.time.LocalDate;
+
+import com.ecommerce.model.Role;
+
+public record UsuarioUpdateRequest(
+        String nombre,
+        String email,
+        String password,
+        LocalDate fechaNacimiento,
+        Role role) {
+}
 
 ================ backend\src\main\java\com\ecommerce\model\Administrador.java ================
 
@@ -1507,6 +2031,69 @@ public class Cliente extends Usuario {
 }
 
 
+================ backend\src\main\java\com\ecommerce\model\Direccion.java ================
+
+package com.ecommerce.model;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "direcciones")
+@Data
+@NoArgsConstructor
+public class Direccion {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private Boolean preferida = false;
+
+    @Column(length = 20)
+    private String alias;
+
+    @Column(nullable = false, length = 25)
+    private String calle;
+
+    @Column(nullable = false, length = 10)
+    private String numeroExterior;
+
+    @Column(length = 10)
+    private String numeroInterior;
+
+    @Column(length = 35)
+    private String referencia;
+
+    @Column(nullable = false, length = 40)
+    private String colonia;
+
+    @Column(nullable = false, length = 45)
+    private String municipio;
+
+    @Column(nullable = false, length = 25)
+    private String estado;
+
+    @Column(nullable = false, length = 5)
+    @Pattern(regexp = "^\\d{5}$", message = "El código postal debe tener exactamente 5 dígitos")
+    private String codigoPostal;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
+
+    @ElementCollection
+    @CollectionTable(name = "direccion_telefonos", joinColumns = @JoinColumn(name = "direccion_id"))
+    @Column(name = "telefono")
+    private List<@Pattern(regexp = "^\\d{10}$", message = "El teléfono debe tener exactamente 10 dígitos") String> telefonos = new ArrayList<>();
+}
+
+
 ================ backend\src\main\java\com\ecommerce\model\Orden.java ================
 
 package com.ecommerce.model;
@@ -1598,6 +2185,8 @@ package com.ecommerce.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Clase base abstracta para todos los tipos de producto.
@@ -1640,6 +2229,15 @@ public abstract class Producto {
 
     @Column(nullable = false)
     private Double precio;
+
+    @Column(length = 250)
+    private String descripcion;
+
+    @Column(length = 150)
+    private String proveedor;
+
+    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductoImagen> imagenes = new ArrayList<>();
 
     // Constructor parametrizado (usado por subclases via super(...))
     public Producto(String nombre, Double precio) {
@@ -1826,6 +2424,44 @@ public class ProductoFisico extends Producto {
 }
 
 
+================ backend\src\main\java\com\ecommerce\model\ProductoImagen.java ================
+
+package com.ecommerce.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "producto_imagenes")
+@Data
+@NoArgsConstructor
+public class ProductoImagen {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 500)
+    private String imagenUrl;
+
+    @Column(nullable = false)
+    private Boolean isDefault;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "producto_id", nullable = false)
+    @JsonIgnore
+    private Producto producto;
+
+    public ProductoImagen(String imagenUrl, Boolean isDefault, Producto producto) {
+        this.imagenUrl = imagenUrl;
+        this.isDefault = isDefault;
+        this.producto = producto;
+    }
+}
+
+
 ================ backend\src\main\java\com\ecommerce\model\Proveedor.java ================
 
 package com.ecommerce.model;
@@ -1926,6 +2562,25 @@ import java.util.Optional;
 @Repository
 public interface CarritoRepository extends JpaRepository<Carrito, Long> {
     Optional<Carrito> findByUsuario(Usuario usuario);
+}
+
+
+================ backend\src\main\java\com\ecommerce\repository\DireccionRepository.java ================
+
+package com.ecommerce.repository;
+
+import com.ecommerce.model.Direccion;
+import com.ecommerce.model.Usuario;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface DireccionRepository extends JpaRepository<Direccion, Long> {
+    List<Direccion> findByUsuario(Usuario usuario);
+
+    long countByUsuario(Usuario usuario);
 }
 
 
@@ -2234,6 +2889,154 @@ public class CarritoService {
 }
 
 
+================ backend\src\main\java\com\ecommerce\service\DireccionService.java ================
+
+package com.ecommerce.service;
+
+import com.ecommerce.dto.DireccionDTO;
+import com.ecommerce.dto.DireccionRequestDTO;
+import com.ecommerce.model.Direccion;
+import com.ecommerce.model.Usuario;
+import com.ecommerce.repository.DireccionRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class DireccionService {
+
+    @Autowired
+    private DireccionRepository direccionRepository;
+
+    @Autowired
+    private UsuarioService usuarioService;
+
+    @SuppressWarnings("null")
+    @Transactional
+    public DireccionDTO crearDireccion(Usuario targetUser, DireccionRequestDTO request) {
+        Direccion direccion = new Direccion();
+        direccion.setUsuario(targetUser);
+        updateDireccionFields(direccion, request);
+
+        // Control principal/preferida
+        long cuentaDirecciones = direccionRepository.countByUsuario(targetUser);
+        if (cuentaDirecciones == 0) {
+            direccion.setPreferida(true);
+        } else if (Boolean.TRUE.equals(request.getPreferida())) {
+            unsetOtherPreferred(targetUser);
+            direccion.setPreferida(true);
+        }
+
+        return DireccionDTO.fromEntity(direccionRepository.save(direccion));
+    }
+
+    @SuppressWarnings("null")
+    @Transactional
+    public DireccionDTO actualizarDireccion(Long id, DireccionRequestDTO request, Usuario accionUsuario) {
+        Direccion direccion = direccionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Dirección no encontrada"));
+
+        validarAccesos(direccion, accionUsuario, "EDITAR");
+
+        updateDireccionFields(direccion, request);
+
+        if (Boolean.TRUE.equals(request.getPreferida()) && !direccion.getPreferida()) {
+            unsetOtherPreferred(direccion.getUsuario());
+            direccion.setPreferida(true);
+        } else if (Boolean.FALSE.equals(request.getPreferida()) && direccion.getPreferida()) {
+            direccion.setPreferida(false);
+        }
+
+        return DireccionDTO.fromEntity(direccionRepository.save(direccion));
+    }
+
+    public List<DireccionDTO> listarMisDirecciones(Usuario usuario) {
+        return direccionRepository.findByUsuario(usuario).stream()
+                .map(DireccionDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtiene una dirección por ID. ADMIN puede ver cualquiera;
+     * CUSTOMER y SUPPLIER solo las propias.
+     */
+    @SuppressWarnings("null")
+    public DireccionDTO obtenerDireccion(Long id, Usuario accionUsuario) {
+        Direccion direccion = direccionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Dirección no encontrada con id: " + id));
+        validarAccesos(direccion, accionUsuario, "LEER");
+        return DireccionDTO.fromEntity(direccion);
+    }
+
+    public List<DireccionDTO> listarDireccionesPorUsuarioId(Long usuarioId, Usuario accionUsuario) {
+        if (!accionUsuario.getRole().name().equals("ADMIN") && !accionUsuario.getId().equals(usuarioId)) {
+            throw new RuntimeException("Acceso Denegado: No puedes ver direcciones de otros usuarios");
+        }
+        Usuario targetUser = usuarioService.buscarPorId(usuarioId);
+        return direccionRepository.findByUsuario(targetUser).stream()
+                .map(DireccionDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<DireccionDTO> listarTodasLasDirecciones(Usuario accionUsuario) {
+        if (!"ADMIN".equals(accionUsuario.getRole().name())) {
+            throw new RuntimeException("Solo ADMIN puede ver todas las direcciones");
+        }
+        return direccionRepository.findAll().stream().map(DireccionDTO::fromEntity).collect(Collectors.toList());
+    }
+
+    @SuppressWarnings("null")
+    @Transactional
+    public void eliminarDireccion(Long id, Usuario accionUsuario) {
+        Direccion direccion = direccionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Dirección no encontrada"));
+
+        validarAccesos(direccion, accionUsuario, "ELIMINAR");
+
+        if ("SUPPLIER".equals(accionUsuario.getRole().name())) {
+            throw new RuntimeException("Proveedores no tienen permiso para eliminar direcciones");
+        }
+
+        direccionRepository.delete(direccion);
+    }
+
+    private void updateDireccionFields(Direccion direccion, DireccionRequestDTO request) {
+        direccion.setAlias(request.getAlias());
+        direccion.setCalle(request.getCalle());
+        direccion.setNumeroExterior(request.getNumeroExterior());
+        direccion.setNumeroInterior(request.getNumeroInterior());
+        direccion.setReferencia(request.getReferencia());
+        direccion.setColonia(request.getColonia());
+        direccion.setMunicipio(request.getMunicipio());
+        direccion.setEstado(request.getEstado());
+        direccion.setCodigoPostal(request.getCodigoPostal());
+        direccion.setTelefonos(request.getTelefonos());
+    }
+
+    private void unsetOtherPreferred(Usuario usuario) {
+        List<Direccion> direcciones = direccionRepository.findByUsuario(usuario);
+        for (Direccion d : direcciones) {
+            if (d.getPreferida()) {
+                d.setPreferida(false);
+                direccionRepository.save(d);
+            }
+        }
+    }
+
+    private void validarAccesos(Direccion d, Usuario accionUsuario, String accion) {
+        if ("ADMIN".equals(accionUsuario.getRole().name())) {
+            return;
+        }
+        if (!d.getUsuario().getId().equals(accionUsuario.getId())) {
+            throw new RuntimeException("Acceso Denegado a esta dirección");
+        }
+    }
+}
+
+
 ================ backend\src\main\java\com\ecommerce\service\OrdenService.java ================
 
 package com.ecommerce.service;
@@ -2335,7 +3138,13 @@ public class OrdenService {
 
 package com.ecommerce.service;
 
+import com.ecommerce.dto.ProductoDTO;
+import com.ecommerce.dto.ProductoRequestDTO;
 import com.ecommerce.model.Producto;
+import com.ecommerce.model.ProductoDigital;
+import com.ecommerce.model.ProductoFisico;
+import com.ecommerce.model.ProductoImagen;
+import com.ecommerce.model.Usuario;
 import com.ecommerce.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -2343,6 +3152,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductoService {
@@ -2350,19 +3160,37 @@ public class ProductoService {
     @Autowired
     private ProductoRepository productoRepository;
 
+    @Autowired
+    private UsuarioService usuarioService;
+
     @SuppressWarnings("null")
     @Transactional
-    public Producto guardarProducto(Producto producto) {
-        return productoRepository.save(producto);
+    public ProductoDTO guardarProducto(ProductoRequestDTO request) {
+        Producto producto;
+        if ("Fisico".equalsIgnoreCase(request.getTipo())) {
+            ProductoFisico pf = new ProductoFisico();
+            pf.setStock(request.getStock());
+            pf.setPeso(request.getPeso());
+            producto = pf;
+        } else {
+            ProductoDigital pd = new ProductoDigital();
+            pd.setUrlDescarga(request.getUrlDescarga());
+            producto = pd;
+        }
+
+        updateCommonFields(producto, request);
+        return ProductoDTO.fromEntity(productoRepository.save(producto));
     }
 
-    public List<Producto> listarProductos() {
-        return productoRepository.findAll();
+    public List<ProductoDTO> listarProductos() {
+        return productoRepository.findAll().stream()
+                .map(ProductoDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @SuppressWarnings("null")
-    public Optional<Producto> obtenerProducto(Long id) {
-        return productoRepository.findById(id);
+    public Optional<ProductoDTO> obtenerProducto(Long id) {
+        return productoRepository.findById(id).map(ProductoDTO::fromEntity);
     }
 
     @SuppressWarnings("null")
@@ -2373,15 +3201,78 @@ public class ProductoService {
 
     @SuppressWarnings("null")
     @Transactional
-    public Producto actualizarProducto(Long id, Producto productoDetalles) {
+    public ProductoDTO actualizarProducto(Long id, ProductoRequestDTO request, String username) {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado con id: " + id));
 
-        producto.setNombre(productoDetalles.getNombre());
-        producto.setPrecio(productoDetalles.getPrecio());
-        // Add other fields as necessary, or use a mapper
+        Usuario accionUsuario = usuarioService.buscarPorEmail(username)
+                .orElseThrow(() -> new RuntimeException("Usuario accion no encontrado"));
 
-        return productoRepository.save(producto);
+        boolean isAdmin = accionUsuario.getRole().name().equals("ADMIN");
+        boolean isSupplier = accionUsuario.getRole().name().equals("SUPPLIER");
+
+        if (isSupplier) {
+            // Un SUPPLIER solo puede modificar sus productos, y solo pueden tocar imágenes
+            // u otros campos habilitados.
+            // Para simplificar: el proveedor del producto debería coincidir con la
+            // empresa/identificador del supplier.
+            // Puesto que "proveedor" es un String asigando por el ADMIN a cada producto,
+            // vamos a empatar el String "proveedor" vs el email / nombre del usuario
+            // actual.
+            // Si el supplier no es el dueño, se rechaza la petición.
+            if (producto.getProveedor() == null || (!producto.getProveedor().equals(accionUsuario.getEmail())
+                    && !producto.getProveedor().equals(((com.ecommerce.model.Proveedor) accionUsuario).getEmpresa()))) {
+                throw new RuntimeException("Solo puedes editar productos que te pertenecen");
+            }
+            // Supplier can't alter proveedor name
+        } else if (isAdmin) {
+            // Admin can override proveedor
+            producto.setProveedor(request.getProveedor());
+        } else {
+            throw new RuntimeException("Not Authorized");
+        }
+
+        producto.setNombre(request.getNombre());
+        producto.setPrecio(request.getPrecio());
+        producto.setDescripcion(request.getDescripcion());
+
+        if (producto instanceof ProductoFisico pf && "Fisico".equalsIgnoreCase(request.getTipo())) {
+            pf.setStock(request.getStock());
+            pf.setPeso(request.getPeso());
+        } else if (producto instanceof ProductoDigital pd && "Digital".equalsIgnoreCase(request.getTipo())) {
+            pd.setUrlDescarga(request.getUrlDescarga());
+        }
+
+        // Handle Images
+        if (request.getImagenesUrls() != null && !request.getImagenesUrls().isEmpty()) {
+            producto.getImagenes().clear(); // For simplicity, replace all
+            int defaultIndex = request.getDefaultImageIndex() != null ? request.getDefaultImageIndex() : 0;
+
+            for (int i = 0; i < request.getImagenesUrls().size(); i++) {
+                boolean isDefault = (i == defaultIndex);
+                ProductoImagen img = new ProductoImagen(request.getImagenesUrls().get(i), isDefault, producto);
+                producto.getImagenes().add(img);
+            }
+        }
+
+        return ProductoDTO.fromEntity(productoRepository.save(producto));
+    }
+
+    private void updateCommonFields(Producto producto, ProductoRequestDTO request) {
+        producto.setNombre(request.getNombre());
+        producto.setPrecio(request.getPrecio());
+        producto.setDescripcion(request.getDescripcion());
+        producto.setProveedor(request.getProveedor());
+
+        if (request.getImagenesUrls() != null && !request.getImagenesUrls().isEmpty()) {
+            int defaultIndex = request.getDefaultImageIndex() != null ? request.getDefaultImageIndex() : 0;
+
+            for (int i = 0; i < request.getImagenesUrls().size(); i++) {
+                boolean isDefault = (i == defaultIndex);
+                ProductoImagen img = new ProductoImagen(request.getImagenesUrls().get(i), isDefault, producto);
+                producto.getImagenes().add(img);
+            }
+        }
     }
 }
 
@@ -2390,6 +3281,7 @@ public class ProductoService {
 
 package com.ecommerce.service;
 
+import com.ecommerce.dto.UsuarioUpdateRequest;
 import com.ecommerce.model.Usuario;
 import com.ecommerce.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -2431,6 +3323,16 @@ public class UsuarioService {
         return usuarioRepository.findById(id);
     }
 
+    /**
+     * Busca un usuario por ID; lanza excepción si no existe.
+     * Usado por DireccionController para operaciones sobre destinatarios específicos.
+     */
+    @SuppressWarnings("null")
+    public Usuario buscarPorId(Long id) {
+        return usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
+    }
+
     // @SuppressWarnings("null")
     public Optional<Usuario> buscarPorEmail(String email) {
         return usuarioRepository.findByEmail(email);
@@ -2453,36 +3355,36 @@ public class UsuarioService {
 
     @SuppressWarnings("null")
     @Transactional
-    public Usuario actualizarUsuario(Long id, Usuario datosActualizados) {
+    public Usuario actualizarUsuario(Long id, UsuarioUpdateRequest datosActualizados) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         // Update basic fields
-        if (datosActualizados.getNombre() != null) {
-            usuario.setNombre(datosActualizados.getNombre());
+        if (datosActualizados.nombre() != null) {
+            usuario.setNombre(datosActualizados.nombre());
         }
 
-        if (datosActualizados.getEmail() != null && !datosActualizados.getEmail().equals(usuario.getEmail())) {
+        if (datosActualizados.email() != null && !datosActualizados.email().equals(usuario.getEmail())) {
             // Check if new email already exists
-            if (usuarioRepository.existsByEmail(datosActualizados.getEmail())) {
+            if (usuarioRepository.existsByEmail(datosActualizados.email())) {
                 throw new RuntimeException("El email ya está registrado");
             }
-            usuario.setEmail(datosActualizados.getEmail());
+            usuario.setEmail(datosActualizados.email());
         }
 
         // Update password only if provided
-        if (datosActualizados.getPassword() != null && !datosActualizados.getPassword().isEmpty()) {
-            usuario.setPassword(passwordEncoder.encode(datosActualizados.getPassword()));
+        if (datosActualizados.password() != null && !datosActualizados.password().isEmpty()) {
+            usuario.setPassword(passwordEncoder.encode(datosActualizados.password()));
         }
 
         // Update role if provided
-        if (datosActualizados.getRole() != null) {
-            usuario.setRole(datosActualizados.getRole());
+        if (datosActualizados.role() != null) {
+            usuario.setRole(datosActualizados.role());
         }
 
         // Update birth date if provided
-        if (datosActualizados.getFechaNacimiento() != null) {
-            usuario.setFechaNacimiento(datosActualizados.getFechaNacimiento());
+        if (datosActualizados.fechaNacimiento() != null) {
+            usuario.setFechaNacimiento(datosActualizados.fechaNacimiento());
         }
 
         return usuarioRepository.save(usuario);
@@ -2517,31 +3419,64 @@ spring.jpa.show-sql=true
 server.error.include-message=always
 
 
+================ backend\target\classes\application.properties ================
+
+spring.application.name=backend
+# Server Configuration
+server.port=8080
+
+# Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce_db?createDatabaseIfNotExist=true
+spring.datasource.username=dbadmin
+spring.datasource.password=dbpassword
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA Configuration
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+# Error Handling
+server.error.include-message=always
+
+
 ================ backend\target\maven-status\maven-compiler-plugin\compile\default-compile\createdFiles.lst ================
 
+com\ecommerce\repository\DireccionRepository.class
+com\ecommerce\dto\ProductoRequestDTO.class
 com\ecommerce\service\ProductoService.class
 com\ecommerce\security\UsuarioSecurity.class
 com\ecommerce\repository\ProductoRepository.class
 com\ecommerce\model\Cliente.class
+com\ecommerce\dto\ProductUpdateRequest.class
 com\ecommerce\service\UsuarioService.class
 com\ecommerce\service\AdministradorService.class
 com\ecommerce\repository\UsuarioRepository.class
 com\ecommerce\service\OrdenService.class
 com\ecommerce\model\Proveedor.class
 com\ecommerce\controller\OrdenController.class
+com\ecommerce\dto\DireccionDTO.class
 com\ecommerce\controller\AuthController.class
 com\ecommerce\model\ProductoFisico.class
 com\ecommerce\model\Usuario.class
+com\ecommerce\model\ProductoImagen.class
+com\ecommerce\service\DireccionService.class
 com\ecommerce\config\SecurityConfig.class
+com\ecommerce\dto\ProductoDTO.class
+com\ecommerce\controller\DireccionController.class
 com\ecommerce\security\TokenAuthenticationFilter.class
+com\ecommerce\model\Direccion.class
 com\ecommerce\dto\LoginRequest.class
 com\ecommerce\config\WebConfig.class
 com\ecommerce\controller\ProductoController.class
 com\ecommerce\controller\CarritoController.class
 com\ecommerce\model\Producto.class
+com\ecommerce\dto\ProductoImagenDTO.class
 com\ecommerce\model\OrdenDetalle.class
+com\ecommerce\dto\UsuarioUpdateRequest.class
 com\ecommerce\dto\LoginResponse.class
 com\ecommerce\model\Role.class
+com\ecommerce\dto\DireccionRequestDTO.class
 com\ecommerce\config\DataSeeder.class
 com\ecommerce\controller\UsuarioController.class
 com\ecommerce\model\ProductoDigital.class
@@ -2562,23 +3497,34 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\config\WebConfig.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\AuthController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\CarritoController.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\DireccionController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\OrdenController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\ProductoController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\UsuarioController.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\DireccionDTO.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\DireccionRequestDTO.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\LoginRequest.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\LoginResponse.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\ProductoDTO.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\ProductoImagenDTO.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\ProductoRequestDTO.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\ProductUpdateRequest.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\UsuarioUpdateRequest.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Administrador.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Carrito.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Cliente.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Direccion.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Orden.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\OrdenDetalle.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Producto.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\ProductoDigital.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\ProductoFisico.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\ProductoImagen.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Proveedor.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Role.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Usuario.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\CarritoRepository.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\DireccionRepository.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\OrdenRepository.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\ProductoRepository.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\UsuarioRepository.java
@@ -2586,6 +3532,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\security\UsuarioSecurity.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\service\AdministradorService.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\service\CarritoService.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\service\DireccionService.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\service\OrdenService.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\service\ProductoService.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\service\UsuarioService.java
@@ -2622,7 +3569,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                 </div>
             </nav>
 -->
-        <nav id="mainNavCart" class="bg-white shadow-md"></nav>
+        <nav id="mainNav" class="bg-white shadow-md"></nav>
 
         <main class="container mx-auto px-6 py-8">
             <h1 class="text-3xl font-bold text-gray-800 mb-8">Tu Carrito de Compras</h1>
@@ -2635,8 +3582,9 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                             <thead class="bg-gray-50 text-gray-600 uppercase text-sm leading-normal">
                                 <tr>
                                     <th class="py-3 px-6">Producto</th>
-                                    <th class="py-3 px-6">Cantidad</th>
                                     <th class="py-3 px-6">Precio</th>
+                                    <th class="py-3 px-6 text-center">Cantidad</th>
+                                    <th class="py-3 px-6 text-right">Total</th>
                                     <th class="py-3 px-6 text-center">Acciones</th>
                                 </tr>
                             </thead>
@@ -2671,9 +3619,9 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                             <span class="text-lg font-bold text-gray-800">Total</span>
                             <span id="total" class="text-xl font-bold text-blue-600">$0.00</span>
                         </div>
-                        <button id="btnCheckout"
+                        <button id="btnOrder"
                             class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow transition duration-300">
-                            Proceder al Pago
+                            Generar Pedido
                         </button>
                         <button id="btnVaciar"
                             class="w-full mt-3 bg-red-100 text-red-600 hover:bg-red-200 font-bold py-2 rounded-lg transition duration-300 text-sm">
@@ -2685,6 +3633,278 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
         </main>
 
         <script type="module" src="js/carrito.js"></script>
+</body>
+
+</html>
+
+================ frontend\direcciones.html ================
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce - Mis Direcciones</title>
+    <link rel="stylesheet" href="css/output.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Char counter */
+        .char-counter {
+            font-size: 0.70rem;
+            color: #6b7280;
+            text-align: right;
+            margin-top: 2px;
+        }
+
+        .char-counter.warn {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        /* Tarjeta de dirección */
+        .direccion-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            position: relative;
+            transition: box-shadow 0.2s;
+        }
+
+        .direccion-card.preferida {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px #dbeafe;
+        }
+
+        .badge-preferida {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 0.70rem;
+            font-weight: 600;
+            padding: 0.15rem 0.6rem;
+            border-radius: 9999px;
+        }
+
+        /* Teléfonos */
+        .tel-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f3f4f6;
+            border-radius: 0.4rem;
+            padding: 0.3rem 0.6rem;
+        }
+
+        /* Modal scroll */
+        .modal-body {
+            max-height: 78vh;
+            overflow-y: auto;
+        }
+
+        /* Grid responsivo con container queries */
+        @container (min-width: 640px) {
+            .form-grid-2 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+
+    <nav id="mainNav"></nav>
+
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        <header class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">
+                <i class="fas fa-map-marker-alt text-blue-500 mr-2"></i> Mis Direcciones
+            </h1>
+            <button id="btnNuevaDireccion"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition flex items-center gap-2">
+                <i class="fas fa-plus"></i> Nueva Dirección
+            </button>
+        </header>
+
+        <!-- Lista de direcciones -->
+        <section id="listaDirecciones" class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            aria-label="Lista de direcciones">
+            <!-- Renderizado dinámicamente -->
+        </section>
+
+        <!-- Estado vacío -->
+        <div id="emptyState" class="hidden text-center py-16 text-gray-400">
+            <i class="fas fa-map-marker-slash text-5xl mb-3"></i>
+            <p class="text-lg">No tienes direcciones registradas.</p>
+            <p class="text-sm mt-1">Agrega tu primera dirección para poder realizar compras.</p>
+        </div>
+    </main>
+
+    <!-- ═══════════════ MODAL CREAR / EDITAR DIRECCIÓN ═══════════════ -->
+    <div id="modalDireccion" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
+            <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+                <h2 id="modalTitle" class="text-lg font-semibold text-gray-800">Nueva Dirección</h2>
+                <button id="btnCerrarModal" class="text-gray-400 hover:text-gray-600" aria-label="Cerrar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body px-6 py-5">
+                <form id="formDireccion" novalidate itemscope itemtype="https://schema.org/PostalAddress">
+                    <input type="hidden" id="direccionId">
+
+                    <!-- Alias + Preferida -->
+                    <div class="flex gap-4 items-end mb-4">
+                        <div class="flex-1">
+                            <label for="alias" class="block text-sm font-medium text-gray-700 mb-1">Alias</label>
+                            <input type="text" id="alias" name="alias" maxlength="20"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                placeholder="Casa, Trabajo, etc.">
+                            <div class="char-counter" id="contadorAlias">0 / 20</div>
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer pb-6">
+                            <input type="checkbox" id="preferida" name="preferida" class="w-4 h-4 accent-blue-600">
+                            <span class="text-sm font-medium text-gray-700">Dirección preferida</span>
+                        </label>
+                    </div>
+
+                    <!-- Calle + Número exterior -->
+                    <div class="form-grid-2 mb-4">
+                        <div>
+                            <label for="calle" class="block text-sm font-medium text-gray-700 mb-1">
+                                Calle <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="calle" name="calle" required maxlength="25"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                itemprop="streetAddress" placeholder="Nombre de la calle">
+                            <div class="char-counter" id="contadorCalle">0 / 25</div>
+                        </div>
+                        <div>
+                            <label for="numeroExterior" class="block text-sm font-medium text-gray-700 mb-1">
+                                Núm. Exterior <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="numeroExterior" name="numeroExterior" required maxlength="10"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                placeholder="123">
+                            <div class="char-counter" id="contadorNumExt">0 / 10</div>
+                        </div>
+                    </div>
+
+                    <!-- Número interior + Referencia -->
+                    <div class="form-grid-2 mb-4">
+                        <div>
+                            <label for="numeroInterior" class="block text-sm font-medium text-gray-700 mb-1">Núm.
+                                Interior</label>
+                            <input type="text" id="numeroInterior" name="numeroInterior" maxlength="10"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                placeholder="Apto 4B (opcional)">
+                            <div class="char-counter" id="contadorNumInt">0 / 10</div>
+                        </div>
+                        <div>
+                            <label for="referencia"
+                                class="block text-sm font-medium text-gray-700 mb-1">Referencia</label>
+                            <input type="text" id="referencia" name="referencia" maxlength="35"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                placeholder="Entre qué calles, color de fachada…">
+                            <div class="char-counter" id="contadorRef">0 / 35</div>
+                        </div>
+                    </div>
+
+                    <!-- Colonia + Municipio -->
+                    <div class="form-grid-2 mb-4">
+                        <div>
+                            <label for="colonia" class="block text-sm font-medium text-gray-700 mb-1">
+                                Colonia <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="colonia" name="colonia" required maxlength="40"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                itemprop="addressLocality" placeholder="Colonia">
+                            <div class="char-counter" id="contadorColonia">0 / 40</div>
+                        </div>
+                        <div>
+                            <label for="municipio" class="block text-sm font-medium text-gray-700 mb-1">
+                                Municipio / Alcaldía <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="municipio" name="municipio" required maxlength="45"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                itemprop="addressRegion" placeholder="Municipio o alcaldía">
+                            <div class="char-counter" id="contadorMunicipio">0 / 45</div>
+                        </div>
+                    </div>
+
+                    <!-- Estado + CP -->
+                    <div class="form-grid-2 mb-4">
+                        <div>
+                            <label for="estado" class="block text-sm font-medium text-gray-700 mb-1">
+                                Estado <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="estado" name="estado" required maxlength="25"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                itemprop="addressCountry" placeholder="Estado o provincia">
+                            <div class="char-counter" id="contadorEstado">0 / 25</div>
+                        </div>
+                        <div>
+                            <label for="codigoPostal" class="block text-sm font-medium text-gray-700 mb-1">
+                                Código Postal <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="codigoPostal" name="codigoPostal" required pattern="^\d{5}$"
+                                maxlength="5" minlength="5"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                itemprop="postalCode" placeholder="12345">
+                            <p class="text-xs text-gray-400 mt-0.5">Exactamente 5 dígitos</p>
+                        </div>
+                    </div>
+
+                    <!-- Teléfonos -->
+                    <fieldset class="border border-gray-200 rounded-lg p-4 mb-4">
+                        <legend class="text-sm font-semibold text-gray-700 px-2">
+                            <i class="fas fa-phone text-blue-400 mr-1"></i>
+                            Teléfonos <span class="text-red-500">*</span>
+                        </legend>
+
+                        <div id="telefonosContainer" class="flex flex-col gap-2 mb-3"></div>
+                        <p id="sinTelefonos" class="text-xs text-red-400 italic mb-2 hidden">
+                            Debe agregar al menos un teléfono.
+                        </p>
+
+                        <div class="flex gap-2">
+                            <input type="tel" id="nuevoTelefono" pattern="^\d{10}$" maxlength="10"
+                                class="flex-1 border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                                placeholder="10 dígitos, ej: 5512345678" aria-label="Número de teléfono a agregar">
+                            <button type="button" id="btnAgregarTel"
+                                class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg text-sm font-medium transition">
+                                <i class="fas fa-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </fieldset>
+
+                    <!-- Botones -->
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" id="btnCancelar"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow text-sm font-medium">
+                            <i class="fas fa-save mr-1"></i> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/direcciones.js"></script>
 </body>
 
 </html>
@@ -2758,19 +3978,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 
 <body class="bg-gray-100 font-sans">
 
-    <!-- Navbar (Dynamic) 
-    <nav class="bg-white shadow-md">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a class="text-2xl font-bold text-blue-600">E-Shop</a>
-            <div class="space-x-4 flex items-center">
-                -- Links rendered by JS --
-            </div>
-        </div>
-    </nav>
-
--->
-
-    <nav id="mainNavOrders" class="bg-white shadow-md"></nav>
+    <nav id="mainNav" class="bg-white shadow-md"></nav>
 
     <div class="container mx-auto px-6 py-8">
         <header class="flex justify-between items-center mb-8">
@@ -4123,17 +5331,29 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Commerce - Gestión de Productos</title>
-    <!-- Tailwind CSS -->
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <link rel="stylesheet" href="css/output.css">
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Char counter */
+        .char-counter { font-size: 0.70rem; color: #6b7280; text-align: right; margin-top: 2px; }
+        .char-counter.warn { color: #ef4444; font-weight: 600; }
+        /* Image manager */
+        #imagenesContainer { display: flex; flex-direction: column; gap: 0.5rem; }
+        .imagen-item {
+            display: flex; align-items: center; gap: 0.5rem;
+            background: #f9fafb; border: 1px solid #e5e7eb;
+            border-radius: 0.5rem; padding: 0.4rem 0.6rem;
+        }
+        .imagen-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
+        .imagen-item input[type="radio"] { accent-color: #2563eb; }
+        .modal-scroll { max-height: 80vh; overflow-y: auto; }
+    </style>
 </head>
 
 <body class="bg-gray-100 font-sans flex flex-col">
 
     <!-- Navigation Bar -->
-
     <nav id="mainNav"></nav>
 
     <main class="container mx-auto px-6 py-8 flex-grow">
@@ -4157,21 +5377,21 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
             </select>
         </div>
 
-        <!-- Product List -->
+        <!-- Product List Table -->
         <div class="bg-white rounded-lg shadow overflow-hidden">
             <table class="w-full text-left border-collapse">
                 <thead class="bg-gray-50 text-gray-600 uppercase text-sm leading-normal">
                     <tr>
-                        <th class="py-3 px-6">ID</th>
-                        <th class="py-3 px-6">Producto</th>
-                        <th class="py-3 px-6">Precio</th>
-                        <th class="py-3 px-6">Tipo</th>
-                        <th class="py-3 px-6 text-center">Acciones</th>
+                        <th class="py-3 px-4">ID</th>
+                        <th class="py-3 px-4">Imagen</th>
+                        <th class="py-3 px-4">Producto</th>
+                        <th class="py-3 px-4">Precio</th>
+                        <th class="py-3 px-4">Tipo</th>
+                        <th class="py-3 px-4">Proveedor</th>
+                        <th class="py-3 px-4 text-center">Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="listaProductos" class="text-gray-600 text-sm font-light">
-                    <!-- Dynamic Content -->
-                </tbody>
+                <tbody id="listaProductos" class="text-gray-600 text-sm font-light"></tbody>
             </table>
             <!-- Empty State -->
             <div id="emptyState" class="hidden p-8 text-center text-gray-500">
@@ -4180,10 +5400,9 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
             </div>
         </div>
 
-        <!-- Modal Form -->
+        <!-- ══════════════ MODAL FORM ══════════════ -->
         <div id="modalProducto" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-            <div
-                class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all scale-100">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 overflow-hidden transform transition-all">
                 <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
                     <h3 id="modalTitle" class="text-lg font-semibold text-gray-800">Nuevo Producto</h3>
                     <button id="btnCerrarModal" class="text-gray-400 hover:text-gray-600">
@@ -4191,27 +5410,49 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                     </button>
                 </div>
 
-                <form id="formProducto" class="p-6 space-y-4">
+                <form id="formProducto" class="p-6 space-y-4 modal-scroll" novalidate>
                     <input type="hidden" id="productoId">
 
+                    <!-- Nombre -->
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Nombre</label>
-                        <input type="text" id="nombre"
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="nombre">Nombre <span class="text-red-500">*</span></label>
+                        <input type="text" id="nombre" name="nombre"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            required maxlength="200">
+                    </div>
+
+                    <!-- Precio -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="precio">Precio <span class="text-red-500">*</span></label>
+                        <input type="number" id="precio" name="precio" step="0.01" min="0.01"
                             class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                             required>
                     </div>
 
+                    <!-- Descripción (ADMIN + SUPPLIER) -->
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Precio</label>
-                        <input type="number" id="precio" step="0.01" min="0.01"
-                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                            required>
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="descripcion">Descripción</label>
+                        <textarea id="descripcion" name="descripcion" rows="3" maxlength="250"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                            placeholder="Máx. 250 caracteres"></textarea>
+                        <div class="char-counter" id="contadorDescripcion">0 / 250</div>
                     </div>
 
+                    <!-- Proveedor (ADMIN ONLY) -->
+                    <div id="campoProveedor">
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="proveedor">
+                            Proveedor <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="proveedor" name="proveedor" maxlength="150"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Nombre del proveedor o empresa (máx. 150 caracteres)">
+                        <div class="char-counter" id="contadorProveedor">0 / 150</div>
+                    </div>
+
+                    <!-- Tipo de Producto -->
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Tipo de
-                            Producto</label>
-                        <select id="tipo"
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="tipo">Tipo de Producto</label>
+                        <select id="tipo" name="tipo"
                             class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="Fisico">Físico</option>
                             <option value="Digital">Digital</option>
@@ -4221,13 +5462,13 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                     <!-- Campos Físicos -->
                     <div id="camposFisico" class="space-y-4">
                         <div>
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Stock</label>
-                            <input type="number" id="stock" min="0"
+                            <label class="block text-gray-700 text-sm font-bold mb-1" for="stock">Stock</label>
+                            <input type="number" id="stock" name="stock" min="0"
                                 class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Peso (kg)</label>
-                            <input type="number" id="peso" step="0.01" min="0"
+                            <label class="block text-gray-700 text-sm font-bold mb-1" for="peso">Peso (kg)</label>
+                            <input type="number" id="peso" name="peso" step="0.01" min="0"
                                 class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
@@ -4235,29 +5476,49 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                     <!-- Campos Digitales -->
                     <div id="camposDigital" class="hidden space-y-4">
                         <div>
-                            <label class="block text-gray-700 text-sm font-bold mb-2">URL
-                                Descarga</label>
-                            <input type="url" id="urlDescarga"
+                            <label class="block text-gray-700 text-sm font-bold mb-1" for="urlDescarga">URL Descarga</label>
+                            <input type="url" id="urlDescarga" name="urlDescarga"
                                 class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Fecha Expiración
-                                (Días)</label>
-                            <input type="number" id="fechaExpiracion"
-                                class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Ej: 30">
                         </div>
                     </div>
 
-                    <div class="pt-4 flex justify-end gap-3">
+                    <!-- ── Gestión de Imágenes ── -->
+                    <fieldset class="border border-gray-200 rounded-lg p-4">
+                        <legend class="text-sm font-bold text-gray-700 px-2">
+                            <i class="fas fa-images text-blue-500 mr-1"></i> Imágenes del Producto
+                            <span class="text-red-500">*</span>
+                        </legend>
+
+                        <!-- Lista de imágenes actuales -->
+                        <div id="imagenesContainer" class="mb-3"></div>
+                        <p id="sinImagenesMsg" class="text-xs text-gray-400 italic mb-2">Sin imágenes aún.</p>
+
+                        <!-- Agregar nueva imagen -->
+                        <div class="flex gap-2 mt-2">
+                            <input type="url" id="nuevaImagenUrl"
+                                class="flex-1 border rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                                placeholder="https://ejemplo.com/imagen.jpg">
+                            <button type="button" id="btnAgregarImagen"
+                                class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded text-sm font-medium transition">
+                                <i class="fas fa-plus"></i> Agregar
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1">Activa el radio "⭐" para marcar la imagen por defecto.</p>
+                    </fieldset>
+
+                    <!-- Botones de acción -->
+                    <div class="pt-2 flex justify-end gap-3">
                         <button type="button" id="btnCancelar"
                             class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Cancelar</button>
                         <button type="submit"
-                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition shadow">Guardar</button>
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition shadow">
+                            <i class="fas fa-save mr-1"></i>Guardar
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
+
     </main>
 
     <script type="module" src="js/productos.js"></script>
@@ -4303,7 +5564,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 
 ================ frontend\README.md ================
 
-# E-Commerce Frontend v1.0
+# E-Commerce Frontend v2.0
 
 ## 🎯 Propósito del Proyecto
 
@@ -4686,6 +5947,97 @@ frontend/
 
 BIU License - Proyecto Académico - Módulo Programming the Internet
 
+---
+
+## 🔄 Phase 2 – Nuevas Funcionalidades
+
+### Alcance Ampliado
+| Rol | Acceso Nuevo |
+|-----|--------------|
+| **ADMIN** | Ver/editar `descripcion`, `proveedor` e imágenes de productos; gestionar direcciones de cualquier usuario desde el panel de usuarios (icono ⚙️) |
+| **SUPPLIER** | Ver/editar `descripcion` e imágenes (sin acceso a `proveedor`); gestionar sus propias direcciones |
+| **CUSTOMER** | Ver imágenes reales de productos, descripción y proveedor; popup de galería de imágenes; gestionar sus propias direcciones |
+
+---
+
+### Nuevas Páginas
+
+| Archivo | Pública a | Descripción |
+|---------|-----------|-------------|
+| `direcciones.html` | CUSTOMER, SUPPLIER | Gestión de mis direcciones propias |
+
+```
+frontend/
+├── direcciones.html       ← NUEVO: Mis Direcciones (CUSTOMER + SUPPLIER)
+└── js/
+    └── direcciones.js     ← NUEVO: Lógica de gestión de direcciones
+```
+
+---
+
+### Navegación Actualizada
+
+**CUSTOMER**: Carrito | Mis Órdenes | **Mis Direcciones** (nuevo)
+**SUPPLIER**: Mis Productos | **Mis Direcciones** (nuevo)
+**ADMIN**: sin cambios en nav; gestión de direcciones accesible desde icono ⚙️ en tabla de usuarios
+
+---
+
+### Gestión de Imágenes de Producto
+
+#### Vista ADMIN/SUPPLIER (`productos.html`)
+- Campo `descripcion`: textarea con contador de caracteres (máx. 250)
+- Campo `proveedor`: input con contador de caracteres (máx. 150) — **solo visible para ADMIN**
+- Sección de imágenes: agregar URLs, marcar predeterminada (⭐), eliminar imágenes
+- La tabla incluye miniatura de la imagen por defecto del producto
+
+#### Vista CUSTOMER (`productoscustomer.html` + `appcust.js`)
+- Renderización real de la imagen por defecto en la tarjeta del producto
+- Descripción truncada con `line-clamp-2`
+- Nombre del proveedor (icono de tienda)
+- Clic en la imagen abre popup/galería con:
+  - Navegación Anterior/Siguiente
+  - Contador `1 / N`
+  - Miniaturas clicables
+  - Soporte de teclado (flechas, Escape)
+  - Cierre al hacer clic fuera
+
+#### Landing Page (`index.html` + `app.js`)
+- Muestra imagen real del producto (si tiene) y descripción truncada
+- Los botones de carrito **NO aparecen** para usuarios no autenticados
+- En su lugar se muestra un enlace "Iniciar sesión para comprar"
+
+---
+
+### Gestión de Direcciones
+
+#### Formulario de Dirección (11 campos)
+| Campo | Validación |
+|-------|------------|
+| `alias` | Máx. 20 caracteres (opcional) |
+| `calle` | Obligatorio, máx. 25 |
+| `numeroExterior` | Obligatorio, máx. 10 |
+| `numeroInterior` | Máx. 10, opcional |
+| `referencia` | Máx. 35, opcional |
+| `colonia` | Obligatorio, máx. 40 |
+| `municipio` | Obligatorio, máx. 45 |
+| `estado` | Obligatorio, máx. 25 |
+| `codigoPostal` | Exactamente 5 dígitos |
+| `telefonos` | Mín. 1, exactamente 10 dígitos cada uno |
+| `preferida` | Bool; la anterior se desmarca automáticamente |
+
+#### ADMIN: Botón ⚙️ en Tabla de Usuarios
+- Cada fila de usuario tiene un botón de engrane que abre el panel de gestiona de direcciones
+- El panel muestra las direcciones del usuario seleccionado
+- ADMIN puede crear, editar y eliminar direcciones de cualquier usuario
+- El sub-formulario aparece inline dentro del modal sin recargar la página
+
+#### Accesibilidad
+- HTML5 semántico: `<address>`, `<fieldset>`, `<legend>`, `<article>`, `<section>`
+- Microdatos schema.org (`PostalAddress`) en tarjetas y formularios
+- Validación nativa HTML5 (`required`, `pattern`, `maxlength`, `minlength`)
+- `aria-label` en botones de navegación
+
 
 ================ frontend\register.html ================
 
@@ -4840,22 +6192,83 @@ module.exports = {
     <title>E-Commerce - Gestión de Usuarios</title>
     <link rel="stylesheet" href="css/output.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Teléfonos */
+        .tel-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f3f4f6;
+            border-radius: 0.4rem;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.75rem;
+        }
+
+        /* Char counter */
+        .char-counter {
+            font-size: 0.70rem;
+            color: #6b7280;
+            text-align: right;
+            margin-top: 2px;
+        }
+
+        .char-counter.warn {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        /* Address card in admin panel */
+        .addr-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+        }
+
+        .addr-card.preferida {
+            border-color: #2563eb;
+        }
+
+        .badge-preferida {
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.1rem 0.5rem;
+            border-radius: 9999px;
+        }
+
+        /* Modal scroll */
+        .modal-body {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        /* Form grid */
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        @media (min-width: 480px) {
+            .form-grid-2 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 font-sans flex flex-col min-h-screen">
 
-    <!-- Navigation Bar -->
-
-    <nav id="mainNav" class="space-x-4 flex items-center">
-        <!-- Dynamic navigation rendered by JS -->
-    </nav>
+    <nav id="mainNav" class="space-x-4 flex items-center"></nav>
 
     <main class="container mx-auto px-6 py-8 flex-grow">
 
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800">Gestión de Usuarios</h1>
             <button id="btnNuevoUsuario"
-                class="hidden hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow transition duration-300 flex items-center gap-2">
+                class="hidden bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow transition flex items-center gap-2">
                 <i class="fas fa-user-plus"></i> Nuevo Usuario
             </button>
         </header>
@@ -4872,55 +6285,46 @@ module.exports = {
                         <th class="py-3 px-6 text-center">Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="listaUsuarios" class="text-gray-600 text-sm font-light">
-                    <!-- Dynamic Content -->
-                </tbody>
+                <tbody id="listaUsuarios" class="text-gray-600 text-sm font-light"></tbody>
             </table>
-            <!-- Empty State -->
             <div id="emptyState" class="hidden p-8 text-center text-gray-500">
                 <i class="fas fa-users text-4xl mb-2"></i>
                 <p>No hay usuarios registrados.</p>
             </div>
         </div>
 
-        <!-- Modal Form -->
+        <!-- ══════════════ MODAL USUARIO ══════════════ -->
         <div id="modalUsuario" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-            <div
-                class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all scale-100">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
                 <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
                     <h3 id="modalTitle" class="text-lg font-semibold text-gray-800">Nuevo Usuario</h3>
                     <button id="btnCerrarModal" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-
                 <form id="formUsuario" class="p-6 space-y-4">
                     <input type="hidden" id="usuarioId">
-
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Nombre</label>
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="nombre">Nombre</label>
                         <input type="text" id="nombre"
                             class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                             required>
                     </div>
-
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="email">Email</label>
                         <input type="email" id="email"
                             class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                             required>
                     </div>
-
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Contraseña</label>
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="password">Contraseña</label>
                         <input type="password" id="password"
                             class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Dejar vacío para mantener la actual">
                         <p class="text-xs text-gray-500 mt-1">Solo requerida al crear nuevo usuario</p>
                     </div>
-
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Rol</label>
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="role">Rol</label>
                         <select id="role"
                             class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                             required>
@@ -4930,13 +6334,12 @@ module.exports = {
                             <option value="CUSTOMER">Cliente</option>
                         </select>
                     </div>
-
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Fecha de Nacimiento</label>
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="fechaNacimiento">Fecha de
+                            Nacimiento</label>
                         <input type="date" id="fechaNacimiento"
                             class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
-
                     <div class="pt-4 flex justify-end gap-3">
                         <button type="button" id="btnCancelar"
                             class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Cancelar</button>
@@ -4946,6 +6349,134 @@ module.exports = {
                 </form>
             </div>
         </div>
+
+        <!-- ══════════════ MODAL DIRECCIONES (ADMIN) ══════════════ -->
+        <div id="modalDirecciones" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+                    <h2 id="modalDirTitle" class="text-lg font-semibold text-gray-800">Direcciones del usuario</h2>
+                    <button id="btnCerrarDirModal" class="text-gray-400 hover:text-gray-600" aria-label="Cerrar">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body p-6">
+                    <!-- Lista de direcciones del usuario seleccionado -->
+                    <div class="flex justify-between items-center mb-4">
+                        <p class="text-sm text-gray-500">Gestiona las direcciones de este usuario.</p>
+                        <button id="btnNuevaDirAdmin"
+                            class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-700 transition flex items-center gap-1">
+                            <i class="fas fa-plus"></i> Nueva
+                        </button>
+                    </div>
+                    <div id="listaDireccionesAdmin" class="flex flex-col gap-3 mb-4"></div>
+                    <div id="emptyDirAdmin" class="hidden text-center py-6 text-gray-400 text-sm">
+                        Este usuario no tiene direcciones registradas.
+                    </div>
+
+                    <!-- Sub-formulario: Crear / Editar dirección (Admin) -->
+                    <div id="formDirAdminWrapper" class="hidden border-t pt-4 mt-2">
+                        <h3 id="formDirAdminTitle" class="font-semibold text-gray-700 mb-3">Nueva Dirección</h3>
+                        <form id="formDirAdmin" novalidate>
+                            <input type="hidden" id="adirId">
+
+                            <div class="flex gap-3 items-end mb-3">
+                                <div class="flex-1">
+                                    <label for="adirAlias"
+                                        class="block text-xs font-medium text-gray-600 mb-1">Alias</label>
+                                    <input type="text" id="adirAlias" maxlength="20"
+                                        class="w-full border rounded-lg px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                                        placeholder="Casa, Trabajo…">
+                                </div>
+                                <label class="flex items-center gap-1.5 text-sm cursor-pointer pb-4">
+                                    <input type="checkbox" id="adirPreferida" class="accent-blue-600">
+                                    Preferida
+                                </label>
+                            </div>
+
+                            <div class="form-grid-2 mb-3">
+                                <div>
+                                    <label for="adirCalle" class="block text-xs font-medium text-gray-600 mb-1">Calle
+                                        *</label>
+                                    <input type="text" id="adirCalle" required maxlength="25"
+                                        class="w-full border rounded-lg px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label for="adirNumExt" class="block text-xs font-medium text-gray-600 mb-1">Núm.
+                                        Ext *</label>
+                                    <input type="text" id="adirNumExt" required maxlength="10"
+                                        class="w-full border rounded-lg px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label for="adirNumInt" class="block text-xs font-medium text-gray-600 mb-1">Núm.
+                                        Int</label>
+                                    <input type="text" id="adirNumInt" maxlength="10"
+                                        class="w-full border rounded-lg px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label for="adirRef"
+                                        class="block text-xs font-medium text-gray-600 mb-1">Referencia</label>
+                                    <input type="text" id="adirRef" maxlength="35"
+                                        class="w-full border rounded-lg px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label for="adirColonia"
+                                        class="block text-xs font-medium text-gray-600 mb-1">Colonia *</label>
+                                    <input type="text" id="adirColonia" required maxlength="40"
+                                        class="w-full border rounded-lg px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label for="adirMunicipio"
+                                        class="block text-xs font-medium text-gray-600 mb-1">Municipio *</label>
+                                    <input type="text" id="adirMunicipio" required maxlength="45"
+                                        class="w-full border rounded-lg px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label for="adirEstado" class="block text-xs font-medium text-gray-600 mb-1">Estado
+                                        *</label>
+                                    <input type="text" id="adirEstado" required maxlength="25"
+                                        class="w-full border rounded-lg px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label for="adirCP" class="block text-xs font-medium text-gray-600 mb-1">C.P. (5
+                                        dígs) *</label>
+                                    <input type="text" id="adirCP" required pattern="^\d{5}$" maxlength="5"
+                                        minlength="5"
+                                        class="w-full border rounded-lg px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                                        placeholder="12345">
+                                </div>
+                            </div>
+
+                            <!-- Teléfonos -->
+                            <fieldset class="border border-gray-200 rounded-lg p-3 mb-3">
+                                <legend class="text-xs font-semibold text-gray-600 px-1">
+                                    <i class="fas fa-phone text-blue-400 mr-1"></i> Teléfonos *
+                                </legend>
+                                <div id="adirTelContainer" class="flex flex-col gap-1.5 mb-2"></div>
+                                <div class="flex gap-2">
+                                    <input type="tel" id="adirNuevoTel" maxlength="10" pattern="^\d{10}$"
+                                        class="flex-1 border rounded px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-blue-400"
+                                        placeholder="10 dígitos">
+                                    <button type="button" id="adirBtnAgregarTel"
+                                        class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-200 transition">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </fieldset>
+
+                            <div class="flex justify-end gap-2">
+                                <button type="button" id="btnCancelarDirAdmin"
+                                    class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition">Cancelar</button>
+                                <button type="submit"
+                                    class="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
+                                    <i class="fas fa-save mr-1"></i> Guardar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script type="module" src="js/usuarios.js"></script>
@@ -5051,6 +6582,14 @@ export default Api;
 
 ================ frontend\js\app.js ================
 
+/**
+ * app.js – Landing Page (index.html)
+ * ─────────────────────────────────────────────────────────────
+ * Muestra productos para usuarios NO autenticados.
+ * IMPORTANTE: El botón "Agregar al Carrito" NO se muestra en
+ * esta vista. El usuario debe iniciar sesión para comprar.
+ * ─────────────────────────────────────────────────────────────
+ */
 document.addEventListener('DOMContentLoaded', async () => {
     const productList = document.getElementById('product-list');
 
@@ -5060,41 +6599,66 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const products = await response.json();
 
-        productList.innerHTML = products.map(product => `
-            <div class="group relative bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-                <div class="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-gray-200 lg:aspect-none lg:h-60">
-                    <div class="flex items-center justify-center h-full text-gray-400">
-                        <!-- Placeholder Image -->
-                        <svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
+        if (products.length === 0) {
+            productList.innerHTML = '<p class="col-span-full text-center text-gray-500 py-12">No hay productos disponibles.</p>';
+            return;
+        }
+
+        productList.innerHTML = products.map(product => {
+            const imagenes = product.imagenes || [];
+            const imgDefault = imagenes.find(i => i.isDefault) || imagenes[0];
+            const imgSrc = imgDefault ? imgDefault.imagenUrl : null;
+
+            const tipo = product.tipo || (product.peso !== undefined && !product.urlDescarga ? 'Físico' : 'Digital');
+            const tipoBadge = (tipo === 'Fisico' || tipo === 'Físico')
+                ? '<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">Físico</span>'
+                : '<span class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">Digital</span>';
+
+            const descripcionHtml = product.descripcion
+                ? `<p class="mt-1 text-sm text-gray-500 line-clamp-2">${product.descripcion}</p>`
+                : '';
+
+            return `
+            <div class="group bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
+                <div class="relative aspect-square w-full overflow-hidden rounded-t-xl bg-gray-100">
+                    ${imgSrc
+                    ? `<img src="${imgSrc}" alt="${product.nombre}" loading="lazy"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=Sin+imagen'">`
+                    : `<div class="flex items-center justify-center h-full text-gray-300">
+                               <svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                       d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                               </svg>
+                           </div>`
+                }
                 </div>
-                <div class="p-4">
-                    <h3 class="text-lg font-medium text-gray-900">
-                        <a href="#">
-                            <span aria-hidden="true" class="absolute inset-0"></span>
-                            ${product.nombre}
-                        </a>
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-500">${product.tipo || (product.stock !== undefined ? 'Físico' : 'Digital')}</p>
-                    <p class="mt-2 text-xl font-bold text-gray-900">${product.precio.toFixed(2)}</p>
-<!--                   
-                    <button class="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Agregar al Carrito</button>
--->
+                <div class="p-4 flex flex-col flex-1">
+                    <div class="flex justify-between items-start gap-1 mb-1">
+                        <h3 class="text-base font-semibold text-gray-900 line-clamp-2">${product.nombre}</h3>
+                        ${tipoBadge}
                     </div>
-            </div>
-        `).join('');
+                    ${descripcionHtml}
+                    <div class="mt-auto pt-3 flex items-center justify-between">
+                        <span class="text-xl font-bold text-gray-900">${product.precio.toFixed(2)}</span>
+                    </div>
+                    <!-- El botón de carrito NO aparece para usuarios no autenticados -->
+                    <a href="login.html"
+                        class="mt-3 w-full text-center bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors duration-200 border border-gray-200">
+                        Iniciar sesión para comprar
+                    </a>
+                </div>
+            </div>`;
+        }).join('');
 
     } catch (error) {
         console.error(error);
-        productList.innerHTML = '<p class="text-center text-red-500">No se pudieron cargar los productos. Asegúrate de que el backend esté corriendo.</p>';
+        productList.innerHTML = '<p class="col-span-full text-center text-red-500">No se pudieron cargar los productos. Asegúrate de que el backend esté corriendo.</p>';
     }
 });
 
 
 ================ frontend\js\appcust.js ================
-
 
 import Api from './api.js';
 import { UI } from './ui.js';
@@ -5102,52 +6666,31 @@ import Auth from './auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-    UI.renderNavBar({
-        containerId: 'mainNav',
-        context: 'products'
-    });
+    UI.renderNavBar({ containerId: 'mainNav', context: 'products' });
 
     const productList = document.getElementById('product-list-customer');
 
     try {
-
         const products = await Api.get('/productos');
         if (!products) throw new Error('Error fetching products');
 
+        if (products.length === 0) {
+            productList.innerHTML = '<p class="col-span-full text-center text-gray-500 py-12">No hay productos disponibles.</p>';
+            return;
+        }
 
-        productList.innerHTML = products.map(product => `
-            <div class="group relative bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-                <div class="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-gray-200 lg:aspect-none lg:h-60">
-                    <div class="flex items-center justify-center h-full text-gray-400">
-                        <!-- Placeholder Image -->
-                        <svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                </div>
-                <div class="p-4">
-                    <h3 class="text-lg font-medium text-gray-900">
-                        <a href="#">
-                            <span aria-hidden="true"></span>
-                            ${product.nombre}
-                        </a>
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-500">${product.tipo || (product.stock !== undefined ? 'Físico' : 'Digital')}</p>
-                    <p class="mt-2 text-xl font-bold text-gray-900">${product.precio.toFixed(2)}</p>
-                    <button class="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700" data-id="${product.id}">Agregar al Carrito</button>
-                </div>
-            </div>
-        `).join('');
+        // Renderizar tarjetas en GRID (layout de productoscustomer)
+        productList.innerHTML = products.map(product => buildProductCard(product)).join('');
 
     } catch (error) {
         console.error(error);
-        productList.innerHTML = '<p class="text-center text-red-500">No se pudieron cargar los productos. Asegúrate de que el backend esté corriendo.</p>';
+        productList.innerHTML = '<p class="col-span-full text-center text-red-500 py-8">No se pudieron cargar los productos. Asegúrate de que el backend esté corriendo.</p>';
     }
 
+    // Delegación de eventos: Agregar al carrito
     productList.addEventListener('click', async (e) => {
-        const btn = e.target.closest('button[data-id]');
+        const btn = e.target.closest('button[data-action="carrito"]');
         if (!btn) return;
-
         try {
             await Api.post(`/carrito/productos/${btn.dataset.id}`);
             UI.showNotification('Producto agregado al carrito');
@@ -5156,11 +6699,225 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    window.logout = () => {
-        Auth.logout();
-    };
+    // Delegación de eventos: Abrir galería de imágenes al click
+    productList.addEventListener('click', (e) => {
+        const imgEl = e.target.closest('[data-action="galeria"]');
+        if (!imgEl) return;
+        const productId = imgEl.dataset.productId;
+        const allImgEls = productList.querySelectorAll(`[data-galeria-src][data-product-id="${productId}"]`);
+        const urls = Array.from(allImgEls).map(el => el.dataset.galeriaSrc);
+        abrirGaleria(urls, parseInt(imgEl.dataset.imgIndex || '0'));
+    });
 
+    // Logout global
+    window.logout = () => Auth.logout();
 });
+
+// ── Construir tarjeta de producto (grid) ──────────────────────────────────────
+function buildProductCard(product) {
+    const imagenes = product.imagenes || [];
+    const imgDefault = imagenes.find(i => i.isDefault) || imagenes[0];
+    const imgSrc = imgDefault ? imgDefault.imagenUrl : null;
+    const tieneVariasImagenes = imagenes.length > 1;
+
+    // Datos de galería embebidos como atributos data para delegación
+    const galeriaAttrs = imagenes.map((img, idx) =>
+        `<span style="display:none" data-galeria-src="${img.imagenUrl}" data-product-id="${product.id}"></span>`
+    ).join('');
+
+    const tipo = product.tipo || (product.peso !== undefined && product.urlDescarga === undefined ? 'Físico' : 'Digital');
+    const tipoBadge = tipo === 'Fisico' || tipo === 'Físico'
+        ? '<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">Físico</span>'
+        : '<span class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">Digital</span>';
+
+    const descripcionHtml = product.descripcion
+        ? `<p class="mt-1 text-sm text-gray-500 line-clamp-2" title="${product.descripcion}">${product.descripcion}</p>`
+        : '';
+
+    const proveedorHtml = product.proveedor
+        ? `<p class="mt-1 text-xs text-gray-400 truncate" title="${product.proveedor}">
+               <i class="fas fa-store text-gray-300 mr-1"></i>${product.proveedor}
+           </p>`
+        : '';
+
+    // Indicador de múltiples imágenes
+    const multiImgBadge = tieneVariasImagenes
+        ? `<span class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-1.5 py-0.5 rounded-full">
+               <i class="fas fa-images mr-0.5"></i>${imagenes.length}
+           </span>`
+        : '';
+
+    const imgContainerCursor = tieneVariasImagenes ? 'cursor-pointer' : '';
+    const imgClickAttr = tieneVariasImagenes
+        ? `data-action="galeria" data-product-id="${product.id}" data-img-index="0"`
+        : '';
+
+    return `
+        <article class="group relative bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-200 flex flex-col"
+                 itemscope itemtype="https://schema.org/Product">
+            ${galeriaAttrs}
+
+            <!-- Imagen principal -->
+            <div class="relative aspect-square w-full overflow-hidden rounded-t-xl bg-gray-100">
+                ${imgSrc
+            ? `<img src="${imgSrc}" alt="${product.nombre}" loading="lazy"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${imgContainerCursor}"
+                            ${imgClickAttr}
+                            onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=Sin+imagen'"
+                            itemprop="image">`
+            : `<div class="flex items-center justify-center h-full text-gray-300 ${imgContainerCursor}" ${imgClickAttr}>
+                           <i class="fas fa-image text-5xl"></i>
+                       </div>`
+        }
+                ${multiImgBadge}
+                ${tieneVariasImagenes
+            ? `<div class="absolute inset-0 flex items-end justify-center pb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                           <span class="bg-black bg-opacity-60 text-white text-xs px-3 py-1 rounded-full">
+                               <i class="fas fa-search-plus mr-1"></i> Ver galería
+                           </span>
+                       </div>`
+            : ''}
+            </div>
+
+            <!-- Información del producto -->
+            <div class="p-4 flex flex-col flex-1">
+                <div class="flex items-start justify-between gap-2 mb-1">
+                    <h3 class="text-base font-semibold text-gray-900 line-clamp-2" itemprop="name">${product.nombre}</h3>
+                    ${tipoBadge}
+                </div>
+
+                ${descripcionHtml}
+                ${proveedorHtml}
+
+                <div class="mt-auto pt-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xl font-bold text-gray-900" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+                            <span itemprop="price" content="${product.precio}">${UI.formatCurrency(product.precio)}</span>
+                            <meta itemprop="priceCurrency" content="MXN">
+                        </span>
+                    </div>
+                    <button class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+                            data-action="carrito" data-id="${product.id}">
+                        <i class="fas fa-cart-plus"></i> Agregar al Carrito
+                    </button>
+                </div>
+            </div>
+        </article>
+    `;
+}
+
+// ── Galería / Popup de imágenes ────────────────────────────────────────────────
+let galeriaActual = [];
+let galeriaIndex = 0;
+
+function abrirGaleria(urls, startIndex = 0) {
+    galeriaActual = urls;
+    galeriaIndex = startIndex;
+
+    // Crear overlay si no existe
+    let overlay = document.getElementById('galeriaOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'galeriaOverlay';
+        overlay.className = 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center';
+        overlay.innerHTML = `
+            <div class="relative w-full max-w-2xl mx-4 flex flex-col items-center gap-4">
+
+                <!-- Botón cerrar -->
+                <button id="btnGaleriaClose"
+                    class="absolute -top-10 right-0 text-white text-3xl hover:text-gray-300 transition"
+                    aria-label="Cerrar galería">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <!-- Contenedor imagen -->
+                <div class="relative w-full flex items-center justify-center bg-white rounded-xl overflow-hidden shadow-2xl" style="min-height:300px; max-height:70vh">
+                    <button id="btnGaleriaPrev"
+                        class="absolute left-2 z-10 bg-black bg-opacity-50 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-opacity-80 transition"
+                        aria-label="Anterior">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+
+                    <img id="galeriaImg" src="" alt="Imagen del producto"
+                        class="max-h-full max-w-full object-contain"
+                        style="max-height:65vh"
+                        onerror="this.src='https://via.placeholder.com/600?text=Error+al+cargar'">
+
+                    <button id="btnGaleriaNext"
+                        class="absolute right-2 z-10 bg-black bg-opacity-50 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-opacity-80 transition"
+                        aria-label="Siguiente">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <!-- Contador -->
+                <div id="galeriaCounter" class="text-white text-sm"></div>
+
+                <!-- Miniaturas -->
+                <div id="galeriaThumbs" class="flex gap-2 flex-wrap justify-center"></div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        // Eventos
+        document.getElementById('btnGaleriaClose').addEventListener('click', cerrarGaleria);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) cerrarGaleria(); });
+        document.getElementById('btnGaleriaPrev').addEventListener('click', () => navegarGaleria(-1));
+        document.getElementById('btnGaleriaNext').addEventListener('click', () => navegarGaleria(1));
+
+        // Teclado
+        document.addEventListener('keydown', galeriaKeyHandler);
+    }
+
+    overlay.classList.remove('hidden');
+    actualizarGaleria();
+}
+
+function cerrarGaleria() {
+    const overlay = document.getElementById('galeriaOverlay');
+    if (overlay) overlay.classList.add('hidden');
+}
+
+function navegarGaleria(dir) {
+    galeriaIndex = (galeriaIndex + dir + galeriaActual.length) % galeriaActual.length;
+    actualizarGaleria();
+}
+
+function actualizarGaleria() {
+    const img = document.getElementById('galeriaImg');
+    const counter = document.getElementById('galeriaCounter');
+    const thumbs = document.getElementById('galeriaThumbs');
+
+    img.src = galeriaActual[galeriaIndex];
+    counter.textContent = `${galeriaIndex + 1} / ${galeriaActual.length}`;
+
+    // Actualizar miniaturas
+    thumbs.innerHTML = galeriaActual.map((url, i) => `
+        <img src="${url}" alt="Miniatura ${i + 1}" loading="lazy"
+             class="w-14 h-14 object-cover rounded cursor-pointer border-2 transition-all
+                    ${i === galeriaIndex ? 'border-blue-400 scale-110' : 'border-transparent opacity-60 hover:opacity-100'}"
+             onclick="window.__galeriaGoTo(${i})"
+             onerror="this.src='https://via.placeholder.com/56'">`
+    ).join('');
+
+    // Ocultar prev/next si solo hay una imagen
+    const hiddenNav = galeriaActual.length <= 1;
+    document.getElementById('btnGaleriaPrev').classList.toggle('hidden', hiddenNav);
+    document.getElementById('btnGaleriaNext').classList.toggle('hidden', hiddenNav);
+}
+
+window.__galeriaGoTo = (idx) => {
+    galeriaIndex = idx;
+    actualizarGaleria();
+};
+
+function galeriaKeyHandler(e) {
+    const overlay = document.getElementById('galeriaOverlay');
+    if (!overlay || overlay.classList.contains('hidden')) return;
+    if (e.key === 'ArrowLeft') navegarGaleria(-1);
+    if (e.key === 'ArrowRight') navegarGaleria(1);
+    if (e.key === 'Escape') cerrarGaleria();
+}
 
 
 ================ frontend\js\auth.js ================
@@ -5274,16 +7031,19 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    UI.renderMenuCart();
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'cart'
+    });
     cargarCarrito();
     setupEventListeners();
 });
 
 function setupEventListeners() {
-    // Phase 2: Checkout implementation
-    const btnCheckout = document.getElementById('btnCheckout');
-    if (btnCheckout) {
-        btnCheckout.addEventListener('click', realizarCheckout);
+    // Phase 2: Order implementation
+    const btnOrder = document.getElementById('btnOrder');
+    if (btnOrder) {
+        btnOrder.addEventListener('click', realizarOrder);
     }
 
     const btnVaciar = document.getElementById('btnVaciar');
@@ -5308,15 +7068,55 @@ async function cargarCarrito() {
     }
 }
 
+function actualizarEstadoAccionesCarrito(hayProductos) {
+    const btnOrder = document.getElementById('btnOrder');
+    const btnVaciar = document.getElementById('btnVaciar');
+
+    [btnOrder, btnVaciar].forEach(btn => {
+        if (!btn) return;
+
+        btn.disabled = !hayProductos;
+
+        if (!hayProductos) {
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    });
+}
+
 function renderizarCarrito(carrito) {
     const tbody = document.getElementById('listaCarrito');
     if (!tbody) return;
 
+    const emptyCartMsg = document.getElementById('emptyCart');
+
     tbody.innerHTML = '';
 
-    // Group products
-    const productosMap = new Map();
     const productos = carrito.productos || [];
+
+    // ✅ Caso carrito vacío
+    if (productos.length === 0) {
+        if (emptyCartMsg) emptyCartMsg.classList.remove('hidden');
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-4 text-gray-500">
+                    El carrito está vacío
+                </td>
+            </tr>
+        `;
+
+        actualizarTotales(0);
+        actualizarEstadoAccionesCarrito(false);
+        return;
+    }
+
+    // ✅ Hay productos
+    if (emptyCartMsg) emptyCartMsg.classList.add('hidden');
+
+    // Agrupar productos
+    const productosMap = new Map();
 
     productos.forEach(p => {
         if (productosMap.has(p.id)) {
@@ -5327,15 +7127,6 @@ function renderizarCarrito(carrito) {
     });
 
     let subtotal = 0;
-
-    const emptyCartMsg = document.getElementById('emptyCart');
-    if (productosMap.size === 0) {
-        if (emptyCartMsg) emptyCartMsg.classList.remove('hidden');
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">El carrito está vacío</td></tr>';
-        actualizarTotales(0);
-        return;
-    }
-    if (emptyCartMsg) emptyCartMsg.classList.add('hidden');
 
     productosMap.forEach(p => {
         const totalProducto = p.precio * p.cantidad;
@@ -5364,6 +7155,7 @@ function renderizarCarrito(carrito) {
     });
 
     actualizarTotales(subtotal);
+    actualizarEstadoAccionesCarrito(true);
 }
 
 function actualizarTotales(subtotal) {
@@ -5399,18 +7191,18 @@ window.eliminarDelCarrito = async (productoId) => {
     }
 };
 
-async function realizarCheckout() {
-    if (!confirm('¿Confirmar compra?')) return;
+async function realizarOrder() {
+    if (!confirm('¿Confirmar pedido?')) return;
 
     try {
         await Api.post('/ordenes/checkout');
         // Redirect or show success
-        UI.showNotification('¡Compra realizada con éxito!', 'success');
+        UI.showNotification('¡Pedido realizado con éxito!', 'success');
         setTimeout(() => {
             window.location.href = 'ordenes.html';
         }, 1500);
     } catch (error) {
-        UI.showNotification('Error en el checkout: ' + error.message, 'error');
+        UI.showNotification('Error en la generacion del pedido: ' + error.message, 'error');
     }
 }
 
@@ -5427,6 +7219,311 @@ async function vaciarCarrito() {
 }
 
 
+================ frontend\js\direcciones.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+// ── Estado local de teléfonos en el modal ─────────────────────────────────────
+let telefonosModal = []; // string[]
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (!Auth.isAuthenticated()) {
+        window.location.href = 'login.html';
+        return;
+    }
+    UI.renderNavBar({ containerId: 'mainNav', context: 'addresses' });
+    cargarDirecciones();
+    setupEventListeners();
+});
+
+// ── Event Listeners ────────────────────────────────────────────────────────────
+function setupEventListeners() {
+    document.getElementById('btnNuevaDireccion').addEventListener('click', () => abrirModal());
+    document.getElementById('btnCerrarModal').addEventListener('click', cerrarModal);
+    document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
+    document.getElementById('formDireccion').addEventListener('submit', guardarDireccion);
+    UI.setupModalCloser('modalDireccion');
+
+    document.getElementById('btnAgregarTel').addEventListener('click', agregarTelefono);
+    document.getElementById('nuevoTelefono').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); agregarTelefono(); }
+    });
+
+    // Contadores de caracteres
+    const conteos = [
+        ['alias', 'contadorAlias', 20],
+        ['calle', 'contadorCalle', 25],
+        ['numeroExterior', 'contadorNumExt', 10],
+        ['numeroInterior', 'contadorNumInt', 10],
+        ['referencia', 'contadorRef', 35],
+        ['colonia', 'contadorColonia', 40],
+        ['municipio', 'contadorMunicipio', 45],
+        ['estado', 'contadorEstado', 25],
+    ];
+    conteos.forEach(([id, counterId, max]) => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', () => actualizarContador(id, counterId, max));
+        }
+    });
+}
+
+function actualizarContador(inputId, counterId, max) {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(counterId);
+    if (!input || !counter) return;
+    const len = input.value.length;
+    counter.textContent = `${len} / ${max}`;
+    counter.classList.toggle('warn', len >= max * 0.9);
+}
+
+// ── API calls ─────────────────────────────────────────────────────────────────
+async function cargarDirecciones() {
+    try {
+        const dirs = await Api.get('/direcciones/mis-direcciones');
+        renderizarDirecciones(dirs);
+    } catch (err) {
+        UI.showNotification('Error al cargar direcciones: ' + err.message, 'error');
+    }
+}
+
+// ── Renderizado de tarjetas ───────────────────────────────────────────────────
+function renderizarDirecciones(dirs) {
+    const container = document.getElementById('listaDirecciones');
+    const emptyState = document.getElementById('emptyState');
+    container.innerHTML = '';
+
+    const user = Auth.getCurrentUser();
+    const role = user ? user.role : '';
+
+    if (!dirs || dirs.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+    }
+    emptyState.classList.add('hidden');
+
+    dirs.forEach(dir => {
+        const card = document.createElement('article');
+        card.className = `direccion-card${dir.preferida ? ' preferida' : ''}`;
+        card.setAttribute('itemscope', '');
+        card.setAttribute('itemtype', 'https://schema.org/PostalAddress');
+
+        const tels = (dir.telefonos || []).map(t =>
+            `<span class="tel-item text-xs text-gray-600"><i class="fas fa-phone text-blue-400 mr-1"></i>${t}</span>`
+        ).join('');
+
+        const botones = construirBotonesTarjeta(dir, role);
+
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    ${dir.alias ? `<h3 class="font-semibold text-gray-800">${dir.alias}</h3>` : ''}
+                    ${dir.preferida ? '<span class="badge-preferida"><i class="fas fa-star"></i> Preferida</span>' : ''}
+                </div>
+                <div class="flex gap-1">${botones}</div>
+            </div>
+            <address class="not-italic text-sm text-gray-600 space-y-0.5">
+                <p itemprop="streetAddress">
+                    ${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ', Int. ' + dir.numeroInterior : ''}
+                </p>
+                ${dir.referencia ? `<p class="text-xs text-gray-400">${dir.referencia}</p>` : ''}
+                <p itemprop="addressLocality">${dir.colonia}</p>
+                <p itemprop="addressRegion">${dir.municipio}, ${dir.estado}</p>
+                <p itemprop="postalCode">C.P. ${dir.codigoPostal}</p>
+            </address>
+            ${tels ? `<div class="flex flex-wrap gap-1 mt-3">${tels}</div>` : ''}
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+function construirBotonesTarjeta(dir, role) {
+    // CUSTOMER puede editar y eliminar sus propias direcciones
+    // SUPPLIER puede editar pero NO eliminar
+    let html = `
+        <button onclick="window.editarDireccion(${dir.id})"
+            class="w-8 h-8 rounded-full hover:bg-gray-100 text-yellow-500 transition" title="Editar">
+            <i class="fas fa-edit"></i>
+        </button>
+    `;
+    if (role !== 'SUPPLIER') {
+        html += `
+            <button onclick="window.eliminarDireccionPropia(${dir.id})"
+                class="w-8 h-8 rounded-full hover:bg-gray-100 text-red-400 transition" title="Eliminar">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        `;
+    }
+    return html;
+}
+
+// ── Teléfonos dentro del modal ────────────────────────────────────────────────
+function agregarTelefono() {
+    const input = document.getElementById('nuevoTelefono');
+    const val = input.value.trim();
+
+    if (!/^\d{10}$/.test(val)) {
+        UI.showNotification('El teléfono debe tener exactamente 10 dígitos', 'error');
+        return;
+    }
+    if (telefonosModal.includes(val)) {
+        UI.showNotification('Ese número ya está en la lista', 'error');
+        return;
+    }
+    telefonosModal.push(val);
+    input.value = '';
+    renderizarTelefonos();
+}
+
+function renderizarTelefonos() {
+    const container = document.getElementById('telefonosContainer');
+    const sinTels = document.getElementById('sinTelefonos');
+    container.innerHTML = '';
+
+    if (telefonosModal.length === 0) {
+        sinTels.classList.remove('hidden');
+        return;
+    }
+    sinTels.classList.add('hidden');
+
+    telefonosModal.forEach((tel, idx) => {
+        const item = document.createElement('div');
+        item.className = 'tel-item';
+        item.innerHTML = `
+            <i class="fas fa-phone text-blue-400 text-xs"></i>
+            <span class="flex-1 text-sm text-gray-700">${tel}</span>
+            <button type="button" onclick="window.quitarTelefono(${idx})"
+                class="text-red-400 hover:text-red-600 text-xs" title="Quitar">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(item);
+    });
+}
+
+window.quitarTelefono = (idx) => {
+    telefonosModal.splice(idx, 1);
+    renderizarTelefonos();
+};
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function abrirModal(dir = null) {
+    const form = document.getElementById('formDireccion');
+    form.reset();
+    telefonosModal = [];
+    document.getElementById('direccionId').value = '';
+    document.getElementById('modalTitle').textContent = dir ? 'Editar Dirección' : 'Nueva Dirección';
+
+    // Reiniciar contadores
+    ['contadorAlias', 'contadorCalle', 'contadorNumExt', 'contadorNumInt', 'contadorRef', 'contadorColonia', 'contadorMunicipio', 'contadorEstado'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = el.textContent.replace(/^\d+/, '0');
+    });
+
+    if (dir) {
+        document.getElementById('direccionId').value = dir.id;
+        document.getElementById('alias').value = dir.alias || '';
+        document.getElementById('preferida').checked = !!dir.preferida;
+        document.getElementById('calle').value = dir.calle || '';
+        document.getElementById('numeroExterior').value = dir.numeroExterior || '';
+        document.getElementById('numeroInterior').value = dir.numeroInterior || '';
+        document.getElementById('referencia').value = dir.referencia || '';
+        document.getElementById('colonia').value = dir.colonia || '';
+        document.getElementById('municipio').value = dir.municipio || '';
+        document.getElementById('estado').value = dir.estado || '';
+        document.getElementById('codigoPostal').value = dir.codigoPostal || '';
+        telefonosModal = [...(dir.telefonos || [])];
+
+        // Actualizar contadores visualmente
+        const campos = ['alias', 'calle', 'numeroExterior', 'numeroInterior', 'referencia', 'colonia', 'municipio', 'estado'];
+        const contadores = ['contadorAlias', 'contadorCalle', 'contadorNumExt', 'contadorNumInt', 'contadorRef', 'contadorColonia', 'contadorMunicipio', 'contadorEstado'];
+        const maximos = [20, 25, 10, 10, 35, 40, 45, 25];
+        campos.forEach((id, i) => actualizarContador(id, contadores[i], maximos[i]));
+    }
+
+    renderizarTelefonos();
+    UI.toggleModal('modalDireccion', true);
+}
+
+function cerrarModal() {
+    UI.toggleModal('modalDireccion', false);
+    telefonosModal = [];
+}
+
+// ── Guardar (POST / PUT) ──────────────────────────────────────────────────────
+async function guardarDireccion(e) {
+    e.preventDefault();
+
+    // Validar CP
+    const cp = document.getElementById('codigoPostal').value.trim();
+    if (!/^\d{5}$/.test(cp)) {
+        UI.showNotification('El código postal debe tener exactamente 5 dígitos', 'error');
+        return;
+    }
+
+    // Validar mínimo un teléfono
+    if (telefonosModal.length === 0) {
+        document.getElementById('sinTelefonos').classList.remove('hidden');
+        UI.showNotification('Debe agregar al menos un teléfono', 'error');
+        return;
+    }
+
+    const id = document.getElementById('direccionId').value;
+
+    const body = {
+        preferida: document.getElementById('preferida').checked,
+        alias: document.getElementById('alias').value.trim() || null,
+        calle: document.getElementById('calle').value.trim(),
+        numeroExterior: document.getElementById('numeroExterior').value.trim(),
+        numeroInterior: document.getElementById('numeroInterior').value.trim() || null,
+        referencia: document.getElementById('referencia').value.trim() || null,
+        colonia: document.getElementById('colonia').value.trim(),
+        municipio: document.getElementById('municipio').value.trim(),
+        estado: document.getElementById('estado').value.trim(),
+        codigoPostal: cp,
+        telefonos: [...telefonosModal]
+    };
+
+    try {
+        if (id) {
+            await Api.put(`/direcciones/${id}`, body);
+            UI.showNotification('Dirección actualizada correctamente');
+        } else {
+            await Api.post('/direcciones', body);
+            UI.showNotification('Dirección creada correctamente');
+        }
+        cerrarModal();
+        cargarDirecciones();
+    } catch (err) {
+        UI.showNotification('Error al guardar: ' + err.message, 'error');
+    }
+}
+
+// ── Funciones globales ─────────────────────────────────────────────────────────
+window.editarDireccion = async (id) => {
+    try {
+        const dir = await Api.get(`/direcciones/${id}`);
+        abrirModal(dir);
+    } catch (err) {
+        UI.showNotification('Error al cargar dirección', 'error');
+    }
+};
+
+window.eliminarDireccionPropia = async (id) => {
+    if (!confirm('¿Eliminar esta dirección?\n\nEsta acción no se puede deshacer.')) return;
+    try {
+        await Api.delete(`/direcciones/${id}`);
+        UI.showNotification('Dirección eliminada');
+        cargarDirecciones();
+    } catch (err) {
+        UI.showNotification('Error al eliminar: ' + err.message, 'error');
+    }
+};
+
+
 ================ frontend\js\ordenes.js ================
 
 import Api from './api.js';
@@ -5439,7 +7536,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    UI.renderMenuOrders();
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'orders'
+    });
     cargarOrdenes();
 });
 
@@ -5488,77 +7588,98 @@ import Api from './api.js';
 import { UI } from './ui.js';
 import Auth from './auth.js';
 
+// ── Estado local de imágenes en el modal ──────────────────────────────────────
+let imagenesModal = []; // [{ url: String, isDefault: Boolean }]
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Auth Check
     if (!Auth.isAuthenticated()) {
         window.location.href = 'login.html';
         return;
     }
 
-    UI.renderNavBar({
-        containerId: 'mainNav',
-        context: 'products'
-    });
+    UI.renderNavBar({ containerId: 'mainNav', context: 'products' });
     setupRoleBasedUI();
     cargarProductos();
     setupEventListeners();
 });
 
+// ── Configuración UI por Rol ───────────────────────────────────────────────────
 function setupRoleBasedUI() {
-    const btnAgregar = document.getElementById('btnAgregar');
-
-    if (!btnAgregar) {
-        console.warn('btnAgregar no existe en el DOM');
-        return;
-    }
-
     const user = Auth.getCurrentUser();
+    const role = user ? user.role : '';
 
-    if (user && user.role === 'ADMIN') {
+    // Mostrar botón Agregar solo para ADMIN
+    if (role === 'ADMIN') {
         document.getElementById('btnAgregar').classList.remove('hidden');
         document.getElementById('btnAgregar').classList.add('flex');
     }
-}
 
-const form = document.getElementById('formProducto');
-const modal = document.getElementById('modalProducto');
-const tipoSelect = document.getElementById('tipo');
-
-function setupEventListeners() {
-    // Modal controls
-    document.getElementById('btnAgregar').addEventListener('click', () => abrirModal());
-    document.getElementById('btnCerrarModal').addEventListener('click', () => UI.toggleModal('modalProducto', false));
-    document.getElementById('btnCancelar').addEventListener('click', () => UI.toggleModal('modalProducto', false));
-
-    // Close modal on outside click
-    UI.setupModalCloser('modalProducto');
-
-    // Dynamic Form Fields
-    tipoSelect.addEventListener('change', toggleCamposTipo);
-
-    // Form Submit
-    form.addEventListener('submit', guardarProducto);
-
-    // Filter
-    document.getElementById('filtroTipo').addEventListener('change', (e) => {
-        cargarProductos(e.target.value);
-    });
-}
-
-function toggleCamposTipo() {
-    const tipo = tipoSelect.value;
-    const camposFisico = document.getElementById('camposFisico');
-    const camposDigital = document.getElementById('camposDigital');
-
-    if (tipo === 'Fisico') {
-        camposFisico.classList.remove('hidden');
-        camposDigital.classList.add('hidden');
-    } else {
-        camposFisico.classList.add('hidden');
-        camposDigital.classList.remove('hidden');
+    // El campo Proveedor solo es visible para ADMIN
+    const campoProveedor = document.getElementById('campoProveedor');
+    if (campoProveedor && role !== 'ADMIN') {
+        campoProveedor.classList.add('hidden');
     }
 }
 
+// ── Event Listeners ────────────────────────────────────────────────────────────
+function setupEventListeners() {
+    document.getElementById('btnAgregar').addEventListener('click', () => abrirModal());
+    document.getElementById('btnCerrarModal').addEventListener('click', () => UI.toggleModal('modalProducto', false));
+    document.getElementById('btnCancelar').addEventListener('click', () => UI.toggleModal('modalProducto', false));
+    UI.setupModalCloser('modalProducto');
+
+    document.getElementById('tipo').addEventListener('change', toggleCamposTipo);
+    document.getElementById('formProducto').addEventListener('submit', guardarProducto);
+
+    // Filtro tipo
+    document.getElementById('filtroTipo').addEventListener('change', (e) => {
+        cargarProductos(e.target.value);
+    });
+
+    // Contador descripción
+    const txtDescripcion = document.getElementById('descripcion');
+    if (txtDescripcion) {
+        txtDescripcion.addEventListener('input', () => {
+            actualizarContador('descripcion', 'contadorDescripcion', 250);
+        });
+    }
+
+    // Contador proveedor
+    const txtProveedor = document.getElementById('proveedor');
+    if (txtProveedor) {
+        txtProveedor.addEventListener('input', () => {
+            actualizarContador('proveedor', 'contadorProveedor', 150);
+        });
+    }
+
+    // Agregar imagen al modal
+    document.getElementById('btnAgregarImagen').addEventListener('click', agregarImagenModal);
+
+    // También agregar imagen al presionar Enter en el campo
+    document.getElementById('nuevaImagenUrl').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            agregarImagenModal();
+        }
+    });
+}
+
+function actualizarContador(inputId, counterId, max) {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(counterId);
+    if (!input || !counter) return;
+    const len = input.value.length;
+    counter.textContent = `${len} / ${max}`;
+    counter.classList.toggle('warn', len >= max * 0.9);
+}
+
+function toggleCamposTipo() {
+    const tipo = document.getElementById('tipo').value;
+    document.getElementById('camposFisico').classList.toggle('hidden', tipo !== 'Fisico');
+    document.getElementById('camposDigital').classList.toggle('hidden', tipo !== 'Digital');
+}
+
+// ── Carga y renderizado de productos (TABLA para ADMIN/SUPPLIER) ───────────────
 async function cargarProductos(filtro = 'todos') {
     try {
         const productos = await Api.get('/productos');
@@ -5577,7 +7698,11 @@ function renderizarTabla(productos, filtro) {
 
     const filtrados = filtro === 'todos'
         ? productos
-        : productos.filter(p => (filtro === 'Fisico' && p.peso !== undefined) || (filtro === 'Digital' && p.urlDescarga !== undefined));
+        : productos.filter(p => {
+            if (filtro === 'Fisico') return p.tipo === 'Fisico' || p.peso !== undefined;
+            if (filtro === 'Digital') return p.tipo === 'Digital' || p.urlDescarga !== undefined;
+            return true;
+        });
 
     if (filtrados.length === 0) {
         document.getElementById('emptyState').classList.remove('hidden');
@@ -5586,71 +7711,162 @@ function renderizarTabla(productos, filtro) {
     document.getElementById('emptyState').classList.add('hidden');
 
     filtrados.forEach(p => {
-        const esFisico = p.peso !== undefined;
+        const esFisico = p.tipo === 'Fisico' || (p.peso !== undefined && p.urlDescarga === undefined);
         const tipoBadge = esFisico
             ? '<span class="bg-blue-100 text-blue-800 py-1 px-3 rounded-full text-xs">Físico</span>'
             : '<span class="bg-purple-100 text-purple-800 py-1 px-3 rounded-full text-xs">Digital</span>';
 
-        let buttons = '';
+        // Imagen por defecto
+        const imgDefault = p.imagenes && p.imagenes.find(i => i.isDefault);
+        const imgSrc = imgDefault ? imgDefault.imagenUrl : (p.imagenes && p.imagenes.length > 0 ? p.imagenes[0].imagenUrl : null);
+        const imgTag = imgSrc
+            ? `<img src="${imgSrc}" alt="Imagen de ${p.nombre}" class="w-12 h-12 object-cover rounded" loading="lazy">`
+            : `<div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400"><i class="fas fa-image"></i></div>`;
 
+        let buttons = '';
         if (role === 'ADMIN') {
-            buttons += `
-                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transform hover:scale-110 transition duration-300" onclick="window.editarProducto(${p.id})">
+            buttons = `
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transition" onclick="window.editarProducto(${p.id})" title="Editar">
                     <i class="fas fa-edit text-yellow-500"></i>
                 </button>
-                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transform hover:scale-110 transition duration-300 ml-2" onclick="window.eliminarProducto(${p.id})">
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transition ml-1" onclick="window.eliminarProducto(${p.id})" title="Eliminar">
                     <i class="fas fa-trash-alt text-red-500"></i>
                 </button>
             `;
         } else if (role === 'SUPPLIER') {
-            buttons += `
-                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transform hover:scale-110 transition duration-300" onclick="window.editarProducto(${p.id})">
+            buttons = `
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transition" onclick="window.editarProducto(${p.id})" title="Editar">
                     <i class="fas fa-edit text-yellow-500"></i>
                 </button>
             `;
         } else if (role === 'CUSTOMER') {
-            buttons += `
-                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transform hover:scale-110 transition duration-300 ml-2" onclick="window.agregarAlCarrito(${p.id})" title="Agregar al Carrito">
+            buttons = `
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transition" onclick="window.agregarAlCarrito(${p.id})" title="Agregar al Carrito">
                     <i class="fas fa-cart-plus text-green-500"></i>
                 </button>
             `;
         }
 
+        const proveedorDisplay = p.proveedor
+            ? `<span class="text-xs text-gray-500 truncate" style="max-width:120px" title="${p.proveedor}">${p.proveedor}</span>`
+            : '<span class="text-xs text-gray-400 italic">—</span>';
+
         const row = document.createElement('tr');
-        row.className = 'border-b border-gray-200 hover:bg-gray-100';
+        row.className = 'border-b border-gray-200 hover:bg-gray-50';
         row.innerHTML = `
-            <td class="py-3 px-6 text-left whitespace-nowrap font-medium">${p.id}</td>
-            <td class="py-3 px-6 text-left">
-                <div class="flex items-center">
-                    <span class="font-medium">${p.nombre}</span>
-                </div>
+            <td class="py-3 px-4 font-medium">${p.id}</td>
+            <td class="py-3 px-4">${imgTag}</td>
+            <td class="py-3 px-4">
+                <div class="font-medium">${p.nombre}</div>
+                ${p.descripcion ? `<div class="text-xs text-gray-400 truncate" style="max-width:200px" title="${p.descripcion}">${p.descripcion}</div>` : ''}
             </td>
-            <td class="py-3 px-6 text-left font-bold text-gray-700">${UI.formatCurrency(p.precio)}</td>
-            <td class="py-3 px-6 text-left">${tipoBadge}</td>
-            <td class="py-3 px-6 text-center">
-                <div class="flex item-center justify-center">
-                    ${buttons}
-                </div>
+            <td class="py-3 px-4 font-bold text-gray-700">${UI.formatCurrency(p.precio)}</td>
+            <td class="py-3 px-4">${tipoBadge}</td>
+            <td class="py-3 px-4">${proveedorDisplay}</td>
+            <td class="py-3 px-4 text-center">
+                <div class="flex items-center justify-center">${buttons}</div>
             </td>
         `;
         tbody.appendChild(row);
     });
 }
 
+// ── Gestión de imágenes en el modal ───────────────────────────────────────────
+function agregarImagenModal() {
+    const urlInput = document.getElementById('nuevaImagenUrl');
+    const url = urlInput.value.trim();
+    if (!url) {
+        UI.showNotification('Ingresa una URL de imagen válida', 'error');
+        return;
+    }
+    // Validar URL básica
+    try { new URL(url); } catch {
+        UI.showNotification('La URL ingresada no es válida', 'error');
+        return;
+    }
+    const isDefault = imagenesModal.length === 0; // Primera imagen será default
+    imagenesModal.push({ url, isDefault });
+    urlInput.value = '';
+    renderizarImagenesModal();
+}
+
+function renderizarImagenesModal() {
+    const container = document.getElementById('imagenesContainer');
+    const sinMsg = document.getElementById('sinImagenesMsg');
+    container.innerHTML = '';
+
+    if (imagenesModal.length === 0) {
+        sinMsg.classList.remove('hidden');
+        return;
+    }
+    sinMsg.classList.add('hidden');
+
+    imagenesModal.forEach((img, idx) => {
+        const item = document.createElement('div');
+        item.className = 'imagen-item';
+        item.innerHTML = `
+            <img src="${img.url}" alt="Preview" onerror="this.src='https://via.placeholder.com/40'" loading="lazy">
+            <label class="flex items-center gap-1 cursor-pointer" title="Marcar como imagen por defecto">
+                <input type="radio" name="imgDefault" value="${idx}" ${img.isDefault ? 'checked' : ''}
+                    onchange="window.setImagenDefault(${idx})">
+                <span class="text-xs text-yellow-600">⭐</span>
+            </label>
+            <span class="flex-1 text-xs text-gray-500 truncate" title="${img.url}">${img.url}</span>
+            <button type="button" onclick="window.eliminarImagenModal(${idx})"
+                class="text-red-400 hover:text-red-600 text-sm" title="Eliminar imagen">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(item);
+    });
+}
+
+window.setImagenDefault = (idx) => {
+    imagenesModal.forEach((img, i) => { img.isDefault = (i === idx); });
+    renderizarImagenesModal();
+};
+
+window.eliminarImagenModal = (idx) => {
+    const wasDefault = imagenesModal[idx].isDefault;
+    imagenesModal.splice(idx, 1);
+    if (wasDefault && imagenesModal.length > 0) {
+        imagenesModal[0].isDefault = true;
+    }
+    renderizarImagenesModal();
+};
+
+// ── Modal abrir/cerrar ─────────────────────────────────────────────────────────
 function abrirModal(producto = null) {
+    const form = document.getElementById('formProducto');
+    const user = Auth.getCurrentUser();
+    const role = user ? user.role : '';
+
     form.reset();
+    imagenesModal = [];
     document.getElementById('productoId').value = '';
+    document.getElementById('contadorDescripcion').textContent = '0 / 250';
+    document.getElementById('contadorProveedor').textContent = '0 / 150';
     document.getElementById('modalTitle').textContent = 'Nuevo Producto';
+
+    // Visibilidad campo proveedor por rol
+    const campoProveedor = document.getElementById('campoProveedor');
+    campoProveedor.classList.toggle('hidden', role !== 'ADMIN');
 
     if (producto) {
         document.getElementById('modalTitle').textContent = 'Editar Producto';
         document.getElementById('productoId').value = producto.id;
-        document.getElementById('nombre').value = producto.nombre;
-        document.getElementById('precio').value = producto.precio;
+        document.getElementById('nombre').value = producto.nombre || '';
+        document.getElementById('precio').value = producto.precio || '';
+        document.getElementById('descripcion').value = producto.descripcion || '';
+        actualizarContador('descripcion', 'contadorDescripcion', 250);
 
-        // Determine type based on properties
-        const esFisico = producto.peso !== undefined;
-        tipoSelect.value = esFisico ? 'Fisico' : 'Digital';
+        if (role === 'ADMIN') {
+            document.getElementById('proveedor').value = producto.proveedor || '';
+            actualizarContador('proveedor', 'contadorProveedor', 150);
+        }
+
+        const esFisico = producto.tipo === 'Fisico' || (producto.peso !== undefined && producto.urlDescarga === undefined);
+        document.getElementById('tipo').value = esFisico ? 'Fisico' : 'Digital';
         toggleCamposTipo();
 
         if (esFisico) {
@@ -5658,49 +7874,81 @@ function abrirModal(producto = null) {
             document.getElementById('peso').value = producto.peso || 0;
         } else {
             document.getElementById('urlDescarga').value = producto.urlDescarga || '';
-            // Expiration might need handling if it's a date or int in backend
+        }
+
+        // Cargar imágenes existentes
+        if (producto.imagenes && producto.imagenes.length > 0) {
+            imagenesModal = producto.imagenes.map(img => ({
+                url: img.imagenUrl,
+                isDefault: img.isDefault
+            }));
         }
     } else {
-        toggleCamposTipo(); // Reset to default
+        toggleCamposTipo();
     }
 
+    renderizarImagenesModal();
     UI.toggleModal('modalProducto', true);
 }
 
+// ── Guardar producto (POST / PUT) ──────────────────────────────────────────────
 async function guardarProducto(e) {
     e.preventDefault();
-    const id = document.getElementById('productoId').value;
-    const nombre = document.getElementById('nombre').value;
-    const precio = parseFloat(document.getElementById('precio').value);
-    const tipo = tipoSelect.value;
 
-    let producto = { nombre, precio };
+    const id = document.getElementById('productoId').value;
+    const user = Auth.getCurrentUser();
+    const role = user ? user.role : '';
+    const tipo = document.getElementById('tipo').value;
+
+    // Validar al menos una imagen
+    if (imagenesModal.length === 0) {
+        UI.showNotification('El producto debe tener al menos una imagen', 'error');
+        return;
+    }
+
+    // Asegurar que haya exactamente un default
+    const hayDefault = imagenesModal.some(i => i.isDefault);
+    if (!hayDefault) imagenesModal[0].isDefault = true;
+
+    const defaultIndex = imagenesModal.findIndex(i => i.isDefault);
+
+    const body = {
+        nombre: document.getElementById('nombre').value.trim(),
+        precio: parseFloat(document.getElementById('precio').value),
+        tipo,
+        descripcion: document.getElementById('descripcion').value.trim() || null,
+        imagenesUrls: imagenesModal.map(i => i.url),
+        defaultImageIndex: defaultIndex
+    };
+
+    // Proveedor — solo ADMIN lo envía
+    if (role === 'ADMIN') {
+        body.proveedor = document.getElementById('proveedor').value.trim() || null;
+    }
 
     if (tipo === 'Fisico') {
-        producto.stock = parseInt(document.getElementById('stock').value) || 0;
-        producto.peso = parseFloat(document.getElementById('peso').value) || 0;
+        body.stock = parseInt(document.getElementById('stock').value) || 0;
+        body.peso = parseFloat(document.getElementById('peso').value) || 0;
     } else {
-        producto.urlDescarga = document.getElementById('urlDescarga').value;
-        // producto.fechaExpiracion = ...
+        body.urlDescarga = document.getElementById('urlDescarga').value.trim() || null;
     }
 
     try {
         if (id) {
-            await Api.put(`/productos/${id}`, producto);
+            await Api.put(`/productos/${id}`, body);
             UI.showNotification('Producto actualizado correctamente');
         } else {
-            const endpoint = tipo === 'Fisico' ? '/productos/fisico' : '/productos/digital';
-            await Api.post(endpoint, producto);
+            await Api.post('/productos', body);
             UI.showNotification('Producto creado correctamente');
         }
         UI.toggleModal('modalProducto', false);
         cargarProductos();
     } catch (error) {
-        UI.showNotification('Error al guardar producto', 'error');
+        UI.showNotification('Error al guardar producto: ' + error.message, 'error');
     }
 }
 
-// Global functions for inline HTML events
+// ── Funciones globales (onclick inline) ───────────────────────────────────────
 window.editarProducto = async (id) => {
     try {
         const producto = await Api.get(`/productos/${id}`);
@@ -5712,7 +7960,6 @@ window.editarProducto = async (id) => {
 
 window.eliminarProducto = async (id) => {
     if (!confirm('¿Estás seguro de eliminar este producto?')) return;
-
     try {
         await Api.delete(`/productos/${id}`);
         UI.showNotification('Producto eliminado');
@@ -5797,15 +8044,23 @@ export const UI = {
             CUSTOMER: {
                 products: [
                     { label: 'Carrito', href: 'carrito.html' },
-                    { label: 'Mis Órdenes', href: 'ordenes.html' }
+                    { label: 'Mis Órdenes', href: 'ordenes.html' },
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
                 ],
                 cart: [
                     { label: 'Productos', href: 'productoscustomer.html' },
-                    { label: 'Mis Órdenes', href: 'ordenes.html' }
+                    { label: 'Mis Órdenes', href: 'ordenes.html' },
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
                 ],
                 orders: [
                     { label: 'Productos', href: 'productoscustomer.html' },
-                    { label: 'Carrito', href: 'carrito.html' }
+                    { label: 'Carrito', href: 'carrito.html' },
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
+                ],
+                addresses: [
+                    { label: 'Productos', href: 'productoscustomer.html' },
+                    { label: 'Carrito', href: 'carrito.html' },
+                    { label: 'Mis Órdenes', href: 'ordenes.html' }
                 ]
             },
             ADMIN: {
@@ -5824,6 +8079,10 @@ export const UI = {
             },
             SUPPLIER: {
                 products: [
+                    { label: 'Mis Productos', href: 'productos.html' },
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
+                ],
+                addresses: [
                     { label: 'Mis Productos', href: 'productos.html' }
                 ]
             }
@@ -5854,416 +8113,6 @@ export const UI = {
         }).format(amount);
     },
 
-    /*
-        renderMenuProducts() {
-            const userStr = localStorage.getItem('user');
-            const user = userStr ? JSON.parse(userStr) : null;
-            const navContainer = document.getElementById('mainNavProducts');
-    
-            if (!navContainer) return;
-    
-            navContainer.innerHTML = '';
-    
-            // Contenedor principal FLEX
-            const wrapper = document.createElement('div');
-            wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
-    
-            // === IZQUIERDA (Logo) ===
-            const left = document.createElement('div');
-            left.className = 'flex items-center';
-    
-            left.innerHTML = `
-                <a class="text-2xl font-bold text-blue-600">
-                    E-Shop
-                </a>
-            `;
-    
-            // === DERECHA (Opciones dinámicas) ===
-            const right = document.createElement('div');
-            right.className = 'flex items-center gap-6';
-    
-            if (!user) {
-                right.innerHTML = `
-                    <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Iniciar Sesión
-                    </a>
-                    <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-                        Registrarse
-                    </a>
-                `;
-            } else {
-               // === ROLE BASED LINKS ===
-                if (user.role === 'CUSTOMER') {
-                    right.innerHTML += `
-                        <a href="carrito.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                           Carrito
-                        </a>
-                        <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                            Mis Órdenes
-                        </a>
-                    `;
-                }
-    
-                if (user.role === 'ADMIN') {
-                    right.innerHTML += `
-                        <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                            Gestión de Órdenes
-                        </a>
-                        <a href="usuarios.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                            Gestión deUsuarios
-                        </a>
-                    `;
-                }
-    
-                if (user.role === 'SUPPLIER') {
-                    right.innerHTML += `
-                        <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                            Mis Productos
-                        </a>
-                    `;
-                }
-    
-                // Saludo
-                right.innerHTML += `
-                    <span class="text-sm text-gray-500">
-                        Hola, ${user.nombre}
-                    </span>
-                `;
-    
-                // Logout
-                right.innerHTML += `
-                    <button onclick="window.logout()" 
-                        class="text-red-500 hover:text-red-700 font-medium">
-                        <i class="fas fa-sign-out-alt"></i> Salir
-                    </button>
-                `;
-            }
-    
-            wrapper.appendChild(left);
-            wrapper.appendChild(right);
-            navContainer.appendChild(wrapper);
-        },
-    
-    */
-
-    renderMenuUsers() {
-        const userStr = localStorage.getItem('user');
-        const user = userStr ? JSON.parse(userStr) : null;
-        const navContainer = document.getElementById('mainNavUsers');
-
-        if (!navContainer) return;
-
-        navContainer.innerHTML = '';
-
-        // Contenedor principal FLEX
-        const wrapper = document.createElement('div');
-        wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
-
-        // === IZQUIERDA (Logo) ===
-        const left = document.createElement('div');
-        left.className = 'flex items-center';
-
-        left.innerHTML = `
-            <a class="text-2xl font-bold text-blue-600">
-                E-Shop
-            </a>
-        `;
-
-        // === DERECHA (Opciones dinámicas) ===
-        const right = document.createElement('div');
-        right.className = 'flex items-center gap-6';
-
-        if (!user) {
-            right.innerHTML = `
-                <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                    Iniciar Sesión
-                </a>
-                <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-                    Registrarse
-                </a>
-            `;
-        } else {
-
-            if (user.role === 'ADMIN') {
-                right.innerHTML += `
-                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Gestión de Órdenes
-                    </a>
-                    <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Gestión deProductos
-                    </a>
-                `;
-            }
-
-            // Saludo
-            right.innerHTML += `
-                <span class="text-sm text-gray-500">
-                    Hola, ${user.nombre}
-                </span>
-            `;
-
-            // Logout
-            right.innerHTML += `
-                <button onclick="window.logout()" 
-                    class="text-red-500 hover:text-red-700 font-medium">
-                    <i class="fas fa-sign-out-alt"></i> Salir
-                </button>
-            `;
-        }
-
-        wrapper.appendChild(left);
-        wrapper.appendChild(right);
-        navContainer.appendChild(wrapper);
-    },
-
-    renderMenuCart() {
-        const userStr = localStorage.getItem('user');
-        const user = userStr ? JSON.parse(userStr) : null;
-        const navContainer = document.getElementById('mainNavCart');
-
-        if (!navContainer) return;
-
-        navContainer.innerHTML = '';
-
-        // Contenedor principal FLEX
-        const wrapper = document.createElement('div');
-        wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
-
-        // === IZQUIERDA (Logo) ===
-        const left = document.createElement('div');
-        left.className = 'flex items-center';
-
-        left.innerHTML = `
-            <a class="text-2xl font-bold text-blue-600">
-                E-Shop
-            </a>
-        `;
-
-        // === DERECHA (Opciones dinámicas) ===
-        const right = document.createElement('div');
-        right.className = 'flex items-center gap-6';
-
-        if (!user) {
-            right.innerHTML = `
-                <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                    Iniciar Sesión
-                </a>
-                <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-                    Registrarse
-                </a>
-            `;
-        } else {
-
-            if (user.role === 'CUSTOMER') {
-                right.innerHTML += `
-                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Mis Órdenes
-                    </a>
-                    <a href="productoscustomer.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Productos
-                    </a>
-                `;
-            }
-
-            if (user.role === 'ADMIN') {
-                right.innerHTML += `
-                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Gestión de Órdenes
-                    </a>
-                    <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Gestión de Productos
-                    </a>
-                `;
-            }
-
-            // Saludo
-            right.innerHTML += `
-                <span class="text-sm text-gray-500">
-                    Hola, ${user.nombre}
-                </span>
-            `;
-
-            // Logout
-            right.innerHTML += `
-                <button onclick="window.logout()" 
-                    class="text-red-500 hover:text-red-700 font-medium">
-                    <i class="fas fa-sign-out-alt"></i> Salir
-                </button>
-            `;
-        }
-
-        wrapper.appendChild(left);
-        wrapper.appendChild(right);
-        navContainer.appendChild(wrapper);
-    },
-
-    renderMenuOrders() {
-        const userStr = localStorage.getItem('user');
-        const user = userStr ? JSON.parse(userStr) : null;
-        const navContainer = document.getElementById('mainNavOrders');
-
-        if (!navContainer) return;
-
-        navContainer.innerHTML = '';
-
-        // Contenedor principal FLEX
-        const wrapper = document.createElement('div');
-        wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
-
-        // === IZQUIERDA (Logo) ===
-        const left = document.createElement('div');
-        left.className = 'flex items-center';
-
-        left.innerHTML = `
-            <a class="text-2xl font-bold text-blue-600">
-                E-Shop
-            </a>
-        `;
-
-        // === DERECHA (Opciones dinámicas) ===
-        const right = document.createElement('div');
-        right.className = 'flex items-center gap-6';
-
-        if (!user) {
-            right.innerHTML = `
-                <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                    Iniciar Sesión
-                </a>
-                <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-                    Registrarse
-                </a>
-            `;
-        } else {
-
-            if (user.role === 'CUSTOMER') {
-                right.innerHTML += `
-                    <a href="carrito.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Carrito
-                    </a>
-                    <a href="productoscustomer.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Productos
-                    </a>
-                `;
-            }
-
-            if (user.role === 'ADMIN') {
-                right.innerHTML += `
-                    <a href="usuarios.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Gestión de Usuarios
-                    </a>
-                    <a href="productos.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Gestión de Productos
-                    </a>
-                `;
-            }
-
-            // Saludo
-            right.innerHTML += `
-                <span class="text-sm text-gray-500">
-                    Hola, ${user.nombre}
-                </span>
-            `;
-
-            // Logout
-            right.innerHTML += `
-                <button onclick="window.logout()" 
-                    class="text-red-500 hover:text-red-700 font-medium">
-                    <i class="fas fa-sign-out-alt"></i> Salir
-                </button>
-            `;
-        }
-
-        wrapper.appendChild(left);
-        wrapper.appendChild(right);
-        navContainer.appendChild(wrapper);
-    },
-
-    renderMenuProductsCustomer() {
-        const userStr = localStorage.getItem('user');
-        const user = userStr ? JSON.parse(userStr) : null;
-        const navContainer = document.getElementById('mainNavProductsCustomer');
-
-        if (!navContainer) return;
-
-        navContainer.innerHTML = '';
-
-        // Contenedor principal FLEX
-        const wrapper = document.createElement('div');
-        wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
-
-        // === IZQUIERDA (Logo) ===
-        const left = document.createElement('div');
-        left.className = 'flex items-center';
-
-        left.innerHTML = `
-            <a class="text-2xl font-bold text-blue-600">
-                E-Shop
-            </a>
-        `;
-
-        // === DERECHA (Opciones dinámicas) ===
-        const right = document.createElement('div');
-        right.className = 'flex items-center gap-6';
-
-        if (!user) {
-            right.innerHTML = `
-                <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                    Iniciar Sesión
-                </a>
-                <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-                    Registrarse
-                </a>
-            `;
-        } else {
-
-            // === ROLE BASED LINKS ===
-            if (user.role === 'CUSTOMER') {
-                right.innerHTML += `
-                    <a href="carrito.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                       Carrito
-                    </a>
-                    <a href="ordenes.html" class="text-gray-700 hover:text-blue-600 font-medium">
-                        Mis Órdenes
-                    </a>
-                `;
-            }
-
-            // Saludo
-            right.innerHTML += `
-                <span class="text-sm text-gray-500">
-                    Hola, ${user.nombre}
-                </span>
-            `;
-
-            // Logout
-            right.innerHTML += `
-                <button onclick="window.logout()" 
-                    class="text-red-500 hover:text-red-700 font-medium">
-                    <i class="fas fa-sign-out-alt"></i> Salir
-                </button>
-            `;
-        }
-
-        wrapper.appendChild(left);
-        wrapper.appendChild(right);
-        navContainer.appendChild(wrapper);
-    },
-
-    /*   
-       showNotification(message, type = 'success') {
-           const notification = document.createElement('div');
-           notification.className = `fixed top-5 right-5 px-6 py-3 rounded shadow-lg text-white z-50 transition-opacity duration-300 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'
-               }`;
-           notification.textContent = message;
-   
-           document.body.appendChild(notification);
-   
-           setTimeout(() => {
-               notification.classList.add('opacity-0');
-               setTimeout(() => notification.remove(), 300);
-           }, 3000);
-       },
-   */
     toggleModal(modalId, show = true) {
         const modal = document.getElementById(modalId);
         if (modal) {
@@ -6287,10 +8136,6 @@ export const UI = {
             });
         }
     },
-
-    //    formatCurrency(amount) {
-    //        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
-    //    }
 };
 
 
@@ -6300,36 +8145,53 @@ import Api from './api.js';
 import { UI } from './ui.js';
 import Auth from './auth.js';
 
+// ── Estado admin address panel ────────────────────────────────────────────────
+let adminTargetUserId = null;
+let adirTelefonos = [];  // teléfonos en el sub-form de dirección
+
 document.addEventListener('DOMContentLoaded', () => {
-    // CRITICAL: Only ADMIN can access this page
     if (!Auth.isAuthenticated()) {
         window.location.href = 'login.html';
         return;
     }
-
     const user = Auth.getCurrentUser();
     if (user.role !== 'ADMIN') {
-        // Redirect non-admin users
         window.location.href = 'productos.html';
         return;
     }
 
-    UI.renderNavBar({
-        containerId: 'mainNav',
-        context: 'users'
-    });
+    document.getElementById('btnNuevoUsuario').classList.remove('hidden');
+    document.getElementById('btnNuevoUsuario').classList.add('flex');
+
+    UI.renderNavBar({ containerId: 'mainNav', context: 'users' });
     cargarUsuarios();
     setupEventListeners();
 });
 
+// ── Event Listeners ────────────────────────────────────────────────────────────
 function setupEventListeners() {
+    // Modal usuario
     document.getElementById('btnNuevoUsuario').addEventListener('click', () => abrirModal());
     document.getElementById('btnCerrarModal').addEventListener('click', cerrarModal);
     document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
     document.getElementById('formUsuario').addEventListener('submit', guardarUsuario);
     UI.setupModalCloser('modalUsuario');
+
+    // Modal direcciones (admin)
+    document.getElementById('btnCerrarDirModal').addEventListener('click', cerrarModalDirecciones);
+    UI.setupModalCloser('modalDirecciones');
+    document.getElementById('btnNuevaDirAdmin').addEventListener('click', () => abrirFormDir());
+    document.getElementById('btnCancelarDirAdmin').addEventListener('click', cerrarFormDir);
+    document.getElementById('formDirAdmin').addEventListener('submit', guardarDireccionAdmin);
+
+    // Teléfonos en form dir admin
+    document.getElementById('adirBtnAgregarTel').addEventListener('click', agregarTelAdmin);
+    document.getElementById('adirNuevoTel').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); agregarTelAdmin(); }
+    });
 }
 
+// ── Usuarios ──────────────────────────────────────────────────────────────────
 async function cargarUsuarios() {
     try {
         const usuarios = await Api.get('/usuarios');
@@ -6349,24 +8211,17 @@ function renderizarUsuarios(usuarios) {
     }
     document.getElementById('emptyState').classList.add('hidden');
 
+    const roleNames = { ADMIN: 'Administrador', SUPPLIER: 'Proveedor', CUSTOMER: 'Cliente' };
+    const roleColors = {
+        ADMIN: 'bg-red-100 text-red-800',
+        SUPPLIER: 'bg-blue-100 text-blue-800',
+        CUSTOMER: 'bg-green-100 text-green-800'
+    };
+
     usuarios.forEach(usuario => {
         const row = document.createElement('tr');
         row.className = 'border-b border-gray-200 hover:bg-gray-50';
-
-        // Get role display name
-        const roleNames = {
-            'ADMIN': 'Administrador',
-            'SUPPLIER': 'Proveedor',
-            'CUSTOMER': 'Cliente'
-        };
         const roleDisplay = roleNames[usuario.role] || usuario.role;
-
-        // Get role color
-        const roleColors = {
-            'ADMIN': 'bg-red-100 text-red-800',
-            'SUPPLIER': 'bg-blue-100 text-blue-800',
-            'CUSTOMER': 'bg-green-100 text-green-800'
-        };
         const roleColor = roleColors[usuario.role] || 'bg-gray-100 text-gray-800';
 
         row.innerHTML = `
@@ -6374,17 +8229,22 @@ function renderizarUsuarios(usuarios) {
             <td class="py-3 px-6">${usuario.nombre}</td>
             <td class="py-3 px-6">${usuario.email}</td>
             <td class="py-3 px-6">
-                <span class="px-2 py-1 rounded text-xs font-semibold ${roleColor}">
-                    ${roleDisplay}
-                </span>
+                <span class="px-2 py-1 rounded text-xs font-semibold ${roleColor}">${roleDisplay}</span>
             </td>
             <td class="py-3 px-6 text-center">
-                <button onclick="window.editarUsuario(${usuario.id})" 
-                    class="text-yellow-500 hover:text-yellow-700 mx-1" title="Editar">
+                <!-- Editar usuario -->
+                <button onclick="window.editarUsuario(${usuario.id})"
+                    class="text-yellow-500 hover:text-yellow-700 mx-1" title="Editar usuario">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button onclick="window.eliminarUsuario(${usuario.id})" 
-                    class="text-red-500 hover:text-red-700 mx-1" title="Eliminar">
+                <!-- Gestionar direcciones (icono engrane) -->
+                <button onclick="window.gestionarDirecciones(${usuario.id}, '${usuario.nombre}')"
+                    class="text-gray-500 hover:text-blue-600 mx-1" title="Gestionar direcciones">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <!-- Eliminar usuario -->
+                <button onclick="window.eliminarUsuario(${usuario.id})"
+                    class="text-red-500 hover:text-red-700 mx-1" title="Eliminar usuario">
                     <i class="fas fa-trash-alt"></i>
                 </button>
             </td>
@@ -6393,76 +8253,52 @@ function renderizarUsuarios(usuarios) {
     });
 }
 
+// ── Modal Usuario ─────────────────────────────────────────────────────────────
 function abrirModal(usuario = null) {
-    const modal = document.getElementById('modalUsuario');
     const form = document.getElementById('formUsuario');
-    const title = document.getElementById('modalTitle');
     const passwordField = document.getElementById('password');
-
     form.reset();
 
     if (usuario) {
-        // Edit mode
-        title.textContent = 'Editar Usuario';
+        document.getElementById('modalTitle').textContent = 'Editar Usuario';
         document.getElementById('usuarioId').value = usuario.id;
         document.getElementById('nombre').value = usuario.nombre;
         document.getElementById('email').value = usuario.email;
         document.getElementById('role').value = usuario.role;
-
-        if (usuario.fechaNacimiento) {
-            document.getElementById('fechaNacimiento').value = usuario.fechaNacimiento;
-        }
-
+        if (usuario.fechaNacimiento) document.getElementById('fechaNacimiento').value = usuario.fechaNacimiento;
         passwordField.removeAttribute('required');
     } else {
-        // Create mode
-        title.textContent = 'Nuevo Usuario';
+        document.getElementById('modalTitle').textContent = 'Nuevo Usuario';
         document.getElementById('usuarioId').value = '';
         passwordField.setAttribute('required', 'required');
     }
-
     UI.toggleModal('modalUsuario', true);
 }
 
-function cerrarModal() {
-    UI.toggleModal('modalUsuario', false);
-}
+function cerrarModal() { UI.toggleModal('modalUsuario', false); }
 
 async function guardarUsuario(e) {
     e.preventDefault();
-
     const usuarioId = document.getElementById('usuarioId').value;
-    const datosUsuario = {
+    const datos = {
         nombre: document.getElementById('nombre').value,
         email: document.getElementById('email').value,
         password: document.getElementById('password').value,
         role: document.getElementById('role').value,
         fechaNacimiento: document.getElementById('fechaNacimiento').value || null
     };
-
-    // Remove empty password on edit
-    if (usuarioId && !datosUsuario.password) {
-        delete datosUsuario.password;
-    }
+    if (usuarioId && !datos.password) delete datos.password;
 
     try {
         if (usuarioId) {
-            // Update existing user
-            await Api.put(`/usuarios/${usuarioId}`, datosUsuario);
-            UI.showNotification('Usuario actualizado exitosamente', 'success');
+            await Api.put(`/usuarios/${usuarioId}`, datos);
+            UI.showNotification('Usuario actualizado exitosamente');
         } else {
-            // Create new user based on role
-            let endpoint = '/usuarios/cliente'; // default
-            if (datosUsuario.role === 'ADMIN') {
-                endpoint = '/usuarios/admin';
-            } else if (datosUsuario.role === 'SUPPLIER') {
-                endpoint = '/usuarios/proveedor';
-            }
-
-            await Api.post(endpoint, datosUsuario);
-            UI.showNotification('Usuario creado exitosamente', 'success');
+            const endpointMap = { ADMIN: '/usuarios/admin', SUPPLIER: '/usuarios/proveedor', CUSTOMER: '/usuarios/cliente' };
+            const endpoint = endpointMap[datos.role] || '/usuarios/cliente';
+            await Api.post(endpoint, datos);
+            UI.showNotification('Usuario creado exitosamente');
         }
-
         cerrarModal();
         cargarUsuarios();
     } catch (error) {
@@ -6470,24 +8306,212 @@ async function guardarUsuario(e) {
     }
 }
 
-// Global functions for inline onclick handlers
-window.editarUsuario = async (id) => {
+// ── Modal Direcciones (Admin) ──────────────────────────────────────────────────
+window.gestionarDirecciones = async (usuarioId, nombre) => {
+    adminTargetUserId = usuarioId;
+    document.getElementById('modalDirTitle').textContent = `Direcciones de ${nombre}`;
+    cerrarFormDir();
+    await cargarDireccionesDeUsuario(usuarioId);
+    UI.toggleModal('modalDirecciones', true);
+};
+
+async function cargarDireccionesDeUsuario(usuarioId) {
     try {
-        const usuario = await Api.get(`/usuarios/${id}`);
-        abrirModal(usuario);
-    } catch (error) {
-        UI.showNotification('Error al cargar usuario', 'error');
+        const dirs = await Api.get(`/direcciones/usuario/${usuarioId}`);
+        renderizarListaAdmin(dirs);
+    } catch (err) {
+        UI.showNotification('Error al cargar direcciones: ' + err.message, 'error');
+    }
+}
+
+function renderizarListaAdmin(dirs) {
+    const lista = document.getElementById('listaDireccionesAdmin');
+    const empty = document.getElementById('emptyDirAdmin');
+    lista.innerHTML = '';
+
+    if (!dirs || dirs.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+    }
+    empty.classList.add('hidden');
+
+    dirs.forEach(dir => {
+        const tels = (dir.telefonos || []).map(t =>
+            `<span class="tel-item"><i class="fas fa-phone text-blue-400 mr-1 text-xs"></i>${t}</span>`
+        ).join('');
+
+        const card = document.createElement('div');
+        card.className = `addr-card${dir.preferida ? ' preferida' : ''}`;
+        card.innerHTML = `
+            <div class="flex justify-between items-start">
+                <div>
+                    ${dir.alias ? `<span class="font-medium text-gray-800 text-sm">${dir.alias}</span> ` : ''}
+                    ${dir.preferida ? '<span class="badge-preferida">⭐ Preferida</span>' : ''}
+                    <div class="text-xs text-gray-600 mt-1">
+                        ${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ', Int. ' + dir.numeroInterior : ''},
+                        ${dir.colonia}, ${dir.municipio}, ${dir.estado} – C.P. ${dir.codigoPostal}
+                    </div>
+                    ${tels ? `<div class="flex flex-wrap gap-1 mt-1.5">${tels}</div>` : ''}
+                </div>
+                <div class="flex gap-1 shrink-0 ml-2">
+                    <button onclick="window.editarDirAdmin(${dir.id})"
+                        class="text-yellow-500 hover:text-yellow-700 text-sm" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="window.eliminarDirAdmin(${dir.id})"
+                        class="text-red-400 hover:text-red-600 text-sm" title="Eliminar">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        lista.appendChild(card);
+    });
+}
+
+// Sub-form crear / editar
+function abrirFormDir(dir = null) {
+    const wrapper = document.getElementById('formDirAdminWrapper');
+    document.getElementById('formDirAdmin').reset();
+    adirTelefonos = [];
+    document.getElementById('adirId').value = '';
+    document.getElementById('formDirAdminTitle').textContent = dir ? 'Editar Dirección' : 'Nueva Dirección';
+
+    if (dir) {
+        document.getElementById('adirId').value = dir.id;
+        document.getElementById('adirAlias').value = dir.alias || '';
+        document.getElementById('adirPreferida').checked = !!dir.preferida;
+        document.getElementById('adirCalle').value = dir.calle || '';
+        document.getElementById('adirNumExt').value = dir.numeroExterior || '';
+        document.getElementById('adirNumInt').value = dir.numeroInterior || '';
+        document.getElementById('adirRef').value = dir.referencia || '';
+        document.getElementById('adirColonia').value = dir.colonia || '';
+        document.getElementById('adirMunicipio').value = dir.municipio || '';
+        document.getElementById('adirEstado').value = dir.estado || '';
+        document.getElementById('adirCP').value = dir.codigoPostal || '';
+        adirTelefonos = [...(dir.telefonos || [])];
+    }
+    renderizarTelAdmin();
+    wrapper.classList.remove('hidden');
+    wrapper.scrollIntoView({ behavior: 'smooth' });
+}
+
+function cerrarFormDir() {
+    document.getElementById('formDirAdminWrapper').classList.add('hidden');
+    adirTelefonos = [];
+}
+
+function cerrarModalDirecciones() {
+    UI.toggleModal('modalDirecciones', false);
+    adminTargetUserId = null;
+    cerrarFormDir();
+}
+
+// Teléfonos en form admin
+function agregarTelAdmin() {
+    const input = document.getElementById('adirNuevoTel');
+    const val = input.value.trim();
+    if (!/^\d{10}$/.test(val)) {
+        UI.showNotification('Teléfono: exactamente 10 dígitos', 'error');
+        return;
+    }
+    if (adirTelefonos.includes(val)) { UI.showNotification('Ese número ya está en la lista', 'error'); return; }
+    adirTelefonos.push(val);
+    input.value = '';
+    renderizarTelAdmin();
+}
+
+function renderizarTelAdmin() {
+    const container = document.getElementById('adirTelContainer');
+    container.innerHTML = '';
+    adirTelefonos.forEach((tel, idx) => {
+        const item = document.createElement('div');
+        item.className = 'tel-item';
+        item.innerHTML = `
+            <i class="fas fa-phone text-blue-400 text-xs"></i>
+            <span class="flex-1 text-xs">${tel}</span>
+            <button type="button" onclick="window.adminQuitarTel(${idx})" class="text-red-400 hover:text-red-600 text-xs">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(item);
+    });
+}
+
+window.adminQuitarTel = (idx) => {
+    adirTelefonos.splice(idx, 1);
+    renderizarTelAdmin();
+};
+
+async function guardarDireccionAdmin(e) {
+    e.preventDefault();
+    if (!adminTargetUserId) return;
+
+    const cp = document.getElementById('adirCP').value.trim();
+    if (!/^\d{5}$/.test(cp)) { UI.showNotification('C.P.: exactamente 5 dígitos', 'error'); return; }
+    if (adirTelefonos.length === 0) { UI.showNotification('Agrega al menos un teléfono', 'error'); return; }
+
+    const id = document.getElementById('adirId').value;
+    const body = {
+        preferida: document.getElementById('adirPreferida').checked,
+        alias: document.getElementById('adirAlias').value.trim() || null,
+        calle: document.getElementById('adirCalle').value.trim(),
+        numeroExterior: document.getElementById('adirNumExt').value.trim(),
+        numeroInterior: document.getElementById('adirNumInt').value.trim() || null,
+        referencia: document.getElementById('adirRef').value.trim() || null,
+        colonia: document.getElementById('adirColonia').value.trim(),
+        municipio: document.getElementById('adirMunicipio').value.trim(),
+        estado: document.getElementById('adirEstado').value.trim(),
+        codigoPostal: cp,
+        telefonos: [...adirTelefonos]
+    };
+
+    try {
+        if (id) {
+            await Api.put(`/direcciones/${id}`, body);
+            UI.showNotification('Dirección actualizada');
+        } else {
+            await Api.post(`/direcciones/usuario/${adminTargetUserId}`, body);
+            UI.showNotification('Dirección creada');
+        }
+        cerrarFormDir();
+        await cargarDireccionesDeUsuario(adminTargetUserId);
+    } catch (err) {
+        UI.showNotification('Error al guardar dirección: ' + err.message, 'error');
+    }
+}
+
+window.editarDirAdmin = async (id) => {
+    try {
+        const dir = await Api.get(`/direcciones/${id}`);
+        abrirFormDir(dir);
+    } catch (err) {
+        UI.showNotification('Error al cargar dirección', 'error');
     }
 };
 
-window.eliminarUsuario = async (id) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
-        return;
+window.eliminarDirAdmin = async (id) => {
+    if (!confirm('¿Eliminar esta dirección? Esta acción no se puede deshacer.')) return;
+    try {
+        await Api.delete(`/direcciones/${id}`);
+        UI.showNotification('Dirección eliminada');
+        await cargarDireccionesDeUsuario(adminTargetUserId);
+    } catch (err) {
+        UI.showNotification('Error al eliminar dirección: ' + err.message, 'error');
     }
+};
 
+// ── Funciones globales usuario ────────────────────────────────────────────────
+window.editarUsuario = async (id) => {
+    try { const u = await Api.get(`/usuarios/${id}`); abrirModal(u); }
+    catch (error) { UI.showNotification('Error al cargar usuario', 'error'); }
+};
+
+window.eliminarUsuario = async (id) => {
+    if (!confirm('¿Eliminar este usuario?\n\nEsta acción no se puede deshacer.')) return;
     try {
         await Api.delete(`/usuarios/${id}`);
-        UI.showNotification('Usuario eliminado exitosamente', 'success');
+        UI.showNotification('Usuario eliminado exitosamente');
         cargarUsuarios();
     } catch (error) {
         UI.showNotification('Error al eliminar usuario: ' + error.message, 'error');

@@ -3,7 +3,6 @@ package com.ecommerce.config;
 import com.ecommerce.model.*;
 import com.ecommerce.repository.UsuarioRepository;
 import com.ecommerce.repository.ProductoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -17,7 +16,6 @@ public class DataSeeder implements CommandLineRunner {
     private final ProductoRepository productoRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Autowired
     public DataSeeder(UsuarioRepository usuarioRepository,
             ProductoRepository productoRepository,
             PasswordEncoder passwordEncoder) {
@@ -45,7 +43,6 @@ public class DataSeeder implements CommandLineRunner {
         admin.setFechaNacimiento(LocalDate.of(1980, 1, 1));
         admin.setRole(Role.ADMIN);
         admin.setValidUntil(LocalDate.now().plusYears(1));
-
         usuarioRepository.save(admin);
 
         // Supplier
@@ -71,19 +68,78 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void crearProductos() {
+        // ── Producto Físico 1: Laptop Gamer ─────────────────────────────
         ProductoFisico p1 = new ProductoFisico();
-        p1.setNombre("Laptop Gamer");
+        p1.setNombre("Laptop Gamer Pro");
         p1.setPrecio(1500.0);
         p1.setPeso(2.5);
         p1.setStock(10);
+        p1.setDescripcion(
+                "Laptop gamer de alto rendimiento con procesador Intel Core i9, 32GB RAM, SSD 1TB y GPU RTX 4070.");
+        p1.setProveedor("Supplier Company");
+        // Imágenes asociadas
+        p1.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=600", true, p1));
+        p1.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600", false, p1));
+        p1.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=600", false, p1));
         productoRepository.save(p1);
 
-        ProductoDigital p2 = new ProductoDigital();
-        p2.setNombre("E-Book Java");
-        p2.setPrecio(29.99);
-        p2.setUrlDescarga("http://example.com/ebook.pdf");
+        // ── Producto Físico 2: Mouse RGB ─────────────────────────────────
+        ProductoFisico p2 = new ProductoFisico();
+        p2.setNombre("Mouse RGB Ergonómico");
+        p2.setPrecio(89.99);
+        p2.setPeso(0.15);
+        p2.setStock(50);
+        p2.setDescripcion(
+                "Mouse inalámbrico ergonómico con iluminación RGB, 6 botones programables y batería de larga duración.");
+        p2.setProveedor("Supplier Company");
+        p2.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1527814050087-3793815479db?w=600", true, p2));
+        p2.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=600", false, p2));
         productoRepository.save(p2);
 
-        System.out.println("Productos de prueba creados.");
+        // ── Producto Físico 3: Teclado Mecánico ──────────────────────────
+        ProductoFisico p3 = new ProductoFisico();
+        p3.setNombre("Teclado Mecánico TKL");
+        p3.setPrecio(149.99);
+        p3.setPeso(0.9);
+        p3.setStock(25);
+        p3.setDescripcion(
+                "Teclado mecánico tenkeyless con switches Cherry MX Red, retroiluminación RGB por tecla y marco de aluminio.");
+        p3.setProveedor("Supplier Company");
+        p3.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=600", true, p3));
+        productoRepository.save(p3);
+
+        // ── Producto Digital 1: E-Book Java ──────────────────────────────
+        ProductoDigital p4 = new ProductoDigital();
+        p4.setNombre("E-Book: Java Avanzado");
+        p4.setPrecio(29.99);
+        p4.setUrlDescarga("https://example.com/downloads/java-avanzado.pdf");
+        p4.setDescripcion(
+                "Guía completa de Java avanzado: patrones de diseño, programación funcional, concurrencia y Spring Boot.");
+        p4.setProveedor("Supplier Company");
+        p4.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=600", true, p4));
+        p4.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600", false, p4));
+        productoRepository.save(p4);
+
+        // ── Producto Digital 2: Curso Spring Boot ────────────────────────
+        ProductoDigital p5 = new ProductoDigital();
+        p5.setNombre("Curso: Spring Boot REST API");
+        p5.setPrecio(59.99);
+        p5.setUrlDescarga("https://example.com/downloads/spring-boot-rest.zip");
+        p5.setDescripcion(
+                "Curso completo en video sobre desarrollo de APIs RESTful con Spring Boot, seguridad JWT y despliegue en AWS.");
+        p5.setProveedor("Supplier Company");
+        p5.getImagenes().add(new ProductoImagen(
+                "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600", true, p5));
+        productoRepository.save(p5);
+
+        System.out.println("Productos de prueba con imágenes y descripciones creados.");
     }
 }

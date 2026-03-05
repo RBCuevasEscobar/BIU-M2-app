@@ -763,3 +763,125 @@ http://localhost:8080/api
 ## 📚 Licencia
 
 BIU License - Proyecto Académico - Módulo Object-Oriented Programming.
+
+---
+
+## 🔄 Phase 2 – Nuevas Funcionalidades
+
+### Extensión de la Entidad `Producto`
+
+#### Nuevos Atributos Obligatorios
+```java
+public abstract class Producto {
+    // ... campos existentes ...
+    @Column(length = 250)
+    private String descripcion;      // Máx. 250 caracteres
+
+    @Column(length = 150)
+    private String proveedor;        // Nombre/empresa del proveedor. Solo ADMIN puede asignar.
+
+    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductoImagen> imagenes = new ArrayList<>();
+}
+```
+
+#### Entidad `ProductoImagen`
+```java
+@Entity
+@Table(name = "producto_imagenes")
+public class ProductoImagen {
+    @Id @GeneratedValue
+    private Long id;
+
+    @Column(nullable = false)
+    private String imagenUrl;   // URL de la imagen
+
+    @Column(nullable = false)
+    private Boolean isDefault;  // Una sola imagen por defecto por producto
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "producto_id")
+    private Producto producto;
+}
+```
+
+**Reglas de negocio de imágenes:**
+- Mínimo una imagen por producto
+- Exactamente una imagen marcada como `isDefault = true`
+- Solo ADMIN puede crear productos; ADMIN + SUPPLIER pueden editar
+- SUPPLIER no puede ver ni modificar el campo `proveedor`
+
+---
+
+### Nueva Entidad `Direccion`
+
+```java
+@Entity
+@Table(name = "direcciones")
+public class Direccion {
+    private Long id;
+    private Boolean preferida;         // Única dirección preferida por usuario
+    private String alias;              // Etiqueta (Casa, Trabajo…)
+    private String calle;              // Máx. 25 caracteres
+    private String numeroExterior;     // Máx. 10 caracteres
+    private String numeroInterior;     // Máx. 10 caracteres (opcional)
+    private String referencia;         // Máx. 35 caracteres (opcional)
+    private String colonia;            // Máx. 40 caracteres
+    private String municipio;          // Máx. 45 caracteres
+    private String estado;             // Máx. 25 caracteres
+    private String codigoPostal;       // Exactamente 5 dígitos
+
+    @ElementCollection
+    private List<String> telefonos;    // Mín. 1 teléfono, formato: 10 dígitos
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+}
+```
+
+**Reglas de negocio de direcciones:**
+- Mínimo 1 dirección permitida por usuario; máximo 5
+- Solo 1 dirección `preferida` por usuario; al marcar una nueva, la anterior se desmarca automáticamente
+- Cada teléfono debe tener exactamente 10 dígitos numéricos
+- ADMIN puede gestionar direcciones de cualquier usuario
+- CUSTOMER puede crear/editar/eliminar sus propias direcciones
+- SUPPLIER puede crear/editar sus propias direcciones, pero NO eliminar
+
+---
+
+### Nuevos Endpoints API
+
+#### Direcciones (`/api/direcciones`)
+| Método | Endpoint | Rol Requerido | Descripción |
+|--------|----------|---------------|-------------|
+| `POST` | `/api/direcciones` | ADMIN, CUSTOMER, SUPPLIER | Crear dirección propia |
+| `PUT` | `/api/direcciones/{id}` | ADMIN, CUSTOMER, SUPPLIER | Actualizar dirección |
+| `GET` | `/api/direcciones/mis-direcciones` | ADMIN, CUSTOMER, SUPPLIER | Listar mis direcciones |
+| `GET` | `/api/direcciones/{id}` | ADMIN, CUSTOMER, SUPPLIER | Obtener dirección por ID |
+| `GET` | `/api/direcciones/usuario/{usuarioId}` | ADMIN, CUSTOMER, SUPPLIER | Listar por usuario |
+| `GET` | `/api/direcciones` | ADMIN | Todas las direcciones |
+| `DELETE` | `/api/direcciones/{id}` | ADMIN, CUSTOMER | Eliminar dirección |
+| `POST` | `/api/direcciones/usuario/{usuarioId}` | ADMIN | Crear para otro usuario |
+
+#### Productos (actualizados)
+| Método | Endpoint | Campos Nuevos |
+|--------|----------|---------------|
+| `POST` | `/api/productos` | `descripcion`, `proveedor`, `imagenesUrls[]`, `defaultImageIndex` |
+| `PUT` | `/api/productos/{id}` | `descripcion`, `imagenesUrls[]`, `defaultImageIndex` (proveedor: solo ADMIN) |
+| `GET` | `/api/productos` | Respuesta incluye `imagenes[]`, `descripcion`, `proveedor` |
+
+---
+
+### `UsuarioService` – Método Añadido
+
+```java
+/**
+ * Busca un usuario por ID; lanza excepción si no existe.
+ * Usado por DireccionController para operaciones sobre destinatarios específicos.
+ */
+public Usuario buscarPorId(Long id) {
+    return usuarioRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
+}
+```

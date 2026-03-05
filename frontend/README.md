@@ -380,3 +380,94 @@ frontend/
 ## 📝 Licencia
 
 BIU License - Proyecto Académico - Módulo Programming the Internet
+
+---
+
+## 🔄 Phase 2 – Nuevas Funcionalidades
+
+### Alcance Ampliado
+| Rol | Acceso Nuevo |
+|-----|--------------|
+| **ADMIN** | Ver/editar `descripcion`, `proveedor` e imágenes de productos; gestionar direcciones de cualquier usuario desde el panel de usuarios (icono ⚙️) |
+| **SUPPLIER** | Ver/editar `descripcion` e imágenes (sin acceso a `proveedor`); gestionar sus propias direcciones |
+| **CUSTOMER** | Ver imágenes reales de productos, descripción y proveedor; popup de galería de imágenes; gestionar sus propias direcciones |
+
+---
+
+### Nuevas Páginas
+
+| Archivo | Pública a | Descripción |
+|---------|-----------|-------------|
+| `direcciones.html` | CUSTOMER, SUPPLIER | Gestión de mis direcciones propias |
+
+```
+frontend/
+├── direcciones.html       ← NUEVO: Mis Direcciones (CUSTOMER + SUPPLIER)
+└── js/
+    └── direcciones.js     ← NUEVO: Lógica de gestión de direcciones
+```
+
+---
+
+### Navegación Actualizada
+
+**CUSTOMER**: Carrito | Mis Órdenes | **Mis Direcciones** (nuevo)
+**SUPPLIER**: Mis Productos | **Mis Direcciones** (nuevo)
+**ADMIN**: sin cambios en nav; gestión de direcciones accesible desde icono ⚙️ en tabla de usuarios
+
+---
+
+### Gestión de Imágenes de Producto
+
+#### Vista ADMIN/SUPPLIER (`productos.html`)
+- Campo `descripcion`: textarea con contador de caracteres (máx. 250)
+- Campo `proveedor`: input con contador de caracteres (máx. 150) — **solo visible para ADMIN**
+- Sección de imágenes: agregar URLs, marcar predeterminada (⭐), eliminar imágenes
+- La tabla incluye miniatura de la imagen por defecto del producto
+
+#### Vista CUSTOMER (`productoscustomer.html` + `appcust.js`)
+- Renderización real de la imagen por defecto en la tarjeta del producto
+- Descripción truncada con `line-clamp-2`
+- Nombre del proveedor (icono de tienda)
+- Clic en la imagen abre popup/galería con:
+  - Navegación Anterior/Siguiente
+  - Contador `1 / N`
+  - Miniaturas clicables
+  - Soporte de teclado (flechas, Escape)
+  - Cierre al hacer clic fuera
+
+#### Landing Page (`index.html` + `app.js`)
+- Muestra imagen real del producto (si tiene) y descripción truncada
+- Los botones de carrito **NO aparecen** para usuarios no autenticados
+- En su lugar se muestra un enlace "Iniciar sesión para comprar"
+
+---
+
+### Gestión de Direcciones
+
+#### Formulario de Dirección (11 campos)
+| Campo | Validación |
+|-------|------------|
+| `alias` | Máx. 20 caracteres (opcional) |
+| `calle` | Obligatorio, máx. 25 |
+| `numeroExterior` | Obligatorio, máx. 10 |
+| `numeroInterior` | Máx. 10, opcional |
+| `referencia` | Máx. 35, opcional |
+| `colonia` | Obligatorio, máx. 40 |
+| `municipio` | Obligatorio, máx. 45 |
+| `estado` | Obligatorio, máx. 25 |
+| `codigoPostal` | Exactamente 5 dígitos |
+| `telefonos` | Mín. 1, exactamente 10 dígitos cada uno |
+| `preferida` | Bool; la anterior se desmarca automáticamente |
+
+#### ADMIN: Botón ⚙️ en Tabla de Usuarios
+- Cada fila de usuario tiene un botón de engrane que abre el panel de gestiona de direcciones
+- El panel muestra las direcciones del usuario seleccionado
+- ADMIN puede crear, editar y eliminar direcciones de cualquier usuario
+- El sub-formulario aparece inline dentro del modal sin recargar la página
+
+#### Accesibilidad
+- HTML5 semántico: `<address>`, `<fieldset>`, `<legend>`, `<article>`, `<section>`
+- Microdatos schema.org (`PostalAddress`) en tarjetas y formularios
+- Validación nativa HTML5 (`required`, `pattern`, `maxlength`, `minlength`)
+- `aria-label` en botones de navegación

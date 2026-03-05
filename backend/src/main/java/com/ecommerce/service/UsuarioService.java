@@ -42,6 +42,16 @@ public class UsuarioService {
         return usuarioRepository.findById(id);
     }
 
+    /**
+     * Busca un usuario por ID; lanza excepción si no existe.
+     * Usado por DireccionController para operaciones sobre destinatarios específicos.
+     */
+    @SuppressWarnings("null")
+    public Usuario buscarPorId(Long id) {
+        return usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
+    }
+
     // @SuppressWarnings("null")
     public Optional<Usuario> buscarPorEmail(String email) {
         return usuarioRepository.findByEmail(email);

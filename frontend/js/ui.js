@@ -61,15 +61,23 @@ export const UI = {
             CUSTOMER: {
                 products: [
                     { label: 'Carrito', href: 'carrito.html' },
-                    { label: 'Mis Órdenes', href: 'ordenes.html' }
+                    { label: 'Mis Órdenes', href: 'ordenes.html' },
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
                 ],
                 cart: [
                     { label: 'Productos', href: 'productoscustomer.html' },
-                    { label: 'Mis Órdenes', href: 'ordenes.html' }
+                    { label: 'Mis Órdenes', href: 'ordenes.html' },
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
                 ],
                 orders: [
                     { label: 'Productos', href: 'productoscustomer.html' },
-                    { label: 'Carrito', href: 'carrito.html' }
+                    { label: 'Carrito', href: 'carrito.html' },
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
+                ],
+                addresses: [
+                    { label: 'Productos', href: 'productoscustomer.html' },
+                    { label: 'Carrito', href: 'carrito.html' },
+                    { label: 'Mis Órdenes', href: 'ordenes.html' }
                 ]
             },
             ADMIN: {
@@ -88,6 +96,9 @@ export const UI = {
             },
             SUPPLIER: {
                 products: [
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
+                ],
+                addresses: [
                     { label: 'Mis Productos', href: 'productos.html' }
                 ]
             }

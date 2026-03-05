@@ -2,77 +2,98 @@ import Api from './api.js';
 import { UI } from './ui.js';
 import Auth from './auth.js';
 
+// ── Estado local de imágenes en el modal ──────────────────────────────────────
+let imagenesModal = []; // [{ url: String, isDefault: Boolean }]
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Auth Check
     if (!Auth.isAuthenticated()) {
         window.location.href = 'login.html';
         return;
     }
 
-    UI.renderNavBar({
-        containerId: 'mainNav',
-        context: 'products'
-    });
+    UI.renderNavBar({ containerId: 'mainNav', context: 'products' });
     setupRoleBasedUI();
     cargarProductos();
     setupEventListeners();
 });
 
+// ── Configuración UI por Rol ───────────────────────────────────────────────────
 function setupRoleBasedUI() {
-    const btnAgregar = document.getElementById('btnAgregar');
-
-    if (!btnAgregar) {
-        console.warn('btnAgregar no existe en el DOM');
-        return;
-    }
-
     const user = Auth.getCurrentUser();
+    const role = user ? user.role : '';
 
-    if (user && user.role === 'ADMIN') {
+    // Mostrar botón Agregar solo para ADMIN
+    if (role === 'ADMIN') {
         document.getElementById('btnAgregar').classList.remove('hidden');
         document.getElementById('btnAgregar').classList.add('flex');
     }
-}
 
-const form = document.getElementById('formProducto');
-const modal = document.getElementById('modalProducto');
-const tipoSelect = document.getElementById('tipo');
-
-function setupEventListeners() {
-    // Modal controls
-    document.getElementById('btnAgregar').addEventListener('click', () => abrirModal());
-    document.getElementById('btnCerrarModal').addEventListener('click', () => UI.toggleModal('modalProducto', false));
-    document.getElementById('btnCancelar').addEventListener('click', () => UI.toggleModal('modalProducto', false));
-
-    // Close modal on outside click
-    UI.setupModalCloser('modalProducto');
-
-    // Dynamic Form Fields
-    tipoSelect.addEventListener('change', toggleCamposTipo);
-
-    // Form Submit
-    form.addEventListener('submit', guardarProducto);
-
-    // Filter
-    document.getElementById('filtroTipo').addEventListener('change', (e) => {
-        cargarProductos(e.target.value);
-    });
-}
-
-function toggleCamposTipo() {
-    const tipo = tipoSelect.value;
-    const camposFisico = document.getElementById('camposFisico');
-    const camposDigital = document.getElementById('camposDigital');
-
-    if (tipo === 'Fisico') {
-        camposFisico.classList.remove('hidden');
-        camposDigital.classList.add('hidden');
-    } else {
-        camposFisico.classList.add('hidden');
-        camposDigital.classList.remove('hidden');
+    // El campo Proveedor solo es visible para ADMIN
+    const campoProveedor = document.getElementById('campoProveedor');
+    if (campoProveedor && role !== 'ADMIN') {
+        campoProveedor.classList.add('hidden');
     }
 }
 
+// ── Event Listeners ────────────────────────────────────────────────────────────
+function setupEventListeners() {
+    document.getElementById('btnAgregar').addEventListener('click', () => abrirModal());
+    document.getElementById('btnCerrarModal').addEventListener('click', () => UI.toggleModal('modalProducto', false));
+    document.getElementById('btnCancelar').addEventListener('click', () => UI.toggleModal('modalProducto', false));
+    UI.setupModalCloser('modalProducto');
+
+    document.getElementById('tipo').addEventListener('change', toggleCamposTipo);
+    document.getElementById('formProducto').addEventListener('submit', guardarProducto);
+
+    // Filtro tipo
+    document.getElementById('filtroTipo').addEventListener('change', (e) => {
+        cargarProductos(e.target.value);
+    });
+
+    // Contador descripción
+    const txtDescripcion = document.getElementById('descripcion');
+    if (txtDescripcion) {
+        txtDescripcion.addEventListener('input', () => {
+            actualizarContador('descripcion', 'contadorDescripcion', 250);
+        });
+    }
+
+    // Contador proveedor
+    const txtProveedor = document.getElementById('proveedor');
+    if (txtProveedor) {
+        txtProveedor.addEventListener('input', () => {
+            actualizarContador('proveedor', 'contadorProveedor', 150);
+        });
+    }
+
+    // Agregar imagen al modal
+    document.getElementById('btnAgregarImagen').addEventListener('click', agregarImagenModal);
+
+    // También agregar imagen al presionar Enter en el campo
+    document.getElementById('nuevaImagenUrl').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            agregarImagenModal();
+        }
+    });
+}
+
+function actualizarContador(inputId, counterId, max) {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(counterId);
+    if (!input || !counter) return;
+    const len = input.value.length;
+    counter.textContent = `${len} / ${max}`;
+    counter.classList.toggle('warn', len >= max * 0.9);
+}
+
+function toggleCamposTipo() {
+    const tipo = document.getElementById('tipo').value;
+    document.getElementById('camposFisico').classList.toggle('hidden', tipo !== 'Fisico');
+    document.getElementById('camposDigital').classList.toggle('hidden', tipo !== 'Digital');
+}
+
+// ── Carga y renderizado de productos (TABLA para ADMIN/SUPPLIER) ───────────────
 async function cargarProductos(filtro = 'todos') {
     try {
         const productos = await Api.get('/productos');
@@ -91,7 +112,11 @@ function renderizarTabla(productos, filtro) {
 
     const filtrados = filtro === 'todos'
         ? productos
-        : productos.filter(p => (filtro === 'Fisico' && p.peso !== undefined) || (filtro === 'Digital' && p.urlDescarga !== undefined));
+        : productos.filter(p => {
+            if (filtro === 'Fisico') return p.tipo === 'Fisico' || p.peso !== undefined;
+            if (filtro === 'Digital') return p.tipo === 'Digital' || p.urlDescarga !== undefined;
+            return true;
+        });
 
     if (filtrados.length === 0) {
         document.getElementById('emptyState').classList.remove('hidden');
@@ -100,71 +125,162 @@ function renderizarTabla(productos, filtro) {
     document.getElementById('emptyState').classList.add('hidden');
 
     filtrados.forEach(p => {
-        const esFisico = p.peso !== undefined;
+        const esFisico = p.tipo === 'Fisico' || (p.peso !== undefined && p.urlDescarga === undefined);
         const tipoBadge = esFisico
             ? '<span class="bg-blue-100 text-blue-800 py-1 px-3 rounded-full text-xs">Físico</span>'
             : '<span class="bg-purple-100 text-purple-800 py-1 px-3 rounded-full text-xs">Digital</span>';
 
-        let buttons = '';
+        // Imagen por defecto
+        const imgDefault = p.imagenes && p.imagenes.find(i => i.isDefault);
+        const imgSrc = imgDefault ? imgDefault.imagenUrl : (p.imagenes && p.imagenes.length > 0 ? p.imagenes[0].imagenUrl : null);
+        const imgTag = imgSrc
+            ? `<img src="${imgSrc}" alt="Imagen de ${p.nombre}" class="w-12 h-12 object-cover rounded" loading="lazy">`
+            : `<div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400"><i class="fas fa-image"></i></div>`;
 
+        let buttons = '';
         if (role === 'ADMIN') {
-            buttons += `
-                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transform hover:scale-110 transition duration-300" onclick="window.editarProducto(${p.id})">
+            buttons = `
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transition" onclick="window.editarProducto(${p.id})" title="Editar">
                     <i class="fas fa-edit text-yellow-500"></i>
                 </button>
-                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transform hover:scale-110 transition duration-300 ml-2" onclick="window.eliminarProducto(${p.id})">
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transition ml-1" onclick="window.eliminarProducto(${p.id})" title="Eliminar">
                     <i class="fas fa-trash-alt text-red-500"></i>
                 </button>
             `;
         } else if (role === 'SUPPLIER') {
-            buttons += `
-                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transform hover:scale-110 transition duration-300" onclick="window.editarProducto(${p.id})">
+            buttons = `
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transition" onclick="window.editarProducto(${p.id})" title="Editar">
                     <i class="fas fa-edit text-yellow-500"></i>
                 </button>
             `;
         } else if (role === 'CUSTOMER') {
-            buttons += `
-                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transform hover:scale-110 transition duration-300 ml-2" onclick="window.agregarAlCarrito(${p.id})" title="Agregar al Carrito">
+            buttons = `
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transition" onclick="window.agregarAlCarrito(${p.id})" title="Agregar al Carrito">
                     <i class="fas fa-cart-plus text-green-500"></i>
                 </button>
             `;
         }
 
+        const proveedorDisplay = p.proveedor
+            ? `<span class="text-xs text-gray-500 truncate" style="max-width:120px" title="${p.proveedor}">${p.proveedor}</span>`
+            : '<span class="text-xs text-gray-400 italic">—</span>';
+
         const row = document.createElement('tr');
-        row.className = 'border-b border-gray-200 hover:bg-gray-100';
+        row.className = 'border-b border-gray-200 hover:bg-gray-50';
         row.innerHTML = `
-            <td class="py-3 px-6 text-left whitespace-nowrap font-medium">${p.id}</td>
-            <td class="py-3 px-6 text-left">
-                <div class="flex items-center">
-                    <span class="font-medium">${p.nombre}</span>
-                </div>
+            <td class="py-3 px-4 font-medium">${p.id}</td>
+            <td class="py-3 px-4">${imgTag}</td>
+            <td class="py-3 px-4">
+                <div class="font-medium">${p.nombre}</div>
+                ${p.descripcion ? `<div class="text-xs text-gray-400 truncate" style="max-width:200px" title="${p.descripcion}">${p.descripcion}</div>` : ''}
             </td>
-            <td class="py-3 px-6 text-left font-bold text-gray-700">${UI.formatCurrency(p.precio)}</td>
-            <td class="py-3 px-6 text-left">${tipoBadge}</td>
-            <td class="py-3 px-6 text-center">
-                <div class="flex item-center justify-center">
-                    ${buttons}
-                </div>
+            <td class="py-3 px-4 font-bold text-gray-700">${UI.formatCurrency(p.precio)}</td>
+            <td class="py-3 px-4">${tipoBadge}</td>
+            <td class="py-3 px-4">${proveedorDisplay}</td>
+            <td class="py-3 px-4 text-center">
+                <div class="flex items-center justify-center">${buttons}</div>
             </td>
         `;
         tbody.appendChild(row);
     });
 }
 
+// ── Gestión de imágenes en el modal ───────────────────────────────────────────
+function agregarImagenModal() {
+    const urlInput = document.getElementById('nuevaImagenUrl');
+    const url = urlInput.value.trim();
+    if (!url) {
+        UI.showNotification('Ingresa una URL de imagen válida', 'error');
+        return;
+    }
+    // Validar URL básica
+    try { new URL(url); } catch {
+        UI.showNotification('La URL ingresada no es válida', 'error');
+        return;
+    }
+    const isDefault = imagenesModal.length === 0; // Primera imagen será default
+    imagenesModal.push({ url, isDefault });
+    urlInput.value = '';
+    renderizarImagenesModal();
+}
+
+function renderizarImagenesModal() {
+    const container = document.getElementById('imagenesContainer');
+    const sinMsg = document.getElementById('sinImagenesMsg');
+    container.innerHTML = '';
+
+    if (imagenesModal.length === 0) {
+        sinMsg.classList.remove('hidden');
+        return;
+    }
+    sinMsg.classList.add('hidden');
+
+    imagenesModal.forEach((img, idx) => {
+        const item = document.createElement('div');
+        item.className = 'imagen-item';
+        item.innerHTML = `
+            <img src="${img.url}" alt="Preview" onerror="this.src='https://via.placeholder.com/40'" loading="lazy">
+            <label class="flex items-center gap-1 cursor-pointer" title="Marcar como imagen por defecto">
+                <input type="radio" name="imgDefault" value="${idx}" ${img.isDefault ? 'checked' : ''}
+                    onchange="window.setImagenDefault(${idx})">
+                <span class="text-xs text-yellow-600">⭐</span>
+            </label>
+            <span class="flex-1 text-xs text-gray-500 truncate" title="${img.url}">${img.url}</span>
+            <button type="button" onclick="window.eliminarImagenModal(${idx})"
+                class="text-red-400 hover:text-red-600 text-sm" title="Eliminar imagen">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(item);
+    });
+}
+
+window.setImagenDefault = (idx) => {
+    imagenesModal.forEach((img, i) => { img.isDefault = (i === idx); });
+    renderizarImagenesModal();
+};
+
+window.eliminarImagenModal = (idx) => {
+    const wasDefault = imagenesModal[idx].isDefault;
+    imagenesModal.splice(idx, 1);
+    if (wasDefault && imagenesModal.length > 0) {
+        imagenesModal[0].isDefault = true;
+    }
+    renderizarImagenesModal();
+};
+
+// ── Modal abrir/cerrar ─────────────────────────────────────────────────────────
 function abrirModal(producto = null) {
+    const form = document.getElementById('formProducto');
+    const user = Auth.getCurrentUser();
+    const role = user ? user.role : '';
+
     form.reset();
+    imagenesModal = [];
     document.getElementById('productoId').value = '';
+    document.getElementById('contadorDescripcion').textContent = '0 / 250';
+    document.getElementById('contadorProveedor').textContent = '0 / 150';
     document.getElementById('modalTitle').textContent = 'Nuevo Producto';
+
+    // Visibilidad campo proveedor por rol
+    const campoProveedor = document.getElementById('campoProveedor');
+    campoProveedor.classList.toggle('hidden', role !== 'ADMIN');
 
     if (producto) {
         document.getElementById('modalTitle').textContent = 'Editar Producto';
         document.getElementById('productoId').value = producto.id;
-        document.getElementById('nombre').value = producto.nombre;
-        document.getElementById('precio').value = producto.precio;
+        document.getElementById('nombre').value = producto.nombre || '';
+        document.getElementById('precio').value = producto.precio || '';
+        document.getElementById('descripcion').value = producto.descripcion || '';
+        actualizarContador('descripcion', 'contadorDescripcion', 250);
 
-        // Determine type based on properties
-        const esFisico = producto.peso !== undefined;
-        tipoSelect.value = esFisico ? 'Fisico' : 'Digital';
+        if (role === 'ADMIN') {
+            document.getElementById('proveedor').value = producto.proveedor || '';
+            actualizarContador('proveedor', 'contadorProveedor', 150);
+        }
+
+        const esFisico = producto.tipo === 'Fisico' || (producto.peso !== undefined && producto.urlDescarga === undefined);
+        document.getElementById('tipo').value = esFisico ? 'Fisico' : 'Digital';
         toggleCamposTipo();
 
         if (esFisico) {
@@ -172,49 +288,81 @@ function abrirModal(producto = null) {
             document.getElementById('peso').value = producto.peso || 0;
         } else {
             document.getElementById('urlDescarga').value = producto.urlDescarga || '';
-            // Expiration might need handling if it's a date or int in backend
+        }
+
+        // Cargar imágenes existentes
+        if (producto.imagenes && producto.imagenes.length > 0) {
+            imagenesModal = producto.imagenes.map(img => ({
+                url: img.imagenUrl,
+                isDefault: img.isDefault
+            }));
         }
     } else {
-        toggleCamposTipo(); // Reset to default
+        toggleCamposTipo();
     }
 
+    renderizarImagenesModal();
     UI.toggleModal('modalProducto', true);
 }
 
+// ── Guardar producto (POST / PUT) ──────────────────────────────────────────────
 async function guardarProducto(e) {
     e.preventDefault();
-    const id = document.getElementById('productoId').value;
-    const nombre = document.getElementById('nombre').value;
-    const precio = parseFloat(document.getElementById('precio').value);
-    const tipo = tipoSelect.value;
 
-    let producto = { nombre, precio };
+    const id = document.getElementById('productoId').value;
+    const user = Auth.getCurrentUser();
+    const role = user ? user.role : '';
+    const tipo = document.getElementById('tipo').value;
+
+    // Validar al menos una imagen
+    if (imagenesModal.length === 0) {
+        UI.showNotification('El producto debe tener al menos una imagen', 'error');
+        return;
+    }
+
+    // Asegurar que haya exactamente un default
+    const hayDefault = imagenesModal.some(i => i.isDefault);
+    if (!hayDefault) imagenesModal[0].isDefault = true;
+
+    const defaultIndex = imagenesModal.findIndex(i => i.isDefault);
+
+    const body = {
+        nombre: document.getElementById('nombre').value.trim(),
+        precio: parseFloat(document.getElementById('precio').value),
+        tipo,
+        descripcion: document.getElementById('descripcion').value.trim() || null,
+        imagenesUrls: imagenesModal.map(i => i.url),
+        defaultImageIndex: defaultIndex
+    };
+
+    // Proveedor — solo ADMIN lo envía
+    if (role === 'ADMIN') {
+        body.proveedor = document.getElementById('proveedor').value.trim() || null;
+    }
 
     if (tipo === 'Fisico') {
-        producto.stock = parseInt(document.getElementById('stock').value) || 0;
-        producto.peso = parseFloat(document.getElementById('peso').value) || 0;
+        body.stock = parseInt(document.getElementById('stock').value) || 0;
+        body.peso = parseFloat(document.getElementById('peso').value) || 0;
     } else {
-        producto.urlDescarga = document.getElementById('urlDescarga').value;
-        // producto.fechaExpiracion = ...
+        body.urlDescarga = document.getElementById('urlDescarga').value.trim() || null;
     }
 
     try {
         if (id) {
-            await Api.put(`/productos/${id}`, producto);
+            await Api.put(`/productos/${id}`, body);
             UI.showNotification('Producto actualizado correctamente');
         } else {
-            const endpoint = tipo === 'Fisico' ? '/productos/fisico' : '/productos/digital';
-            await Api.post(endpoint, producto);
+            await Api.post('/productos', body);
             UI.showNotification('Producto creado correctamente');
         }
         UI.toggleModal('modalProducto', false);
         cargarProductos();
     } catch (error) {
-        UI.showNotification('Error al guardar producto', 'error');
+        UI.showNotification('Error al guardar producto: ' + error.message, 'error');
     }
 }
 
-// Global functions for inline HTML events
+// ── Funciones globales (onclick inline) ───────────────────────────────────────
 window.editarProducto = async (id) => {
     try {
         const producto = await Api.get(`/productos/${id}`);
@@ -226,7 +374,6 @@ window.editarProducto = async (id) => {
 
 window.eliminarProducto = async (id) => {
     if (!confirm('¿Estás seguro de eliminar este producto?')) return;
-
     try {
         await Api.delete(`/productos/${id}`);
         UI.showNotification('Producto eliminado');

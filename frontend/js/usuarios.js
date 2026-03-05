@@ -2,44 +2,53 @@ import Api from './api.js';
 import { UI } from './ui.js';
 import Auth from './auth.js';
 
+// ── Estado admin address panel ────────────────────────────────────────────────
+let adminTargetUserId = null;
+let adirTelefonos = [];  // teléfonos en el sub-form de dirección
+
 document.addEventListener('DOMContentLoaded', () => {
-    // CRITICAL: Only ADMIN can access this page
     if (!Auth.isAuthenticated()) {
         window.location.href = 'login.html';
         return;
     }
-
     const user = Auth.getCurrentUser();
     if (user.role !== 'ADMIN') {
-        // Redirect non-admin users
         window.location.href = 'productos.html';
         return;
     }
 
-    // 🔹 Mostrar botón solo para ADMIN
-    const btnNuevo = document.getElementById('btnNuevoUsuario');
-    if (btnNuevo) {
-        document.getElementById('btnNuevoUsuario').classList.remove('hidden');
-        document.getElementById('btnNuevoUsuario').classList.add('flex');
-    }
+    document.getElementById('btnNuevoUsuario').classList.remove('hidden');
+    document.getElementById('btnNuevoUsuario').classList.add('flex');
 
-
-    UI.renderNavBar({
-        containerId: 'mainNav',
-        context: 'users'
-    });
+    UI.renderNavBar({ containerId: 'mainNav', context: 'users' });
     cargarUsuarios();
     setupEventListeners();
 });
 
+// ── Event Listeners ────────────────────────────────────────────────────────────
 function setupEventListeners() {
+    // Modal usuario
     document.getElementById('btnNuevoUsuario').addEventListener('click', () => abrirModal());
     document.getElementById('btnCerrarModal').addEventListener('click', cerrarModal);
     document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
     document.getElementById('formUsuario').addEventListener('submit', guardarUsuario);
     UI.setupModalCloser('modalUsuario');
+
+    // Modal direcciones (admin)
+    document.getElementById('btnCerrarDirModal').addEventListener('click', cerrarModalDirecciones);
+    UI.setupModalCloser('modalDirecciones');
+    document.getElementById('btnNuevaDirAdmin').addEventListener('click', () => abrirFormDir());
+    document.getElementById('btnCancelarDirAdmin').addEventListener('click', cerrarFormDir);
+    document.getElementById('formDirAdmin').addEventListener('submit', guardarDireccionAdmin);
+
+    // Teléfonos en form dir admin
+    document.getElementById('adirBtnAgregarTel').addEventListener('click', agregarTelAdmin);
+    document.getElementById('adirNuevoTel').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); agregarTelAdmin(); }
+    });
 }
 
+// ── Usuarios ──────────────────────────────────────────────────────────────────
 async function cargarUsuarios() {
     try {
         const usuarios = await Api.get('/usuarios');
@@ -59,24 +68,17 @@ function renderizarUsuarios(usuarios) {
     }
     document.getElementById('emptyState').classList.add('hidden');
 
+    const roleNames = { ADMIN: 'Administrador', SUPPLIER: 'Proveedor', CUSTOMER: 'Cliente' };
+    const roleColors = {
+        ADMIN: 'bg-red-100 text-red-800',
+        SUPPLIER: 'bg-blue-100 text-blue-800',
+        CUSTOMER: 'bg-green-100 text-green-800'
+    };
+
     usuarios.forEach(usuario => {
         const row = document.createElement('tr');
         row.className = 'border-b border-gray-200 hover:bg-gray-50';
-
-        // Get role display name
-        const roleNames = {
-            'ADMIN': 'Administrador',
-            'SUPPLIER': 'Proveedor',
-            'CUSTOMER': 'Cliente'
-        };
         const roleDisplay = roleNames[usuario.role] || usuario.role;
-
-        // Get role color
-        const roleColors = {
-            'ADMIN': 'bg-red-100 text-red-800',
-            'SUPPLIER': 'bg-blue-100 text-blue-800',
-            'CUSTOMER': 'bg-green-100 text-green-800'
-        };
         const roleColor = roleColors[usuario.role] || 'bg-gray-100 text-gray-800';
 
         row.innerHTML = `
@@ -84,17 +86,22 @@ function renderizarUsuarios(usuarios) {
             <td class="py-3 px-6">${usuario.nombre}</td>
             <td class="py-3 px-6">${usuario.email}</td>
             <td class="py-3 px-6">
-                <span class="px-2 py-1 rounded text-xs font-semibold ${roleColor}">
-                    ${roleDisplay}
-                </span>
+                <span class="px-2 py-1 rounded text-xs font-semibold ${roleColor}">${roleDisplay}</span>
             </td>
             <td class="py-3 px-6 text-center">
-                <button onclick="window.editarUsuario(${usuario.id})" 
-                    class="text-yellow-500 hover:text-yellow-700 mx-1" title="Editar">
+                <!-- Editar usuario -->
+                <button onclick="window.editarUsuario(${usuario.id})"
+                    class="text-yellow-500 hover:text-yellow-700 mx-1" title="Editar usuario">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button onclick="window.eliminarUsuario(${usuario.id})" 
-                    class="text-red-500 hover:text-red-700 mx-1" title="Eliminar">
+                <!-- Gestionar direcciones (icono engrane) -->
+                <button onclick="window.gestionarDirecciones(${usuario.id}, '${usuario.nombre}')"
+                    class="text-gray-500 hover:text-blue-600 mx-1" title="Gestionar direcciones">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <!-- Eliminar usuario -->
+                <button onclick="window.eliminarUsuario(${usuario.id})"
+                    class="text-red-500 hover:text-red-700 mx-1" title="Eliminar usuario">
                     <i class="fas fa-trash-alt"></i>
                 </button>
             </td>
@@ -103,76 +110,52 @@ function renderizarUsuarios(usuarios) {
     });
 }
 
+// ── Modal Usuario ─────────────────────────────────────────────────────────────
 function abrirModal(usuario = null) {
-    const modal = document.getElementById('modalUsuario');
     const form = document.getElementById('formUsuario');
-    const title = document.getElementById('modalTitle');
     const passwordField = document.getElementById('password');
-
     form.reset();
 
     if (usuario) {
-        // Edit mode
-        title.textContent = 'Editar Usuario';
+        document.getElementById('modalTitle').textContent = 'Editar Usuario';
         document.getElementById('usuarioId').value = usuario.id;
         document.getElementById('nombre').value = usuario.nombre;
         document.getElementById('email').value = usuario.email;
         document.getElementById('role').value = usuario.role;
-
-        if (usuario.fechaNacimiento) {
-            document.getElementById('fechaNacimiento').value = usuario.fechaNacimiento;
-        }
-
+        if (usuario.fechaNacimiento) document.getElementById('fechaNacimiento').value = usuario.fechaNacimiento;
         passwordField.removeAttribute('required');
     } else {
-        // Create mode
-        title.textContent = 'Nuevo Usuario';
+        document.getElementById('modalTitle').textContent = 'Nuevo Usuario';
         document.getElementById('usuarioId').value = '';
         passwordField.setAttribute('required', 'required');
     }
-
     UI.toggleModal('modalUsuario', true);
 }
 
-function cerrarModal() {
-    UI.toggleModal('modalUsuario', false);
-}
+function cerrarModal() { UI.toggleModal('modalUsuario', false); }
 
 async function guardarUsuario(e) {
     e.preventDefault();
-
     const usuarioId = document.getElementById('usuarioId').value;
-    const datosUsuario = {
+    const datos = {
         nombre: document.getElementById('nombre').value,
         email: document.getElementById('email').value,
         password: document.getElementById('password').value,
         role: document.getElementById('role').value,
         fechaNacimiento: document.getElementById('fechaNacimiento').value || null
     };
-
-    // Remove empty password on edit
-    if (usuarioId && !datosUsuario.password) {
-        delete datosUsuario.password;
-    }
+    if (usuarioId && !datos.password) delete datos.password;
 
     try {
         if (usuarioId) {
-            // Update existing user
-            await Api.put(`/usuarios/${usuarioId}`, datosUsuario);
-            UI.showNotification('Usuario actualizado exitosamente', 'success');
+            await Api.put(`/usuarios/${usuarioId}`, datos);
+            UI.showNotification('Usuario actualizado exitosamente');
         } else {
-            // Create new user based on role
-            let endpoint = '/usuarios/cliente'; // default
-            if (datosUsuario.role === 'ADMIN') {
-                endpoint = '/usuarios/admin';
-            } else if (datosUsuario.role === 'SUPPLIER') {
-                endpoint = '/usuarios/proveedor';
-            }
-
-            await Api.post(endpoint, datosUsuario);
-            UI.showNotification('Usuario creado exitosamente', 'success');
+            const endpointMap = { ADMIN: '/usuarios/admin', SUPPLIER: '/usuarios/proveedor', CUSTOMER: '/usuarios/cliente' };
+            const endpoint = endpointMap[datos.role] || '/usuarios/cliente';
+            await Api.post(endpoint, datos);
+            UI.showNotification('Usuario creado exitosamente');
         }
-
         cerrarModal();
         cargarUsuarios();
     } catch (error) {
@@ -180,24 +163,212 @@ async function guardarUsuario(e) {
     }
 }
 
-// Global functions for inline onclick handlers
-window.editarUsuario = async (id) => {
+// ── Modal Direcciones (Admin) ──────────────────────────────────────────────────
+window.gestionarDirecciones = async (usuarioId, nombre) => {
+    adminTargetUserId = usuarioId;
+    document.getElementById('modalDirTitle').textContent = `Direcciones de ${nombre}`;
+    cerrarFormDir();
+    await cargarDireccionesDeUsuario(usuarioId);
+    UI.toggleModal('modalDirecciones', true);
+};
+
+async function cargarDireccionesDeUsuario(usuarioId) {
     try {
-        const usuario = await Api.get(`/usuarios/${id}`);
-        abrirModal(usuario);
-    } catch (error) {
-        UI.showNotification('Error al cargar usuario', 'error');
+        const dirs = await Api.get(`/direcciones/usuario/${usuarioId}`);
+        renderizarListaAdmin(dirs);
+    } catch (err) {
+        UI.showNotification('Error al cargar direcciones: ' + err.message, 'error');
+    }
+}
+
+function renderizarListaAdmin(dirs) {
+    const lista = document.getElementById('listaDireccionesAdmin');
+    const empty = document.getElementById('emptyDirAdmin');
+    lista.innerHTML = '';
+
+    if (!dirs || dirs.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+    }
+    empty.classList.add('hidden');
+
+    dirs.forEach(dir => {
+        const tels = (dir.telefonos || []).map(t =>
+            `<span class="tel-item"><i class="fas fa-phone text-blue-400 mr-1 text-xs"></i>${t}</span>`
+        ).join('');
+
+        const card = document.createElement('div');
+        card.className = `addr-card${dir.preferida ? ' preferida' : ''}`;
+        card.innerHTML = `
+            <div class="flex justify-between items-start">
+                <div>
+                    ${dir.alias ? `<span class="font-medium text-gray-800 text-sm">${dir.alias}</span> ` : ''}
+                    ${dir.preferida ? '<span class="badge-preferida">⭐ Preferida</span>' : ''}
+                    <div class="text-xs text-gray-600 mt-1">
+                        ${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ', Int. ' + dir.numeroInterior : ''},
+                        ${dir.colonia}, ${dir.municipio}, ${dir.estado} – C.P. ${dir.codigoPostal}
+                    </div>
+                    ${tels ? `<div class="flex flex-wrap gap-1 mt-1.5">${tels}</div>` : ''}
+                </div>
+                <div class="flex gap-1 shrink-0 ml-2">
+                    <button onclick="window.editarDirAdmin(${dir.id})"
+                        class="text-yellow-500 hover:text-yellow-700 text-sm" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="window.eliminarDirAdmin(${dir.id})"
+                        class="text-red-400 hover:text-red-600 text-sm" title="Eliminar">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        lista.appendChild(card);
+    });
+}
+
+// Sub-form crear / editar
+function abrirFormDir(dir = null) {
+    const wrapper = document.getElementById('formDirAdminWrapper');
+    document.getElementById('formDirAdmin').reset();
+    adirTelefonos = [];
+    document.getElementById('adirId').value = '';
+    document.getElementById('formDirAdminTitle').textContent = dir ? 'Editar Dirección' : 'Nueva Dirección';
+
+    if (dir) {
+        document.getElementById('adirId').value = dir.id;
+        document.getElementById('adirAlias').value = dir.alias || '';
+        document.getElementById('adirPreferida').checked = !!dir.preferida;
+        document.getElementById('adirCalle').value = dir.calle || '';
+        document.getElementById('adirNumExt').value = dir.numeroExterior || '';
+        document.getElementById('adirNumInt').value = dir.numeroInterior || '';
+        document.getElementById('adirRef').value = dir.referencia || '';
+        document.getElementById('adirColonia').value = dir.colonia || '';
+        document.getElementById('adirMunicipio').value = dir.municipio || '';
+        document.getElementById('adirEstado').value = dir.estado || '';
+        document.getElementById('adirCP').value = dir.codigoPostal || '';
+        adirTelefonos = [...(dir.telefonos || [])];
+    }
+    renderizarTelAdmin();
+    wrapper.classList.remove('hidden');
+    wrapper.scrollIntoView({ behavior: 'smooth' });
+}
+
+function cerrarFormDir() {
+    document.getElementById('formDirAdminWrapper').classList.add('hidden');
+    adirTelefonos = [];
+}
+
+function cerrarModalDirecciones() {
+    UI.toggleModal('modalDirecciones', false);
+    adminTargetUserId = null;
+    cerrarFormDir();
+}
+
+// Teléfonos en form admin
+function agregarTelAdmin() {
+    const input = document.getElementById('adirNuevoTel');
+    const val = input.value.trim();
+    if (!/^\d{10}$/.test(val)) {
+        UI.showNotification('Teléfono: exactamente 10 dígitos', 'error');
+        return;
+    }
+    if (adirTelefonos.includes(val)) { UI.showNotification('Ese número ya está en la lista', 'error'); return; }
+    adirTelefonos.push(val);
+    input.value = '';
+    renderizarTelAdmin();
+}
+
+function renderizarTelAdmin() {
+    const container = document.getElementById('adirTelContainer');
+    container.innerHTML = '';
+    adirTelefonos.forEach((tel, idx) => {
+        const item = document.createElement('div');
+        item.className = 'tel-item';
+        item.innerHTML = `
+            <i class="fas fa-phone text-blue-400 text-xs"></i>
+            <span class="flex-1 text-xs">${tel}</span>
+            <button type="button" onclick="window.adminQuitarTel(${idx})" class="text-red-400 hover:text-red-600 text-xs">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(item);
+    });
+}
+
+window.adminQuitarTel = (idx) => {
+    adirTelefonos.splice(idx, 1);
+    renderizarTelAdmin();
+};
+
+async function guardarDireccionAdmin(e) {
+    e.preventDefault();
+    if (!adminTargetUserId) return;
+
+    const cp = document.getElementById('adirCP').value.trim();
+    if (!/^\d{5}$/.test(cp)) { UI.showNotification('C.P.: exactamente 5 dígitos', 'error'); return; }
+    if (adirTelefonos.length === 0) { UI.showNotification('Agrega al menos un teléfono', 'error'); return; }
+
+    const id = document.getElementById('adirId').value;
+    const body = {
+        preferida: document.getElementById('adirPreferida').checked,
+        alias: document.getElementById('adirAlias').value.trim(),
+        calle: document.getElementById('adirCalle').value.trim(),
+        numeroExterior: document.getElementById('adirNumExt').value.trim(),
+        numeroInterior: document.getElementById('adirNumInt').value.trim() || null,
+        referencia: document.getElementById('adirRef').value.trim() || null,
+        colonia: document.getElementById('adirColonia').value.trim(),
+        municipio: document.getElementById('adirMunicipio').value.trim(),
+        estado: document.getElementById('adirEstado').value.trim(),
+        codigoPostal: cp,
+        telefonos: [...adirTelefonos]
+    };
+
+    try {
+        if (id) {
+            await Api.put(`/direcciones/${id}`, body);
+            UI.showNotification('Dirección actualizada');
+        } else {
+            await Api.post(`/direcciones/usuario/${adminTargetUserId}`, body);
+            UI.showNotification('Dirección creada');
+        }
+        cerrarFormDir();
+        await cargarDireccionesDeUsuario(adminTargetUserId);
+    } catch (err) {
+        UI.showNotification('Error al guardar dirección: ' + err.message, 'error');
+    }
+}
+
+window.editarDirAdmin = async (id) => {
+    try {
+        const dir = await Api.get(`/direcciones/${id}`);
+        abrirFormDir(dir);
+    } catch (err) {
+        UI.showNotification('Error al cargar dirección', 'error');
     }
 };
 
-window.eliminarUsuario = async (id) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
-        return;
+window.eliminarDirAdmin = async (id) => {
+    if (!confirm('¿Eliminar esta dirección? Esta acción no se puede deshacer.')) return;
+    try {
+        await Api.delete(`/direcciones/${id}`);
+        UI.showNotification('Dirección eliminada');
+        await cargarDireccionesDeUsuario(adminTargetUserId);
+    } catch (err) {
+        UI.showNotification('Error al eliminar dirección: ' + err.message, 'error');
     }
+};
 
+// ── Funciones globales usuario ────────────────────────────────────────────────
+window.editarUsuario = async (id) => {
+    try { const u = await Api.get(`/usuarios/${id}`); abrirModal(u); }
+    catch (error) { UI.showNotification('Error al cargar usuario', 'error'); }
+};
+
+window.eliminarUsuario = async (id) => {
+    if (!confirm('¿Eliminar este usuario?\n\nEsta acción no se puede deshacer.')) return;
     try {
         await Api.delete(`/usuarios/${id}`);
-        UI.showNotification('Usuario eliminado exitosamente', 'success');
+        UI.showNotification('Usuario eliminado exitosamente');
         cargarUsuarios();
     } catch (error) {
         UI.showNotification('Error al eliminar usuario: ' + error.message, 'error');
