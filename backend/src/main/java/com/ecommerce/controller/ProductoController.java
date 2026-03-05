@@ -20,8 +20,17 @@ public class ProductoController {
     private ProductoService productoService;
 
     @GetMapping
-    public List<ProductoDTO> listarProductos() {
-        return productoService.listarProductos();
+    public List<ProductoDTO> listarProductos(Authentication auth) {
+
+        // Caso 1: usuario NO autenticado (landing page)
+        if (auth == null) {
+            return productoService.listarProductosPublicos();
+        }
+
+        // Caso 2: usuario autenticado
+        String email = auth.getName();
+
+        return productoService.listarProductos(email);
     }
 
     @GetMapping("/{id}")

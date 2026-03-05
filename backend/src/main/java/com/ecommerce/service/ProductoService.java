@@ -6,21 +6,26 @@ import com.ecommerce.model.Producto;
 import com.ecommerce.model.ProductoDigital;
 import com.ecommerce.model.ProductoFisico;
 import com.ecommerce.model.ProductoImagen;
+import com.ecommerce.model.Proveedor;
+import com.ecommerce.model.Role;
 import com.ecommerce.model.Usuario;
 import com.ecommerce.repository.ProductoRepository;
+import com.ecommerce.repository.UsuarioRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductoService {
 
     @Autowired
     private ProductoRepository productoRepository;
+
+    private final UsuarioRepository usuarioRepository;
 
     @Autowired
     private UsuarioService usuarioService;
@@ -44,10 +49,45 @@ public class ProductoService {
         return ProductoDTO.fromEntity(productoRepository.save(producto));
     }
 
-    public List<ProductoDTO> listarProductos() {
-        return productoRepository.findAll().stream()
+    public ProductoService(ProductoRepository productoRepository, UsuarioRepository usuarioRepository) {
+        this.productoRepository = productoRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
+
+    public List<ProductoDTO> listarProductosPublicos() {
+
+        return productoRepository.findAll()
+                .stream()
                 .map(ProductoDTO::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    public List<ProductoDTO> listarProductos(String emailUsuario) {
+
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        List<Producto> productos;
+
+        if (usuario.getRole() == Role.ADMIN) {
+
+            productos = productoRepository.findAll();
+
+        } else if (usuario.getRole() == Role.SUPPLIER) {
+
+            Proveedor proveedor = (Proveedor) usuario;
+
+            productos = productoRepository.findByProveedor(proveedor.getEmpresa());
+
+        } else {
+
+            // CUSTOMER
+            productos = productoRepository.findAll();
+        }
+
+        return productos.stream()
+                .map(ProductoDTO::fromEntity)
+                .toList();
     }
 
     @SuppressWarnings("null")

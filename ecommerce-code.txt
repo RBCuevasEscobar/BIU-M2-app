@@ -16,7 +16,7 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.4.1</version>
+		<version>3.5.11</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.ecommerce</groupId>
@@ -1001,7 +1001,6 @@ package com.ecommerce.config;
 import com.ecommerce.model.*;
 import com.ecommerce.repository.UsuarioRepository;
 import com.ecommerce.repository.ProductoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -1015,7 +1014,6 @@ public class DataSeeder implements CommandLineRunner {
     private final ProductoRepository productoRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Autowired
     public DataSeeder(UsuarioRepository usuarioRepository,
             ProductoRepository productoRepository,
             PasswordEncoder passwordEncoder) {
@@ -1623,6 +1621,7 @@ public class DireccionDTO {
     private String numeroInterior;
     private String referencia;
     private String colonia;
+    private String ciudad;
     private String municipio;
     private String estado;
     private String codigoPostal;
@@ -1638,6 +1637,7 @@ public class DireccionDTO {
         dto.setNumeroInterior(direccion.getNumeroInterior());
         dto.setReferencia(direccion.getReferencia());
         dto.setColonia(direccion.getColonia());
+        dto.setCiudad(direccion.getCiudad());
         dto.setMunicipio(direccion.getMunicipio());
         dto.setEstado(direccion.getEstado());
         dto.setCodigoPostal(direccion.getCodigoPostal());
@@ -1678,12 +1678,15 @@ public class DireccionRequestDTO {
     @Size(max = 10)
     private String numeroInterior;
 
-    @Size(max = 35)
+    @Size(max = 75)
     private String referencia;
 
     @NotBlank
     @Size(max = 40)
     private String colonia;
+
+    @Size(max = 45)
+    private String ciudad;
 
     @NotBlank
     @Size(max = 45)
@@ -2067,11 +2070,14 @@ public class Direccion {
     @Column(length = 10)
     private String numeroInterior;
 
-    @Column(length = 35)
+    @Column(length = 75)
     private String referencia;
 
     @Column(nullable = false, length = 40)
     private String colonia;
+
+    @Column(nullable = false, length = 45)
+    private String ciudad;
 
     @Column(nullable = false, length = 45)
     private String municipio;
@@ -2091,6 +2097,7 @@ public class Direccion {
     @CollectionTable(name = "direccion_telefonos", joinColumns = @JoinColumn(name = "direccion_id"))
     @Column(name = "telefono")
     private List<@Pattern(regexp = "^\\d{10}$", message = "El teléfono debe tener exactamente 10 dígitos") String> telefonos = new ArrayList<>();
+
 }
 
 
@@ -3010,6 +3017,7 @@ public class DireccionService {
         direccion.setNumeroInterior(request.getNumeroInterior());
         direccion.setReferencia(request.getReferencia());
         direccion.setColonia(request.getColonia());
+        direccion.setCiudad(request.getCiudad());
         direccion.setMunicipio(request.getMunicipio());
         direccion.setEstado(request.getEstado());
         direccion.setCodigoPostal(request.getCodigoPostal());
@@ -3760,15 +3768,18 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
             </div>
 
             <div class="modal-body px-6 py-5">
-                <form id="formDireccion" novalidate itemscope itemtype="https://schema.org/PostalAddress">
+                <form id="formDireccion" itemscope itemtype="https://schema.org/PostalAddress">
                     <input type="hidden" id="direccionId">
 
                     <!-- Alias + Preferida -->
                     <div class="flex gap-4 items-end mb-4">
                         <div class="flex-1">
-                            <label for="alias" class="block text-sm font-medium text-gray-700 mb-1">Alias</label>
-                            <input type="text" id="alias" name="alias" maxlength="20"
+                            <label for="alias" class="block text-sm font-medium text-gray-700 mb-1">Alias<span
+                                    class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="alias" name="alias" required maxlength="20"
                                 class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
                                 placeholder="Casa, Trabajo, etc.">
                             <div class="char-counter" id="contadorAlias">0 / 20</div>
                         </div>
@@ -3782,19 +3793,21 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                     <div class="form-grid-2 mb-4">
                         <div>
                             <label for="calle" class="block text-sm font-medium text-gray-700 mb-1">
-                                Calle <span class="text-red-500">*</span>
+                                Calle<span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="calle" name="calle" required maxlength="25"
                                 class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
                                 itemprop="streetAddress" placeholder="Nombre de la calle">
                             <div class="char-counter" id="contadorCalle">0 / 25</div>
                         </div>
                         <div>
                             <label for="numeroExterior" class="block text-sm font-medium text-gray-700 mb-1">
-                                Núm. Exterior <span class="text-red-500">*</span>
+                                Núm. Exterior<span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="numeroExterior" name="numeroExterior" required maxlength="10"
                                 class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
                                 placeholder="123">
                             <div class="char-counter" id="contadorNumExt">0 / 10</div>
                         </div>
@@ -3807,36 +3820,50 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                                 Interior</label>
                             <input type="text" id="numeroInterior" name="numeroInterior" maxlength="10"
                                 class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
                                 placeholder="Apto 4B (opcional)">
                             <div class="char-counter" id="contadorNumInt">0 / 10</div>
                         </div>
                         <div>
                             <label for="referencia"
                                 class="block text-sm font-medium text-gray-700 mb-1">Referencia</label>
-                            <input type="text" id="referencia" name="referencia" maxlength="35"
+                            <input type="text" id="referencia" name="referencia" maxlength="75"
                                 class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
                                 placeholder="Entre qué calles, color de fachada…">
-                            <div class="char-counter" id="contadorRef">0 / 35</div>
+                            <div class="char-counter" id="contadorRef">0 / 75</div>
                         </div>
                     </div>
 
-                    <!-- Colonia + Municipio -->
+                    <!-- Colonia + Ciudad + Municipio -->
                     <div class="form-grid-2 mb-4">
                         <div>
                             <label for="colonia" class="block text-sm font-medium text-gray-700 mb-1">
-                                Colonia <span class="text-red-500">*</span>
+                                Colonia<span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="colonia" name="colonia" required maxlength="40"
                                 class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
                                 itemprop="addressLocality" placeholder="Colonia">
                             <div class="char-counter" id="contadorColonia">0 / 40</div>
                         </div>
                         <div>
+                            <label for="ciudad" class="block text-sm font-medium text-gray-700 mb-1">
+                                Ciudad<span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="ciudad" name="ciudad" required maxlength="45"
+                                class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
+                                itemprop="addressRegion" placeholder="Ciudad">
+                            <div class="char-counter" id="contadorCiudad">0 / 45</div>
+                        </div>
+                        <div>
                             <label for="municipio" class="block text-sm font-medium text-gray-700 mb-1">
-                                Municipio / Alcaldía <span class="text-red-500">*</span>
+                                Municipio / Alcaldía<span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="municipio" name="municipio" required maxlength="45"
                                 class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
                                 itemprop="addressRegion" placeholder="Municipio o alcaldía">
                             <div class="char-counter" id="contadorMunicipio">0 / 45</div>
                         </div>
@@ -3846,20 +3873,22 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                     <div class="form-grid-2 mb-4">
                         <div>
                             <label for="estado" class="block text-sm font-medium text-gray-700 mb-1">
-                                Estado <span class="text-red-500">*</span>
+                                Estado<span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="estado" name="estado" required maxlength="25"
                                 class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
                                 itemprop="addressCountry" placeholder="Estado o provincia">
                             <div class="char-counter" id="contadorEstado">0 / 25</div>
                         </div>
                         <div>
                             <label for="codigoPostal" class="block text-sm font-medium text-gray-700 mb-1">
-                                Código Postal <span class="text-red-500">*</span>
+                                Código Postal<span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="codigoPostal" name="codigoPostal" required pattern="^\d{5}$"
                                 maxlength="5" minlength="5"
                                 class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
                                 itemprop="postalCode" placeholder="12345">
                             <p class="text-xs text-gray-400 mt-0.5">Exactamente 5 dígitos</p>
                         </div>
@@ -3869,7 +3898,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                     <fieldset class="border border-gray-200 rounded-lg p-4 mb-4">
                         <legend class="text-sm font-semibold text-gray-700 px-2">
                             <i class="fas fa-phone text-blue-400 mr-1"></i>
-                            Teléfonos <span class="text-red-500">*</span>
+                            Teléfonos<span class="text-red-500">*</span>
                         </legend>
 
                         <div id="telefonosContainer" class="flex flex-col gap-2 mb-3"></div>
@@ -3880,6 +3909,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                         <div class="flex gap-2">
                             <input type="tel" id="nuevoTelefono" pattern="^\d{10}$" maxlength="10"
                                 class="flex-1 border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                                class="w-full border rounded-lg px-3 py-2 text-sm invalid:border-red-500 invalid:ring-red-500"
                                 placeholder="10 dígitos, ej: 5512345678" aria-label="Número de teléfono a agregar">
                             <button type="button" id="btnAgregarTel"
                                 class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg text-sm font-medium transition">
@@ -5336,18 +5366,50 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Char counter */
-        .char-counter { font-size: 0.70rem; color: #6b7280; text-align: right; margin-top: 2px; }
-        .char-counter.warn { color: #ef4444; font-weight: 600; }
-        /* Image manager */
-        #imagenesContainer { display: flex; flex-direction: column; gap: 0.5rem; }
-        .imagen-item {
-            display: flex; align-items: center; gap: 0.5rem;
-            background: #f9fafb; border: 1px solid #e5e7eb;
-            border-radius: 0.5rem; padding: 0.4rem 0.6rem;
+        .char-counter {
+            font-size: 0.70rem;
+            color: #6b7280;
+            text-align: right;
+            margin-top: 2px;
         }
-        .imagen-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
-        .imagen-item input[type="radio"] { accent-color: #2563eb; }
-        .modal-scroll { max-height: 80vh; overflow-y: auto; }
+
+        .char-counter.warn {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        /* Image manager */
+        #imagenesContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .imagen-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.4rem 0.6rem;
+        }
+
+        .imagen-item img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .imagen-item input[type="radio"] {
+            accent-color: #2563eb;
+        }
+
+        .modal-scroll {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
     </style>
 </head>
 
@@ -5410,12 +5472,13 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                     </button>
                 </div>
 
-                <form id="formProducto" class="p-6 space-y-4 modal-scroll" novalidate>
+                <form id="formProducto" class="p-6 space-y-4 modal-scroll">
                     <input type="hidden" id="productoId">
 
                     <!-- Nombre -->
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-1" for="nombre">Nombre <span class="text-red-500">*</span></label>
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="nombre">Nombre <span
+                                class="text-red-500">*</span></label>
                         <input type="text" id="nombre" name="nombre"
                             class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                             required maxlength="200">
@@ -5423,15 +5486,17 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 
                     <!-- Precio -->
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-1" for="precio">Precio <span class="text-red-500">*</span></label>
-                        <input type="number" id="precio" name="precio" step="0.01" min="0.01"
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="precio">Precio <span
+                                class="text-red-500">*</span></label>
+                        <input type="number" id="precio" name="precio" step="0.01" min="0"
                             class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                             required>
                     </div>
 
                     <!-- Descripción (ADMIN + SUPPLIER) -->
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-1" for="descripcion">Descripción</label>
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="descripcion">Descripción (máx 250
+                            caracteres)</label>
                         <textarea id="descripcion" name="descripcion" rows="3" maxlength="250"
                             class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                             placeholder="Máx. 250 caracteres"></textarea>
@@ -5476,7 +5541,8 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                     <!-- Campos Digitales -->
                     <div id="camposDigital" class="hidden space-y-4">
                         <div>
-                            <label class="block text-gray-700 text-sm font-bold mb-1" for="urlDescarga">URL Descarga</label>
+                            <label class="block text-gray-700 text-sm font-bold mb-1" for="urlDescarga">URL
+                                Descarga</label>
                             <input type="url" id="urlDescarga" name="urlDescarga"
                                 class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
@@ -5485,12 +5551,13 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                     <!-- ── Gestión de Imágenes ── -->
                     <fieldset class="border border-gray-200 rounded-lg p-4">
                         <legend class="text-sm font-bold text-gray-700 px-2">
-                            <i class="fas fa-images text-blue-500 mr-1"></i> Imágenes del Producto
+                            <i class="fas fa-images text-blue-500 mr-1"></i> Imágenes del Producto (mínimo 1)
                             <span class="text-red-500">*</span>
                         </legend>
 
                         <!-- Lista de imágenes actuales -->
                         <div id="imagenesContainer" class="mb-3"></div>
+                        required
                         <p id="sinImagenesMsg" class="text-xs text-gray-400 italic mb-2">Sin imágenes aún.</p>
 
                         <!-- Agregar nueva imagen -->
@@ -6620,11 +6687,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             return `
             <div class="group bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
-                <div class="relative aspect-square w-full overflow-hidden rounded-t-xl bg-gray-100">
+                <div class="relative w-full aspect-[4/3] overflow-hidden rounded-t-xl bg-gray-100 flex items-center justify-center">
                     ${imgSrc
-                    ? `<img src="${imgSrc}" alt="${product.nombre}" loading="lazy"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=Sin+imagen'">`
+                    ? `<img src="${imgSrc}" 
+                            srcset="
+                                ${imgSrc} 400w,
+                                ${imgSrc} 800w,
+                                ${imgSrc} 1200w
+                            "
+                            sizes="
+                                (max-width:640px) 100vw,
+                                (max-width:1024px) 50vw,
+                                25vw
+                            "
+                            alt="${product.nombre}" 
+                            loading="lazy"
+                            decoding="async"
+                            class="
+                                w-full
+                                h-full
+                                object-cover
+                                transition-transform
+                                duration-300
+                                group-hover:scale-105
+                            "
+                            style="aspect-ratio:4/3"
+                            onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=Sin+imagen'">`
                     : `<div class="flex items-center justify-center h-full text-gray-300">
                                <svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -6680,7 +6768,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Renderizar tarjetas en GRID (layout de productoscustomer)
-        productList.innerHTML = products.map(product => buildProductCard(product)).join('');
+        const fragment = document.createDocumentFragment();
+
+        products.forEach(product => {
+            const card = buildProductCard(product);
+            fragment.appendChild(card);
+        });
+
+        productList.innerHTML = '';
+        productList.appendChild(fragment);
 
     } catch (error) {
         console.error(error);
@@ -6701,12 +6797,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Delegación de eventos: Abrir galería de imágenes al click
     productList.addEventListener('click', (e) => {
-        const imgEl = e.target.closest('[data-action="galeria"]');
-        if (!imgEl) return;
-        const productId = imgEl.dataset.productId;
-        const allImgEls = productList.querySelectorAll(`[data-galeria-src][data-product-id="${productId}"]`);
-        const urls = Array.from(allImgEls).map(el => el.dataset.galeriaSrc);
-        abrirGaleria(urls, parseInt(imgEl.dataset.imgIndex || '0'));
+
+        const img = e.target.closest('[data-action="galeria"]');
+        if (!img) return;
+
+        const card = img.closest('article');
+        const urls = JSON.parse(card.dataset.images);
+
+        abrirGaleria(urls, 0);
+
     });
 
     // Logout global
@@ -6715,95 +6814,87 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── Construir tarjeta de producto (grid) ──────────────────────────────────────
 function buildProductCard(product) {
+
     const imagenes = product.imagenes || [];
     const imgDefault = imagenes.find(i => i.isDefault) || imagenes[0];
-    const imgSrc = imgDefault ? imgDefault.imagenUrl : null;
-    const tieneVariasImagenes = imagenes.length > 1;
 
-    // Datos de galería embebidos como atributos data para delegación
-    const galeriaAttrs = imagenes.map((img, idx) =>
-        `<span style="display:none" data-galeria-src="${img.imagenUrl}" data-product-id="${product.id}"></span>`
-    ).join('');
+    const card = document.createElement('article');
 
-    const tipo = product.tipo || (product.peso !== undefined && product.urlDescarga === undefined ? 'Físico' : 'Digital');
-    const tipoBadge = tipo === 'Fisico' || tipo === 'Físico'
-        ? '<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">Físico</span>'
-        : '<span class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">Digital</span>';
-
-    const descripcionHtml = product.descripcion
-        ? `<p class="mt-1 text-sm text-gray-500 line-clamp-2" title="${product.descripcion}">${product.descripcion}</p>`
-        : '';
-
-    const proveedorHtml = product.proveedor
-        ? `<p class="mt-1 text-xs text-gray-400 truncate" title="${product.proveedor}">
-               <i class="fas fa-store text-gray-300 mr-1"></i>${product.proveedor}
-           </p>`
-        : '';
-
-    // Indicador de múltiples imágenes
-    const multiImgBadge = tieneVariasImagenes
-        ? `<span class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-1.5 py-0.5 rounded-full">
-               <i class="fas fa-images mr-0.5"></i>${imagenes.length}
-           </span>`
-        : '';
-
-    const imgContainerCursor = tieneVariasImagenes ? 'cursor-pointer' : '';
-    const imgClickAttr = tieneVariasImagenes
-        ? `data-action="galeria" data-product-id="${product.id}" data-img-index="0"`
-        : '';
-
-    return `
-        <article class="group relative bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-200 flex flex-col"
-                 itemscope itemtype="https://schema.org/Product">
-            ${galeriaAttrs}
-
-            <!-- Imagen principal -->
-            <div class="relative aspect-square w-full overflow-hidden rounded-t-xl bg-gray-100">
-                ${imgSrc
-            ? `<img src="${imgSrc}" alt="${product.nombre}" loading="lazy"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${imgContainerCursor}"
-                            ${imgClickAttr}
-                            onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=Sin+imagen'"
-                            itemprop="image">`
-            : `<div class="flex items-center justify-center h-full text-gray-300 ${imgContainerCursor}" ${imgClickAttr}>
-                           <i class="fas fa-image text-5xl"></i>
-                       </div>`
-        }
-                ${multiImgBadge}
-                ${tieneVariasImagenes
-            ? `<div class="absolute inset-0 flex items-end justify-center pb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                           <span class="bg-black bg-opacity-60 text-white text-xs px-3 py-1 rounded-full">
-                               <i class="fas fa-search-plus mr-1"></i> Ver galería
-                           </span>
-                       </div>`
-            : ''}
-            </div>
-
-            <!-- Información del producto -->
-            <div class="p-4 flex flex-col flex-1">
-                <div class="flex items-start justify-between gap-2 mb-1">
-                    <h3 class="text-base font-semibold text-gray-900 line-clamp-2" itemprop="name">${product.nombre}</h3>
-                    ${tipoBadge}
-                </div>
-
-                ${descripcionHtml}
-                ${proveedorHtml}
-
-                <div class="mt-auto pt-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xl font-bold text-gray-900" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
-                            <span itemprop="price" content="${product.precio}">${UI.formatCurrency(product.precio)}</span>
-                            <meta itemprop="priceCurrency" content="MXN">
-                        </span>
-                    </div>
-                    <button class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2"
-                            data-action="carrito" data-id="${product.id}">
-                        <i class="fas fa-cart-plus"></i> Agregar al Carrito
-                    </button>
-                </div>
-            </div>
-        </article>
+    card.className = `
+        group relative bg-white border border-gray-200
+        rounded-xl shadow-sm hover:shadow-lg
+        transition-shadow duration-200 flex flex-col
     `;
+
+    card.dataset.productId = product.id;
+    card.dataset.images = JSON.stringify(imagenes.map(i => i.imagenUrl));
+
+    const tipo = product.tipo || (product.peso !== undefined ? 'Físico' : 'Digital');
+
+    const badge =
+        tipo === 'Fisico'
+            ? `<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">Físico</span>`
+            : `<span class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">Digital</span>`;
+
+    const imgSrc = imgDefault ? imgDefault.imagenUrl : null;
+
+    card.innerHTML = `
+        <div class="relative w-full overflow-hidden rounded-t-xl bg-gray-100">
+
+        ${imgSrc
+            ? `<img 
+                src="${imgSrc}"
+                alt="${product.nombre}"
+                loading="lazy"
+                decoding="async"
+                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-pointer"
+                data-action="galeria"
+                style="aspect-ratio:4/3"
+                onerror="this.src='https://via.placeholder.com/400?text=Sin+imagen'">`
+            : `<div class="flex items-center justify-center w-full h-full text-gray-300">
+                <i class="fas fa-image text-5xl"></i>
+        </div>`
+        }
+
+        </div>
+
+        <div class="p-4 flex flex-col flex-1">
+
+            <div class="flex items-start justify-between gap-2 mb-1">
+                <h3 class="text-base font-semibold text-gray-900 line-clamp-2">
+                    ${product.nombre}
+                </h3>
+                ${badge}
+            </div>
+
+            ${product.descripcion
+            ? `<p class="mt-1 text-sm text-gray-500 line-clamp-2">${product.descripcion}</p>`
+            : ''}
+
+            <div class="mt-auto pt-3">
+
+                <span class="text-xl font-bold text-gray-900">
+                    ${UI.formatCurrency(product.precio)}
+                </span>
+
+                <button
+                    class="mt-3 w-full bg-blue-600 hover:bg-blue-700
+                    text-white py-2 rounded-lg text-sm font-medium
+                    flex items-center justify-center gap-2"
+                    data-action="carrito"
+                    data-id="${product.id}">
+
+                    <i class="fas fa-cart-plus"></i>
+                    Agregar al Carrito
+
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+    return card;
 }
 
 // ── Galería / Popup de imágenes ────────────────────────────────────────────────
@@ -6811,71 +6902,143 @@ let galeriaActual = [];
 let galeriaIndex = 0;
 
 function abrirGaleria(urls, startIndex = 0) {
+
+    if (!urls || urls.length === 0) return;
+
     galeriaActual = urls;
     galeriaIndex = startIndex;
 
-    // Crear overlay si no existe
-    let overlay = document.getElementById('galeriaOverlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'galeriaOverlay';
-        overlay.className = 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center';
-        overlay.innerHTML = `
-            <div class="relative w-full max-w-2xl mx-4 flex flex-col items-center gap-4">
+    let overlay = document.getElementById("galeriaOverlay");
 
-                <!-- Botón cerrar -->
-                <button id="btnGaleriaClose"
-                    class="absolute -top-10 right-0 text-white text-3xl hover:text-gray-300 transition"
-                    aria-label="Cerrar galería">
-                    <i class="fas fa-times"></i>
+    if (!overlay) {
+
+        overlay = document.createElement("div");
+        overlay.id = "galeriaOverlay";
+
+        overlay.style.position = "fixed";
+        overlay.style.inset = "0";
+        overlay.style.background = "rgba(0,0,0,0.95)";
+        overlay.style.zIndex = "9999";
+        overlay.style.display = "flex";
+        overlay.style.alignItems = "center";
+        overlay.style.justifyContent = "center";
+
+        overlay.innerHTML = `
+
+        <!-- BOTON CERRAR -->
+        <button id="btnGaleriaClose"
+            style="
+            position:absolute;
+            top:15px;
+            right:25px;
+            font-size:32px;
+            color:white;
+            background:none;
+            border:none;
+            cursor:pointer;
+            z-index:10000;">
+            <i class="fas fa-times"></i>
+        </button>
+
+        <div style="position:relative;width:100%;max-width:1100px;padding:20px">
+
+            <!-- contenedor imagen -->
+            <div style="
+                position:relative;
+                width:100%;
+                height:520px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                background:white;
+                border-radius:10px;
+                overflow:hidden;
+            ">
+
+                <button id="btnGaleriaPrev"
+                    style="
+                    position:absolute;
+                    left:15px;
+                    width:45px;
+                    height:45px;
+                    border-radius:50%;
+                    background:rgba(252, 251, 251, 0.6);
+                    color:black;
+                    border:none;
+                    cursor:pointer;
+                    z-index:10">
+                    <i class="fas fa-chevron-left"></i>
                 </button>
 
-                <!-- Contenedor imagen -->
-                <div class="relative w-full flex items-center justify-center bg-white rounded-xl overflow-hidden shadow-2xl" style="min-height:300px; max-height:70vh">
-                    <button id="btnGaleriaPrev"
-                        class="absolute left-2 z-10 bg-black bg-opacity-50 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-opacity-80 transition"
-                        aria-label="Anterior">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
+                <img id="galeriaImg"
+                    style="
+                    max-width:90%;
+                    max-height:90%;
+                    object-fit:contain;
+                    ">
 
-                    <img id="galeriaImg" src="" alt="Imagen del producto"
-                        class="max-h-full max-w-full object-contain"
-                        style="max-height:65vh"
-                        onerror="this.src='https://via.placeholder.com/600?text=Error+al+cargar'">
+                <button id="btnGaleriaNext"
+                    style="
+                    position:absolute;
+                    right:15px;
+                    width:45px;
+                    height:45px;
+                    border-radius:50%;
+                    background:rgba(252, 251, 251, 0.6);
+                    color:black;
+                    border:none;
+                    cursor:pointer;
+                    z-index:10">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
 
-                    <button id="btnGaleriaNext"
-                        class="absolute right-2 z-10 bg-black bg-opacity-50 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-opacity-80 transition"
-                        aria-label="Siguiente">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>
-
-                <!-- Contador -->
-                <div id="galeriaCounter" class="text-white text-sm"></div>
-
-                <!-- Miniaturas -->
-                <div id="galeriaThumbs" class="flex gap-2 flex-wrap justify-center"></div>
             </div>
+
+            <div id="galeriaCounter"
+                style="color:white;text-align:center;margin-top:8px"></div>
+
+            <div id="galeriaThumbs"
+                style="
+                margin-top:12px;
+                display:flex;
+                gap:8px;
+                justify-content:center;
+                flex-wrap:wrap;
+                max-height:110px;
+                overflow-y:auto"></div>
+
+        </div>
         `;
+
         document.body.appendChild(overlay);
 
-        // Eventos
-        document.getElementById('btnGaleriaClose').addEventListener('click', cerrarGaleria);
-        overlay.addEventListener('click', (e) => { if (e.target === overlay) cerrarGaleria(); });
-        document.getElementById('btnGaleriaPrev').addEventListener('click', () => navegarGaleria(-1));
-        document.getElementById('btnGaleriaNext').addEventListener('click', () => navegarGaleria(1));
+        document.getElementById("btnGaleriaClose")
+            .addEventListener("click", cerrarGaleria);
 
-        // Teclado
-        document.addEventListener('keydown', galeriaKeyHandler);
+        document.getElementById("btnGaleriaPrev")
+            .addEventListener("click", () => navegarGaleria(-1));
+
+        document.getElementById("btnGaleriaNext")
+            .addEventListener("click", () => navegarGaleria(1));
+
+        overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) cerrarGaleria();
+        });
+
     }
 
-    overlay.classList.remove('hidden');
+    overlay.style.display = "flex";
+
     actualizarGaleria();
 }
 
 function cerrarGaleria() {
-    const overlay = document.getElementById('galeriaOverlay');
-    if (overlay) overlay.classList.add('hidden');
+
+    const overlay = document.getElementById("galeriaOverlay");
+
+    if (!overlay) return;
+
+    overlay.style.display = "none";
 }
 
 function navegarGaleria(dir) {
@@ -6884,40 +7047,58 @@ function navegarGaleria(dir) {
 }
 
 function actualizarGaleria() {
-    const img = document.getElementById('galeriaImg');
-    const counter = document.getElementById('galeriaCounter');
-    const thumbs = document.getElementById('galeriaThumbs');
+
+    const img = document.getElementById("galeriaImg");
+    const counter = document.getElementById("galeriaCounter");
+    const thumbs = document.getElementById("galeriaThumbs");
+
+    if (!img) return;
 
     img.src = galeriaActual[galeriaIndex];
-    counter.textContent = `${galeriaIndex + 1} / ${galeriaActual.length}`;
 
-    // Actualizar miniaturas
-    thumbs.innerHTML = galeriaActual.map((url, i) => `
-        <img src="${url}" alt="Miniatura ${i + 1}" loading="lazy"
-             class="w-14 h-14 object-cover rounded cursor-pointer border-2 transition-all
-                    ${i === galeriaIndex ? 'border-blue-400 scale-110' : 'border-transparent opacity-60 hover:opacity-100'}"
-             onclick="window.__galeriaGoTo(${i})"
-             onerror="this.src='https://via.placeholder.com/56'">`
-    ).join('');
+    counter.textContent =
+        `${galeriaIndex + 1} / ${galeriaActual.length}`;
 
-    // Ocultar prev/next si solo hay una imagen
-    const hiddenNav = galeriaActual.length <= 1;
-    document.getElementById('btnGaleriaPrev').classList.toggle('hidden', hiddenNav);
-    document.getElementById('btnGaleriaNext').classList.toggle('hidden', hiddenNav);
+    thumbs.innerHTML = "";
+
+    galeriaActual.forEach((url, i) => {
+
+        const thumb = document.createElement("img");
+
+        thumb.src = url;
+
+        thumb.style.width = "80px";
+        thumb.style.height = "80px";
+        thumb.style.objectFit = "cover";
+        thumb.style.borderRadius = "6px";
+        thumb.style.cursor = "pointer";
+        thumb.style.border =
+            i === galeriaIndex
+                ? "3px solid #3b82f6"
+                : "2px solid transparent";
+
+        thumb.onclick = () => {
+            galeriaIndex = i;
+            actualizarGaleria();
+        };
+
+        thumbs.appendChild(thumb);
+
+    });
+
+    const hideNav = galeriaActual.length <= 1;
+
+    document.getElementById("btnGaleriaPrev").style.display =
+        hideNav ? "none" : "block";
+
+    document.getElementById("btnGaleriaNext").style.display =
+        hideNav ? "none" : "block";
 }
 
 window.__galeriaGoTo = (idx) => {
     galeriaIndex = idx;
     actualizarGaleria();
 };
-
-function galeriaKeyHandler(e) {
-    const overlay = document.getElementById('galeriaOverlay');
-    if (!overlay || overlay.classList.contains('hidden')) return;
-    if (e.key === 'ArrowLeft') navegarGaleria(-1);
-    if (e.key === 'ArrowRight') navegarGaleria(1);
-    if (e.key === 'Escape') cerrarGaleria();
-}
 
 
 ================ frontend\js\auth.js ================
@@ -7257,8 +7438,9 @@ function setupEventListeners() {
         ['calle', 'contadorCalle', 25],
         ['numeroExterior', 'contadorNumExt', 10],
         ['numeroInterior', 'contadorNumInt', 10],
-        ['referencia', 'contadorRef', 35],
+        ['referencia', 'contadorRef', 75],
         ['colonia', 'contadorColonia', 40],
+        ['ciudad', 'contadorCiudad', 45],
         ['municipio', 'contadorMunicipio', 45],
         ['estado', 'contadorEstado', 25],
     ];
@@ -7330,6 +7512,7 @@ function renderizarDirecciones(dirs) {
                 </p>
                 ${dir.referencia ? `<p class="text-xs text-gray-400">${dir.referencia}</p>` : ''}
                 <p itemprop="addressLocality">${dir.colonia}</p>
+                <p itemprop="addressCity">${dir.ciudad}</p>
                 <p itemprop="addressRegion">${dir.municipio}, ${dir.estado}</p>
                 <p itemprop="postalCode">C.P. ${dir.codigoPostal}</p>
             </address>
@@ -7418,7 +7601,7 @@ function abrirModal(dir = null) {
     document.getElementById('modalTitle').textContent = dir ? 'Editar Dirección' : 'Nueva Dirección';
 
     // Reiniciar contadores
-    ['contadorAlias', 'contadorCalle', 'contadorNumExt', 'contadorNumInt', 'contadorRef', 'contadorColonia', 'contadorMunicipio', 'contadorEstado'].forEach(id => {
+    ['contadorAlias', 'contadorCalle', 'contadorNumExt', 'contadorNumInt', 'contadorRef', 'contadorColonia', 'contadorCiudad', 'contadorMunicipio', 'contadorEstado'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.textContent = el.textContent.replace(/^\d+/, '0');
     });
@@ -7432,15 +7615,16 @@ function abrirModal(dir = null) {
         document.getElementById('numeroInterior').value = dir.numeroInterior || '';
         document.getElementById('referencia').value = dir.referencia || '';
         document.getElementById('colonia').value = dir.colonia || '';
+        document.getElementById('ciudad').value = dir.ciudad || '';
         document.getElementById('municipio').value = dir.municipio || '';
         document.getElementById('estado').value = dir.estado || '';
         document.getElementById('codigoPostal').value = dir.codigoPostal || '';
         telefonosModal = [...(dir.telefonos || [])];
 
         // Actualizar contadores visualmente
-        const campos = ['alias', 'calle', 'numeroExterior', 'numeroInterior', 'referencia', 'colonia', 'municipio', 'estado'];
-        const contadores = ['contadorAlias', 'contadorCalle', 'contadorNumExt', 'contadorNumInt', 'contadorRef', 'contadorColonia', 'contadorMunicipio', 'contadorEstado'];
-        const maximos = [20, 25, 10, 10, 35, 40, 45, 25];
+        const campos = ['alias', 'calle', 'numeroExterior', 'numeroInterior', 'referencia', 'colonia', 'ciudad', 'municipio', 'estado'];
+        const contadores = ['contadorAlias', 'contadorCalle', 'contadorNumExt', 'contadorNumInt', 'contadorRef', 'contadorColonia', 'contadorCiudad', 'contadorMunicipio', 'contadorEstado'];
+        const maximos = [20, 25, 10, 10, 35, 40, 45, 45, 25];
         campos.forEach((id, i) => actualizarContador(id, contadores[i], maximos[i]));
     }
 
@@ -7456,6 +7640,34 @@ function cerrarModal() {
 // ── Guardar (POST / PUT) ──────────────────────────────────────────────────────
 async function guardarDireccion(e) {
     e.preventDefault();
+
+    const form = document.getElementById('formDireccion');
+
+    // 🔥 Validación HTML5 estándar
+    if (!form.checkValidity()) {
+        form.reportValidity();   // Muestra errores nativos
+        return;                  // ❌ NO enviar al backend
+    }
+
+    // Validar campos
+    const campos = ['alias', 'calle', 'numeroExterior', 'colonia', 'ciudad', 'municipio', 'estado', 'codigoPostal'];
+    const contadores = ['contadorAlias', 'contadorCalle', 'contadorNumExt', 'contadorColonia', 'contadorCiudad', 'contadorMunicipio', 'contadorEstado', 'contadorCP'];
+    const maximos = [20, 25, 10, 40, 45, 45, 25, 5];
+    campos.forEach((id, i) => {
+        const val = document.getElementById(id).value.trim();
+        if (!val) {
+            UI.showNotification(`El campo "${id}" es obligatorio`, 'error');
+            return;
+        }
+        actualizarContador(id, contadores[i], maximos[i]);
+    });
+
+    //Validar alias
+    const alias = document.getElementById('alias').value.trim();
+    if (!alias) {
+        UI.showNotification('El alias es obligatorio', 'error');
+        return;
+    }
 
     // Validar CP
     const cp = document.getElementById('codigoPostal').value.trim();
@@ -7475,12 +7687,13 @@ async function guardarDireccion(e) {
 
     const body = {
         preferida: document.getElementById('preferida').checked,
-        alias: document.getElementById('alias').value.trim() || null,
+        alias: document.getElementById('alias').value.trim(),
         calle: document.getElementById('calle').value.trim(),
         numeroExterior: document.getElementById('numeroExterior').value.trim(),
         numeroInterior: document.getElementById('numeroInterior').value.trim() || null,
         referencia: document.getElementById('referencia').value.trim() || null,
         colonia: document.getElementById('colonia').value.trim(),
+        ciudad: document.getElementById('ciudad').value.trim(),
         municipio: document.getElementById('municipio').value.trim(),
         estado: document.getElementById('estado').value.trim(),
         codigoPostal: cp,
@@ -8079,7 +8292,6 @@ export const UI = {
             },
             SUPPLIER: {
                 products: [
-                    { label: 'Mis Productos', href: 'productos.html' },
                     { label: 'Mis Direcciones', href: 'direcciones.html' }
                 ],
                 addresses: [
@@ -8454,7 +8666,7 @@ async function guardarDireccionAdmin(e) {
     const id = document.getElementById('adirId').value;
     const body = {
         preferida: document.getElementById('adirPreferida').checked,
-        alias: document.getElementById('adirAlias').value.trim() || null,
+        alias: document.getElementById('adirAlias').value.trim(),
         calle: document.getElementById('adirCalle').value.trim(),
         numeroExterior: document.getElementById('adirNumExt').value.trim(),
         numeroInterior: document.getElementById('adirNumInt').value.trim() || null,
