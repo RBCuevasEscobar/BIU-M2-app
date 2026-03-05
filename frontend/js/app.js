@@ -36,11 +36,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             return `
             <div class="group bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
-                <div class="relative aspect-square w-full overflow-hidden rounded-t-xl bg-gray-100">
+                <div class="relative w-full aspect-[4/3] overflow-hidden rounded-t-xl bg-gray-100 flex items-center justify-center">
                     ${imgSrc
-                    ? `<img src="${imgSrc}" alt="${product.nombre}" loading="lazy"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=Sin+imagen'">`
+                    ? `<img src="${imgSrc}" 
+                            srcset="
+                                ${imgSrc} 400w,
+                                ${imgSrc} 800w,
+                                ${imgSrc} 1200w
+                            "
+                            sizes="
+                                (max-width:640px) 100vw,
+                                (max-width:1024px) 50vw,
+                                25vw
+                            "
+                            alt="${product.nombre}" 
+                            loading="lazy"
+                            decoding="async"
+                            class="
+                                w-full
+                                h-full
+                                object-cover
+                                transition-transform
+                                duration-300
+                                group-hover:scale-105
+                            "
+                            style="aspect-ratio:4/3"
+                            onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=Sin+imagen'">`
                     : `<div class="flex items-center justify-center h-full text-gray-300">
                                <svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
