@@ -1,5 +1,53 @@
 
 
+================ CODE_REVIEW_FINDINGS.md ================
+
+# HALLAZGOS DE AUDITORÍA DE CÓDIGO (CODE REVIEW FINDINGS)
+
+Este documento detalla los resultados del análisis profundo (Deep Analysis) ejecutado sobre el repositorio del sistema eCommerce (Frontend y Backend). Se han identificado hallazgos relacionados con la consistencia entre la API y las pruebas en Postman, riesgos de seguridad, potenciales bugs y deuda técnica.
+
+# TAREA 9 — VALIDACIÓN DE CONSISTENCIA API vs POSTMAN
+
+Tras contrastar los endpoints existentes en la aplicación Spring Boot (*Controllers*) con la colección `ECommerce_Collection.json`, se han detectado las siguientes observaciones:
+
+## 1. Endpoints Faltantes en Postman
+* **Direcciones**: No existen pruebas creadas para el CRUD completo de rutas como `GET /api/direcciones`, `POST /api/direcciones`, ni `GET /api/direcciones/mis-direcciones`.
+* **Cancelación de Órdenes**: El endpoint `POST /api/ordenes/{id}/cancelar` está expuesto en el `OrdenController`, pero la colección actual de pruebas no lo invoca.
+* **Listado de Órdenes de Usuario Específico**: El controlador permite a un ADMIN ver las órdenes de cualquier usuario (`GET /api/ordenes/usuario/{usuarioId}`), sin embargo, no está documentado ni automatizado en el archivo JSON.
+
+## 2. Parámetros Inconsistentes
+* **Productos**: El seeder inicial modela `ProductoDigital` y `ProductoFisico`. La prueba asume siempre un `type: "Fisico"` al mandar el payload JSON, pero no se prueba la variante abstracta `ProductoDigital` para validar que el polimorfismo inserte el objeto correcto.
+* **Errores Negativos**: La colección carece de aserciones para "Unhappy Paths", tales como:
+  * Evidenciar que un stock negativo regresa el estado HTTP `400` y transiciona la orden a `OUT_OF_STOCK`.
+  * Intentar autenticarse con contraseñas incorrectas (`HTTP 401 Unauthorized`).
+
+## 3. Rutas Desactualizadas
+* Las dependencias DTO recién introducidas han cambiado algunas estructuras de respuesta anidando sub-objetos como `paymentTransactionDTO`, pero los tests de Postman actuales se limitan a checar un `HTTP 200` y extraer sólo el `.id` de la respuesta, omitiendo la validación de un "JSON Schema" riguroso.
+
+---
+
+# TAREA 15 — AUDITORÍA DE CÓDIGO
+
+## Riesgos de Seguridad 🛡️
+1. **Secretos Hardcodeados**: Es probable que la clave secreta para la firma del JWT (`jwt.secret`), así como las credenciales de la base de datos MySQL (usuario `root`, por ejemplo), residan en plano dentro de `application.properties`. Se sugiere migrar al uso de variables de entorno (`${DB_PASSWORD}`) o Spring Cloud Config / HashiCorp Vault.
+2. **Exposición de Trazas de Excepción**: En ocasiones, el `InvalidDefinitionException` o la ausencia de controladores de exepción `@ControllerAdvice` globales podría filtrar *Stacktraces* de la lógica interna de Java o consultas Hibernate al cliente (frontend).
+3. **CORS y Orígenes Confiables**: La política CORS, si está configurada como `*` (permitir todos), debe ser restringida a los dominios autorizados de la interfaz frontend por motivos de protección contra CSRF o *Cross-Site Scripting*.
+
+## Posibles Bugs (Bugs Potenciales) 🐛
+1. **Lógica de Concurrencia de Inventario**: Al usar `sumar/restar` stock interactuando bajo un volumen enorme y concurrente, el valor escalar de la base de datos en `ProductoFisico` podría sufrir de la condición de carrera (*Race Condition*), a menos que se asegure el uso estricto de bloqueos optimistas JPA (`@Version`) o bloqueos pesimistas (`@Lock(LockModeType.PESSIMISTIC_WRITE)`).
+2. **Borrado de Elementos Relacionados**: Las relaciones `@ManyToMany` u `@OneToMany` sin el atributo `orphanRemoval` apropiado pueden derivar en retención de basura (filas viudas en SQL) al eliminar perfiles o carritos.
+
+## Mejoras de Rendimiento ⚡
+1. **Overhead de Serialización Hibernate**: La resolución principal usando DTOs corrigió un bucle de consultas (El problema N+1 y serialización ByBuddy proxy). Se recomienda continuar usando inyección de dependencias como *MapStruct* para transcodificar DTO-a-Entity automáticamente en tiempo de compilación.
+2. **Caché para Catálogos Estáticos**: Las consultas a `GET /api/productos` acceden a la base de datos MySQL de forma reiterativa. Para un modelo de alta demanda, se sugiere agregar la caché de segundo nivel de Hibernate y memoria distribuida mediante integración con `@EnableCaching` (Redis/Hazelcast).
+
+## Mejoras de Arquitectura y Deuda Técnica 📐
+1. **Arquitectura Hexagonal (Puertos y Adaptadores)**: Si las reglas de negocio, los DTOs y el uso estricto de la máquina de estados continúan creciendo, migrar de un diseño clásico "Controller->Service->Repository" hacia un *Domain-Driven Design (DDD)* completo para desacoplar y prevenir fugas de la dependencia `@Entity` hacia APIs externas.
+2. **Carga en Memoria vs Paginación**: En los endpoints de listado (`listarUsuarios`, `listarTodasDTO`), el arreglo puede crecer enormemente, comprometiendo la RAM de la JVM. Como deuda técnica crítica, todos los controladores GET deben admitir `Pageable` para transitar los datos por lotes (Chunks) al cliente web.
+
+_Estas recomendaciones se limitan estrictamente al ámbito de análisis, de acuerdo al mandato de no alterar la funcionalidad ni operación actual del sistema._
+
+
 ================ .mvn\wrapper\maven-wrapper.properties ================
 
 wrapperVersion=3.3.4
@@ -1139,6 +1187,453 @@ mvn spring-boot:run
 # Acceder a la API
 http://localhost:8080/api
 ```
+
+---
+
+## 🔍 Descripción detallada actualizada de la implementación de la arquitectura de backend para la solución eCommerce.
+
+A continuación se expone el análisis profundo de la arquitectura, configuración, endpoints y persistencia de este backend eCommerce, modelado para un entorno empresarial.
+
+### 1. Análisis Profundo del Backend (`Spring Boot`)
+
+La arquitectura subyacente de este servidor Java se apoya íntegramente en las bondades de **Spring Boot**, promoviendo un desacoplamiento a través de la inyección de dependencias (`@Autowired` / Inversión de Control).
+
+* **Estructura del Proyecto y Paquetes**: Organizado lógicamente por dominio o característica de negocio ("Feature-folder structure" combinada con de Capas).
+  * `com.ecommerce.config`: Inicialización de beans estáticos, variables globales y datos quemados para testeo (`DataSeeder`).
+  * `com.ecommerce.controller`: Frontera de la API. Exponen rutas `RESTful` empleando anotaciones como `@RestController` y `@RequestMapping`. Controlan el enrutamiento y deserialización JSON HTTP.
+  * `com.ecommerce.service`: Core central del sistema. Aisla la lógica de negocio pura de las transacciones web. Operan con `@Service` y `@Transactional` para rollback en errores.
+  * `com.ecommerce.repository`: Interfaces Spring Data JPA conectadas a MySQL que ahorran manipulación explícita del Driver JDBC.
+  * `com.ecommerce.model` & `com.ecommerce.dto`: Los Modelos (*Entities*) mapean la base de datos. Los Data Transfer Objects (*DTOs*) sanitizan la exposición serializada para Jackson, eludiendo proxies perezosos (Lazy).
+  * `com.ecommerce.security`: Cortafuegos inicial; provee `SecurityFilterChain`, `TokenAuthenticationFilter` para validación estricta de cada JWT cabecera antes del Controller.
+
+* **Manejo de Errores y Validaciones**: Las validaciones se efectúan combinadamente; restricciones primarias a nivel de JPA (`@Column(nullable=false, unique=true)`) y en cascada por los *Services* (arrojando excepciones limpias tipo `RuntimeException` que Spring procesa nativamente, convirtiendo los códigos en `500` o `400`).
+
+### 2. Persistencia de Datos (MySQL y JPA/Hibernate)
+
+La capa transaccional se asienta en la tecnología Relacional **MySQL**, manipulada desde Java vía **Hibernate ORM**.
+
+* **Mapeo ORM**: Objetos Java se proyectan en memoria tabular de MySQL empleando las especificaciones de JPA. Herencia avanzada (tipo `JOINED`) se aplica a los objetos `Usuario` y `Producto`.
+* **Transacciones**: Controladas por `@Transactional`, permitiendo "Puntos de Control" o un Rollback atómico en dado caso que la Máquina de Estados de un *Checkout* se caiga (por ejemplo, al pagar sin red lógica).
+* **Ausencia NoSQL**: Este sistema opera al **100% sobre tecnología relacional**, maximizando consistencia bajo el modelo ACID y evitando esquemas distribuidos ambiguos.
+* **Ciclo de Vida Específico**:
+  * **Usuarios**: Alta única por email. Modificación restringida y borrado en cascada (destruyéndose también su `Carrito` adjunto).
+  * **Productos**: Inserción única por Proveedores/ADMIN. Su mutabilidad fundamental reside en el *Stock* del GestorFísico.
+  * **Órdenes y Envíos**: Una orden muta internamente a través del enum `EstadoOrden`. Su registro final se archiva permanentemente vinculado al despachante (`Shipment`) e identificador logístico.
+
+### 3. Diseño y Configuración MySQL
+
+El motor base garantiza alta escalabilidad mediante patrones estandarizados en `application.properties`:
+
+* **Configuración de Conexión y Datasource**: Mediante las propiedades `spring.datasource.url`, el controlador oficial `com.mysql.cj.jdbc.Driver` entabla puentes TCP/IP al clúster MySQL.
+* **Pool de Conexiones (HikariCP)**: Integrado transparentemente por Spring Boot, el enjambre de conexiones pre-iniciadas y administradas por *HikariCP* asegura un tráfico eficiente frente a ráfagas de concurrentes HTTP sin instanciar sockets repetitivos.
+* **Gestión Integridad y Consistencia**: La atomicidad de bases relacionales, acoplada al nivel de aislamiento nativo `READ_COMMITTED` de MySQL y los perfiles `@Lock` que Hibernate inyecta en background (para colisiones de stock), minimiza condiciones de carrera a nivel macro.
+
+### 4. Diagrama ERD de la Base de Datos
+
+```mermaid
+erDiagram
+    USUARIOS {
+        bigint id PK
+        varchar nombre
+        varchar email UK
+        varchar password
+        date fecha_nacimiento
+        varchar role
+    }
+    DIRECCION {
+        bigint id PK
+        bigint usuario_id FK
+        varchar calle
+        varchar ciudad
+        varchar codigo_postal
+    }
+    PRODUCTOS {
+        bigint id PK
+        varchar nombre
+        double precio
+        varchar descripcion
+        varchar proveedor
+    }
+    CARRITOS {
+        bigint id PK
+        bigint usuario_id FK
+    }
+    CARRITO_PRODUCTOS {
+        bigint carrito_id FK
+        bigint producto_id FK
+    }
+    ORDENES {
+        bigint id PK
+        bigint usuario_id FK
+        bigint payment_transaction_id FK
+        bigint shipment_id FK
+        double total
+        varchar estado
+        timestamp fecha_creacion
+    }
+    ORDENES_DETALLE {
+        bigint id PK
+        bigint orden_id FK
+        bigint producto_id FK
+        double precio
+        int cantidad
+    }
+    PAYMENT_TRANSACTION {
+        bigint id PK
+        varchar payment_method
+        varchar status
+        double amount
+    }
+    SHIPMENT {
+        bigint id PK
+        timestamp date_dispatch
+        timestamp date_delivered
+        varchar courier
+        varchar tracking_number
+    }
+
+    USUARIOS ||--o{ DIRECCION : "tiene multiples"
+    USUARIOS ||--|| CARRITOS : "tiene 1"
+    CARRITOS ||--o{ CARRITO_PRODUCTOS : "contiene"
+    PRODUCTOS ||--o{ CARRITO_PRODUCTOS : "esta en"
+    USUARIOS ||--o{ ORDENES : "coloca"
+    ORDENES ||--o{ ORDENES_DETALLE : "contiene items"
+    PRODUCTOS ||--o{ ORDENES_DETALLE : "hace referencia"
+    ORDENES ||--|| PAYMENT_TRANSACTION : "registra pago"
+    ORDENES ||--|| SHIPMENT : "registra envio"
+```
+
+### 5. Diagrama de Clases Actualizado (Backend y DTOs)
+
+```mermaid
+classDiagram
+    class ControllerLayer {
+        +Auth_Orden_User_ProductControllers
+        +DTO Serialization
+    }
+    
+    class DTO {
+        <<data transfer>>
+        OrdenDTO
+        PaymentTransactionDTO
+        ShipmentDTO
+    }
+
+    class OrdenService {
+        +crearOrden() OrdenDTO
+        +transicionPago() OrdenDTO
+        +despachar() OrdenDTO
+    }
+    
+    class ProcesoPago {
+        <<interface>>
+        +iniciarPago()
+    }
+    class PagoTarjeta
+    class PagoPayPal
+    
+    class RepositoryLayer {
+        <<interfaces JPA>>
+        OrdenRepository
+        UsuarioRepository
+    }
+
+    class Orden {
+        <<entity>>
+        +EstadoOrden estado
+    }
+    class PaymentTransaction {
+        <<entity>>
+    }
+
+    ControllerLayer ..> DTO : returns
+    ControllerLayer ..> OrdenService : dependency
+    OrdenService ..> ProcesoPago : strategy
+    ProcesoPago <|.. PagoTarjeta
+    ProcesoPago <|.. PagoPayPal
+    OrdenService ..> RepositoryLayer : dependency
+    RepositoryLayer ..> Orden : reads/writes
+    Orden *-- PaymentTransaction : composition
+```
+
+### 6. Arquitectura C4 Completa
+
+* **Nivel 1 (Contexto)**:
+```mermaid
+C4Context
+    title Nivel 1 - Contexto del Sistema eCommerce
+
+    %% Usuarios definidos en la parte superior
+    Person(customer, "Cliente", "Comprador de la tienda")
+    Person(admin, "Administrador", "Gestor logístico")
+    Person(supplier, "Proveedor", "Abastece productos")
+
+    %% Salto de línea visual usando un contenedor (opcional pero ayuda al orden)
+    System(ecommerce, "Plataforma de eCommerce", "Permite compras, inventarios, despachos y pagos unificados.")
+
+    %% Relaciones que fuerzan el flujo hacia abajo
+    Rel(customer, ecommerce, "Navega y Compra", "HTTPS")
+    Rel(admin, ecommerce, "Administra todo", "HTTPS")
+    Rel(supplier, ecommerce, "Actualiza su inventario", "HTTPS")
+
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+
+```
+
+* **Nivel 2 (Contenedores)**:
+```mermaid
+C4Container
+    title Nivel 2 - Contenedores
+    Person(customer, "Cliente", "Usuario Web")
+    System_Boundary(c1, "eCommerce System") {
+        Container(spa, "Single Page App", "JavaScript/HTML5", "UI Web Moderna")
+        Container(api, "API REST Backend", "Spring Boot/Java", "Manejo de reglas de negocio y transacciones.")
+        ContainerDb(db, "Base de Datos", "MySQL", "Persistencia Relacional ACID.")
+    }
+    Rel(customer, spa, "Interactúa", "Browser HTTPS")
+    Rel(spa, api, "Llama a API (JSON)", "REST API")
+    Rel(api, db, "Escribe y Lee", "JDBC / TCP 3306")
+```
+
+* **Nivel 3 (Componentes - API Backend)**:
+```mermaid
+C4Component
+    title Nivel 3 - Componentes de la API Backend (Spring Boot)
+    Container_Boundary(api, "API REST Backend") {
+        Component(security, "Security Filter Chain", "Spring Security", "Intercepción JWT/RBAC")
+        Component(controller, "Controllers", "RestControllers", "Enrutador REST")
+        Component(service, "Services", "Lógica", "Máquina de estados, Encripción BCrypt")
+        Component(repo, "Repositories", "Spring Data", "ORM JPA")
+    }
+    Rel(security, controller, "Autoriza acceso a")
+    Rel(controller, service, "Delega")
+    Rel(service, repo, "Usa transacciones")
+```
+* **Nivel 4 (Código)**: *(Revisar sección 5. Modelo de Clases UML detallado arriba para implementaciones locales)*.
+
+### 7. Ciclo de Vida de una Orden (Secuencia Completa)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor CLI as Usuario
+    participant FRONT as Frontend (SPA)
+    participant SEC as Interfaz JWT & Auth
+    participant BACK as Backend API
+    participant BD as MySQL DB
+
+    CLI->>FRONT: 1. Registra cuenta email/password
+    FRONT->>BACK: POST /api/usuarios
+    BACK->>BD: Inserta Usuario
+    CLI->>FRONT: 2. Inicia Sesión (Login)
+    FRONT->>BACK: POST /api/auth/login
+    BACK-->>FRONT: Devuelve JWT
+    CLI->>FRONT: 3. Añade Productos al Carrito
+    FRONT->>BACK: POST /api/carrito/agregar
+    CLI->>FRONT: 4. Click en "Finalizar Compra" (Checkout)
+    FRONT->>SEC: POST /api/ordenes/checkout (+token)
+    SEC->>BACK: Valida Autenticación
+    BACK->>BD: Transforma Carrito en Orden (CREATED)
+    CLI->>FRONT: 5. Elige "Tarjeta de Crédito" y Paga
+    FRONT->>BACK: POST /api/payments/procesar
+    BACK->>BACK: OOP Interfaces: Aplica PagoTarjeta
+    BACK->>BD: Actualiza estado a PAID
+    BD-->>FRONT: Confirmación UI
+    CLI->>FRONT: 6. Espera en Panel de Órdenes.
+    
+    actor ADM as Administrador
+    ADM->>BACK: 7. /api/shipments/despachar/{id}
+    BACK->>BD: Genera Shipment, Tracking. Orden->SHIPPED.
+    ADM->>BACK: 8. /api/shipments/entregar/{id}
+    BACK->>BD: Sella ciclo logístico. Orden->DELIVERED.
+```
+
+### 8. Análisis y Documentación de Postman (Flujos Automatizados)
+
+El ciclo vital de la API se modeló exhaustivamente dentro del archivo generado `backend/ECommerce_Collection.json`.
+* **CREATE / POST**: Probado en la ruta de Usuarios, Inicio de Sesión y Conversión de Carrito a Checkout.
+* **READ / GET**: Validado en la inspección de catálogo universal de Productos y listados de Admin.
+* **UPDATE / PATCH/PUT**: El Mutador principal de estado ocurre durante Posteos iterativos:
+  1. Pago: El endpoint de transacción actualiza el Enum State y resta stock en `ProductoFisico`.
+  2. Envíos: Los endpoints logísticos crean las firmas de mensajería alterando la Orden base preexistente.
+* El archivo de Postman incluye secuencias JavaScript reactivas (*Scripts `Tests`*) capaces de inyectar los tokens de autorización transparentemente entre endpoints.
+
+### 9. Especificación Reconstruida OpenAPI / Swagger
+
+Referencia estática OpenAPI `3.0.0` extraída desde la arquitectura de controladores Spring.
+```yaml
+openapi: 3.0.0
+info:
+  title: E-Commerce API
+  version: 3.0.0
+paths:
+  /api/auth/login:
+    post:
+      summary: Retorna JWT Bearer Token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200': { description: Login exitoso }
+  /api/usuarios:
+    get:
+      summary: CRUD - Obtiene todos los usuarios (ADMIN Only)
+      security: [{ bearerAuth: [] }]
+      responses: { '200': { description: Lista Usuarios Válida } }
+  /api/ordenes/checkout:
+    post:
+      summary: Convierte los items actuales en el carrito a una nueva Orden en estado CREATED.
+      security: [{ bearerAuth: [] }]
+      responses: { '200': { description: Objeto OrdenDTO anidado con ShipmentDTO vacío. } }
+  /api/payments/procesar:
+    post:
+      summary: Procesamiento transaccional de estados.
+      requestBody:
+        content:
+          application/json:
+            example: {"ordenId": 1, "metodoPago": "Tarjeta"}
+      responses:
+        '200': { description: Orden transitada exitosamente a PAID y stock mermado en MySQL. }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+```
+
+### 10. Interfaces de Pago
+
+El patrón *Strategy / Factory* se manifiesta bajo el paquete `payment`.
+* `ProcesoPago` es la super-interface central definiendo firmas lógicas: `iniciarPago(Orden)`, `verificarPago(Orden)`, `confirmarPago(Orden)`.
+* Sus extensiones concretas (`PagoTarjeta`, `PagoPayPal`, `PagoTransferencia`) proveen el determinismo algorítmico individualizado y validan polimórficamente el método especificado por la carga útil en frontend (Ej: procesar API bancaria frente a API PayPal remota antes de resolver exitoso el bloque a `PAID`).
+
+**Interface `PaymentTransactionRepository`**
+```java
+package com.ecommerce.repository;
+
+import com.ecommerce.model.PaymentTransaction;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface PaymentTransactionRepository extends JpaRepository<PaymentTransaction, Long> {
+}
+```
+
+**Superinterface `procesoPagoFactory`**
+```java
+/**
+ * Factory para obtener la estrategia de pago correcta.
+ */
+@Service
+public class ProcesoPagoFactory {
+
+    @Autowired
+    @Qualifier("PagoTarjeta")
+    private ProcesoPago pagoTarjeta;
+
+    @Autowired
+    @Qualifier("PagoPayPal")
+    private ProcesoPago pagoPayPal;
+
+    @Autowired
+    @Qualifier("PagoTransferencia")
+    private ProcesoPago pagoTransferencia;
+
+    public ProcesoPago obtenerMetodo(String method) {
+        if (method == null)
+            return pagoTarjeta;
+        switch (method.toLowerCase()) {
+            case "paypal":
+                return pagoPayPal;
+            case "transferencia":
+                return pagoTransferencia;
+            case "tarjeta":
+            default:
+                return pagoTarjeta;
+        }
+    }
+}
+```
+
+**Proceso de pago completo `procesarPago`**
+```java
+    /**
+     * FASE 2: Procesar Pago y Verificar Stock
+     */
+    @Transactional
+    public OrdenDTO procesarPago(Long ordenId, String metodoPago) {
+        Orden orden = ordenRepository.findById(ordenId)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+        // Validaciones Máquina de Estados
+        if (orden.getEstado() == EstadoOrden.PAID || orden.getEstado() == EstadoOrden.SHIPPED
+                || orden.getEstado() == EstadoOrden.DELIVERED) {
+            throw new RuntimeException("La orden ya fue pagada o procesada.");
+        }
+        if (orden.getEstado() == EstadoOrden.CANCELLED) {
+            throw new RuntimeException("La orden está cancelada.");
+        }
+
+        // 1. Verificar Stock Múltiple (OOP Abstraction)
+        boolean hasStock = true;
+        for (OrdenDetalle detalle : orden.getDetalles()) {
+            GestorInventario gestor = inventarioFactory.obtenerGestor(detalle.getProducto());
+            if (!gestor.verificarStock(detalle.getProducto(), detalle.getCantidad())) {
+                hasStock = false;
+                break;
+            }
+        }
+
+        if (!hasStock) {
+            orden.setEstado(EstadoOrden.OUT_OF_STOCK);
+            return toDTO(ordenRepository.save(orden));
+        }
+
+        // Transición a Payment Pending si hay stock
+        orden.setEstado(EstadoOrden.PAYMENT_PENDING);
+
+        // 2. Procesar Pago (OOP Interface)
+        ProcesoPago procesoPago = pagoFactory.obtenerMetodo(metodoPago);
+        procesoPago.iniciarPago(orden);
+
+        boolean pagoExitoso = procesoPago.verificarPago(orden);
+
+        if (pagoExitoso) {
+            PaymentTransaction trx = procesoPago.confirmarPago(orden, orden.getTotal());
+            if (trx != null) {
+                trx = paymentTransactionRepository.save(trx);
+                orden.setPaymentTransaction(trx);
+            }
+            orden.setEstado(EstadoOrden.PAID);
+
+            // 3. Descontar Stock definitivo porque ya se pagó
+            for (OrdenDetalle detalle : orden.getDetalles()) {
+                GestorInventario gestor = inventarioFactory.obtenerGestor(detalle.getProducto());
+                gestor.actualizarStock(detalle.getProducto(), -detalle.getCantidad());
+            }
+        } else {
+            // Se queda en pending si falla (el prompt indica: "Si un intento de pago falla,
+            // el estado permanece PAYMENT_PENDING")
+            orden.setEstado(EstadoOrden.PAYMENT_PENDING);
+        }
+
+        return toDTO(ordenRepository.save(orden));
+    }
+```
+
+### 11. Seguridad y Manejo de Sesiones Avanzadas
+
+El motor Java subyacente implementa autenticación completamente **Stateless**.
+* **Protección Criptográfica**: Las contraseñas se ofuscan en la base de datos tras una vía de escape unidireccional por `BCryptPasswordEncoder`, blindando frente a exfiltraciones relacionales.
+* **Autorización Granular (RBAC)**: En vez de un filtro global que dependa de URL Pathing pre-configurado en contexto clásico, el servidor utiliza resolución a nivel de método: `@PreAuthorize("hasRole('ADMIN') or @usuarioSecurity.isOwner(#usuarioId)")`. Esto deniega agresivamente la intrusión de escalada horizontal en tiempo real.
+* **Manejo de Sesiones**: En oposición a las interfaces `JSESSIONID` ligadas a memoria física servidor, cada `TokenAuthenticationFilter` intercepta y decodifica el JSON Web Token de la petición REST validando su caducidad, firma HMAC encubierta, e inyectándolo hacia `SecurityContextHolder` temporalmente durante el hilo HTTP particular.
 
 ---
 
@@ -7525,6 +8020,62 @@ frontend/
 ## 📝 Licencia
 
 BIU License - Proyecto Académico - Módulo Programming the Internet
+
+---
+
+## 🔍 Deep Analysis (Auditoría Técnica y Documentación Avanzada)
+
+### 11. Documentación del Frontend (Arquitectura Reactiva Vainilla)
+
+El frontend de esta plataforma eCommerce ha sido construído con adherencia a la siguiente especificación técnica y flujos de datos.
+
+* **Arquitectura del Frontend**: Se sostiene como una **Single Page Application (SPA) Parcial** basada estrictamente en **Vanilla JavaScript (ES6 Modules)** y **Tailwind CSS**. Evita la sobrecarga de frameworks React/Angular, logrando una alta modularidad inyectando dinámicamente nodos en el Document Object Model (DOM).
+
+* **Sistema de Componentes Puros**:
+  * `ui.js`: Motor de renderizado transversal. Expone funciones abstractas para renderizar alertas (`showNotification`), modales (`toggleModal`) y adaptar los Navbars dinámicos de acuerdo a los roles (RBAC en cliente).
+  * `auth.js`: Gestor del estado global del usuario alojado persistentemente en `localStorage`. Controla el ciclo de vida de la sesión (login/logout).
+  * `api.js`: Wrapper centralizado diseñado bajo el Patrón Adapter para la Fetch API nativa. Intercepta y envuelve todas las llamadas salientes y respuestas JSON.
+
+* **Consumo de APIs**:
+  Se opera asíncronamente mediante promesas `async / await`. El módulo `api.js` provee los cuatro verbos REST (`get`, `post`, `put`, `delete`). Destaca la inyección silenciosa de la cabecera `Authorization: Bearer <token>` extraída desde el Session Storage para validar contextos con el Servidor Spring Boot.
+
+* **Validaciones (Validación Dinámica)**:
+  La interfaz estipula un modelo dual defensivo:
+  1. *Nativo*: Atributos de HTML5 (`required`, `minlength`, `maxlength`, `pattern`) frenan intrusiones tempranas.
+  2. *Dinámico Constante*: Funciones atadas a *Event Listeners* (`input`, `blur`) rastrean el tipeo del usuario. Modifican en tiempo real los contornos DOM (`border-red-500` vs `border-green-500`) usando clases de Tailwind.
+
+* **Manejo de Errores**:
+  Toda la tubería de peticiones pasa por bloques `try-catch`. 
+  - Errores sintácticos HTTP `400 Bad Request` se interceptan extrayendo sus `message` o constraint violations mapeadas por backend y mostradas con `UI.showNotification()`.
+  - Errores de acceso `401 Unauthorized` o `403 Forbidden` disparan el vaciado del `localStorage` y forzan un `window.location.href = '/login.html'`, protegiendo al usuario.
+
+### Documentación de Interfaces Gráficas Críticas (GUIs)
+
+#### A. Interfaz de Checkout (Cierre de Compra)
+- **Vista**: `checkout.html` operada por `js/checkout.js`.
+- **Propósito**: Consolidar visualmente el carrito y transitar la base de datos hacia una Orden `CREATED`.
+- **Flujo**:
+  1. Renderiza un esqueleto (resumen) de los ítems tabulados a comprar con el cálculo total matemático instantáneo.
+  2. Exige selección en un *Dropdown* de la Dirección de Entrega (consumida asíncronamente desde el catálogo de rutas guardadas por el Cliente).
+  3. Desencadena la reserva logística llamando a `POST /api/ordenes/checkout`.
+
+#### B. Interfaz de Pago (Transacción)
+- **Vista**: Expansión dinámica operada tras concluir Checkout o desde el Panel de Órdenes (`ordenes.html`).
+- **Propósito**: Fondear económicamente la orden escalándola hacia `PAID` o fallando por inexistencia a `OUT_OF_STOCK`.
+- **Flujo**:
+  1. Provee un selector de pasarelas abstractas (Tarjeta, Paypal, Transferencia).
+  2. Activa un widget validado para introducir credenciales (EJ: `pattern="[0-9]{16}"` para TDC).
+  3. Ejecuta el bloqueo del DOM UI simulando latencia (loader intermitente) enviando los parámetros a `/api/payments/procesar`. 
+  4. Finaliza pintando la pastilla o *Badge* del estado transformado de gris (`CREATED`) a verde vibrante (`PAID`).
+
+#### C. Interfaz de Despacho Logístico (Envíos)
+- **Vista**: Modal oculto invocado dentro de `ordenes.html`, exclusivamente persistente para el rol `ADMIN`.
+- **Propósito**: Efectuar la transición de estados `PAID` → `SHIPPED` → `DELIVERED`.
+- **Flujo**:
+  1. El Administrador ubica una fila calificada como *PAID* e invoca el sub-botón `Despachar`.
+  2. Emerge sobre la ventana un Pop-Up (Modal HTML `<dialog>` interceptado) demandando Empresa de Mensajería (Courier) e Identificador de Rastreo.
+  3. La validación en vivo impide submit dobles.
+  4. Tras éxito de `POST /api/shipments/despachar/{id}`, la vista desactiva permanentemente el botón para prevenir redespachos y actualiza la estampa temporal en la GUI indicando que el paquete está en ruta.
 
 ---
 

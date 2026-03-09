@@ -91,36 +91,34 @@ function buildProductCard(product) {
     const imgSrc = imgDefault ? imgDefault.imagenUrl : null;
 
     card.innerHTML = `
-        <div class="relative w-full overflow-hidden rounded-t-xl bg-gray-100">
+        
+        <div class="relative w-full rounded-t-xl bg-white aspect-[4/3] flex items-center justify-center">
 
         ${imgSrc
-            ? `<img 
+            ? `<img
                 src="${imgSrc}"
                 alt="${product.nombre}"
                 loading="lazy"
                 decoding="async"
-                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-pointer"
+                class="absolute inset-0 w-full h-full object-contain p-4 transition-transform duration-300 group-hover:scale-105 cursor-pointer"
                 data-action="galeria"
-                style="aspect-ratio:4/3"
                 onerror="this.src='https://via.placeholder.com/400?text=Sin+imagen'">`
             : `<div class="flex items-center justify-center w-full h-full text-gray-300">
                 <i class="fas fa-image text-5xl"></i>
-        </div>`
+            </div>`
         }
-
         </div>
-
-        <div class="p-4 flex flex-col flex-1">
+        <div class="p-4 flex flex-col flex-1 min-h-[140px]">
 
             <div class="flex items-start justify-between gap-2 mb-1">
-                <h3 class="text-base font-semibold text-gray-900 line-clamp-2">
+                <h3 class="text-base font-semibold text-gray-900">
                     ${product.nombre}
                 </h3>
                 ${badge}
             </div>
 
             ${product.descripcion
-            ? `<p class="mt-1 text-sm text-gray-500 line-clamp-2">${product.descripcion}</p>`
+            ? `<p class="mt-1 text-sm text-gray-500">${product.descripcion}</p>`
             : ''}
 
             <div class="mt-auto pt-3">

@@ -31,12 +31,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 : '<span class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">Digital</span>';
 
             const descripcionHtml = product.descripcion
-                ? `<p class="mt-1 text-sm text-gray-500 line-clamp-2">${product.descripcion}</p>`
+                ? `<p class="mt-1 text-sm text-gray-500">${product.descripcion}</p>`
                 : '';
 
             return `
             <div class="group bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
-                <div class="relative w-full aspect-[4/3] overflow-hidden rounded-t-xl bg-gray-100 flex items-center justify-center">
+                <div class="relative w-full aspect-[4/3] overflow-hidden rounded-t-xl bg-white flex items-center justify-center">
                     ${imgSrc
                     ? `<img src="${imgSrc}" 
                             srcset="
@@ -53,12 +53,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                             loading="lazy"
                             decoding="async"
                             class="
-                                w-full
-                                h-full
-                                object-cover
-                                transition-transform
-                                duration-300
-                                group-hover:scale-105
+                                absolute 
+                                inset-0 
+                                w-full 
+                                h-full 
+                                object-contain 
+                                p-4 
+                                transition-transform 
+                                duration-300 
+                                group-hover:scale-105 
+                                cursor-pointer
                             "
                             style="aspect-ratio:4/3"
                             onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=Sin+imagen'">`
@@ -70,9 +74,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                            </div>`
                 }
                 </div>
-                <div class="p-4 flex flex-col flex-1">
+                <div class="p-4 flex flex-col flex-1 min-h-[140px]">
                     <div class="flex justify-between items-start gap-1 mb-1">
-                        <h3 class="text-base font-semibold text-gray-900 line-clamp-2">${product.nombre}</h3>
+                        <h3 class="text-base font-semibold text-gray-900">${product.nombre}</h3>
                         ${tipoBadge}
                     </div>
                     ${descripcionHtml}

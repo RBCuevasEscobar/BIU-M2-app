@@ -976,13 +976,22 @@ classDiagram
 ```mermaid
 C4Context
     title Nivel 1 - Contexto del Sistema eCommerce
+
+    %% Usuarios definidos en la parte superior
     Person(customer, "Cliente", "Comprador de la tienda")
-    Person(admin, "Administrador", "Gestor logístico y roles")
+    Person(admin, "Administrador", "Gestor logístico")
     Person(supplier, "Proveedor", "Abastece productos")
+
+    %% Salto de línea visual usando un contenedor (opcional pero ayuda al orden)
     System(ecommerce, "Plataforma de eCommerce", "Permite compras, inventarios, despachos y pagos unificados.")
+
+    %% Relaciones que fuerzan el flujo hacia abajo
     Rel(customer, ecommerce, "Navega y Compra", "HTTPS")
-    Rel(admin, ecommerce, "Supervisa", "HTTPS")
-    Rel(supplier, ecommerce, "Agrega items", "HTTPS")
+    Rel(admin, ecommerce, "Administra todo", "HTTPS")
+    Rel(supplier, ecommerce, "Actualiza su inventario", "HTTPS")
+
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+
 ```
 
 * **Nivel 2 (Contenedores)**:
@@ -1115,8 +1124,123 @@ components:
 ### 10. Interfaces de Pago
 
 El patrón *Strategy / Factory* se manifiesta bajo el paquete `payment`.
-* `ProcesoPago` es la super-interfaz central definiendo firmas lógicas: `iniciarPago(Orden)`, `verificarPago(Orden)`, `confirmarPago(Orden)`.
+* `ProcesoPago` es la super-interface central definiendo firmas lógicas: `iniciarPago(Orden)`, `verificarPago(Orden)`, `confirmarPago(Orden)`.
 * Sus extensiones concretas (`PagoTarjeta`, `PagoPayPal`, `PagoTransferencia`) proveen el determinismo algorítmico individualizado y validan polimórficamente el método especificado por la carga útil en frontend (Ej: procesar API bancaria frente a API PayPal remota antes de resolver exitoso el bloque a `PAID`).
+
+**Interface `PaymentTransactionRepository`**
+```java
+package com.ecommerce.repository;
+
+import com.ecommerce.model.PaymentTransaction;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface PaymentTransactionRepository extends JpaRepository<PaymentTransaction, Long> {
+}
+```
+
+**Superinterface `procesoPagoFactory`**
+```java
+/**
+ * Factory para obtener la estrategia de pago correcta.
+ */
+@Service
+public class ProcesoPagoFactory {
+
+    @Autowired
+    @Qualifier("PagoTarjeta")
+    private ProcesoPago pagoTarjeta;
+
+    @Autowired
+    @Qualifier("PagoPayPal")
+    private ProcesoPago pagoPayPal;
+
+    @Autowired
+    @Qualifier("PagoTransferencia")
+    private ProcesoPago pagoTransferencia;
+
+    public ProcesoPago obtenerMetodo(String method) {
+        if (method == null)
+            return pagoTarjeta;
+        switch (method.toLowerCase()) {
+            case "paypal":
+                return pagoPayPal;
+            case "transferencia":
+                return pagoTransferencia;
+            case "tarjeta":
+            default:
+                return pagoTarjeta;
+        }
+    }
+}
+```
+
+**Proceso de pago completo `procesarPago`**
+```java
+    /**
+     * FASE 2: Procesar Pago y Verificar Stock
+     */
+    @Transactional
+    public OrdenDTO procesarPago(Long ordenId, String metodoPago) {
+        Orden orden = ordenRepository.findById(ordenId)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+        // Validaciones Máquina de Estados
+        if (orden.getEstado() == EstadoOrden.PAID || orden.getEstado() == EstadoOrden.SHIPPED
+                || orden.getEstado() == EstadoOrden.DELIVERED) {
+            throw new RuntimeException("La orden ya fue pagada o procesada.");
+        }
+        if (orden.getEstado() == EstadoOrden.CANCELLED) {
+            throw new RuntimeException("La orden está cancelada.");
+        }
+
+        // 1. Verificar Stock Múltiple (OOP Abstraction)
+        boolean hasStock = true;
+        for (OrdenDetalle detalle : orden.getDetalles()) {
+            GestorInventario gestor = inventarioFactory.obtenerGestor(detalle.getProducto());
+            if (!gestor.verificarStock(detalle.getProducto(), detalle.getCantidad())) {
+                hasStock = false;
+                break;
+            }
+        }
+
+        if (!hasStock) {
+            orden.setEstado(EstadoOrden.OUT_OF_STOCK);
+            return toDTO(ordenRepository.save(orden));
+        }
+
+        // Transición a Payment Pending si hay stock
+        orden.setEstado(EstadoOrden.PAYMENT_PENDING);
+
+        // 2. Procesar Pago (OOP Interface)
+        ProcesoPago procesoPago = pagoFactory.obtenerMetodo(metodoPago);
+        procesoPago.iniciarPago(orden);
+
+        boolean pagoExitoso = procesoPago.verificarPago(orden);
+
+        if (pagoExitoso) {
+            PaymentTransaction trx = procesoPago.confirmarPago(orden, orden.getTotal());
+            if (trx != null) {
+                trx = paymentTransactionRepository.save(trx);
+                orden.setPaymentTransaction(trx);
+            }
+            orden.setEstado(EstadoOrden.PAID);
+
+            // 3. Descontar Stock definitivo porque ya se pagó
+            for (OrdenDetalle detalle : orden.getDetalles()) {
+                GestorInventario gestor = inventarioFactory.obtenerGestor(detalle.getProducto());
+                gestor.actualizarStock(detalle.getProducto(), -detalle.getCantidad());
+            }
+        } else {
+            // Se queda en pending si falla (el prompt indica: "Si un intento de pago falla,
+            // el estado permanece PAYMENT_PENDING")
+            orden.setEstado(EstadoOrden.PAYMENT_PENDING);
+        }
+
+        return toDTO(ordenRepository.save(orden));
+    }
+```
 
 ### 11. Seguridad y Manejo de Sesiones Avanzadas
 

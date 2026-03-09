@@ -19,11 +19,12 @@ Source: frontend\package.json (devDependencies)
 - tailwindcss ^4.1.18
 
 Internal dependency graph
-Nodes: 100
+Nodes: 101
 Edges: 22
 
 Nodes:
 - .mvn\wrapper\maven-wrapper.properties
+- CODE_REVIEW_FINDINGS.md
 - backend\ECommerce_Collection.json
 - backend\README.md
 - backend\pom.xml
