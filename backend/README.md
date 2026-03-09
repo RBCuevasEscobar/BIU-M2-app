@@ -1,4 +1,4 @@
-# E-Commerce Backend v2.0
+# E-Commerce Backend v3.0
 
 ## 🎯 Propósito del Backend
 
@@ -786,8 +786,8 @@ El ciclo de vida de la orden está modelado bajo una estricta **Máquina de Esta
 3. **`PAID`**: Transacción de pago confirmada exitosa. Solo en este punto el **Stock** del `ProductoFisico` es descontado de la BD real.
 4. **`OUT_OF_STOCK`**: Intentó pagar pero los `GestorInventario` respondieron false en `verificarStock()`. Queda en limbo de falla para recuperar.
 5. **`CANCELLED`**: Anulada desde UI de Cliente/Admin.
-6. **`SHIPPED`**: Entidad `Shipment` creada con empresa mensajera (`courier`) y código de rastreo.
-7. **`DELIVERED`**: Ciclo completado. El artículo está en manos del cliente.
+6. **`SHIPPED`**: Entidad `Shipment` creada con empresa mensajera (`courier`) y número de guía de rastreo.
+7. **`DELIVERED`**: Ciclo completado. El artículo fue entregado en la dirección del cliente.
 
 ---
 
@@ -810,7 +810,7 @@ BIU License - Proyecto Académico - Módulo Object-Oriented Programming.
 
 ---
 
-## 🔄 Phase 2 – Nuevas Funcionalidades
+## 🔄 Fase 3 – Nuevas Funcionalidades
 
 ### Extensión de la Entidad `Producto`
 
@@ -894,26 +894,31 @@ public class Direccion {
 
 ---
 
+###- `GestorInventario`: Interfaz para la gestión de inventario físico vs. digital.
+- `ProcesoPago`: Interfaz para múltiples proveedores de pago (Tarjeta, PayPal, Transferencia).
+- **Comprobación de seguridad**: Implementada mediante Spring Security (`@PreAuthorize`).
+- **Adiciones de la Fase 3**: Gestión del ciclo de vida de pedidos (`EstadoOrden`), Checkout unificado, Transacciones de pago y Envíos.
+
+## Resumen de los Endpoints de la API
+
+| Método | Punto de conexión | Acceso | Descripción |
+| :--- | :--- | :--- | :--- |
+| **POST** | `/api/auth/register` | Público | Registrar nuevo usuario. |
+| **POST** | `/api/auth/login` | Público | Autenticar usuario y obtener token. |
+| **GET** | `/api/productos` | Público | Listar productos disponibles. | 
+| **POST** | `/api/productos` | Administrador | Crear un nuevo producto. |
+| **GET** | `/api/direcciones/mis-direcciones` | Autenticado | Listar direcciones de usuario. |
+| **POST** | `/api/ordenes/checkout` | Cliente | Convertir carrito en pedido (estado CREATED). |
+| **POST** | `/api/payments/procesar` | Cliente | Procesar pago (PAID / OUT_OF_STOCK). |
+| **POST** | `/api/shipments/despachar/{id}`| Administrador | Enviar pedido (SHIPPED). |
+| **POST** | `/api/shipments/entregar/{id}` | Administrador | Marcar entrega (DELIVERED). |
+
+Para obtener una lista completa de los puntos finales, importe la colección de Postman proporcionada (..\backend\ECommerce_Collection.json) o revise los controladores subyacentes.
+
 ###- `GestorInventario`: Interface for physical vs digital inventory handling.
 - `ProcesoPago`: Interface for multiple payment providers (Tarjeta, PayPal, Transfer).
 - **Security Check**: Enforced via Spring Security (`@PreAuthorize`).
 - **Phase 3 additions**: Order lifecycle management (`EstadoOrden`), unified Checkout, Payment Transactions, and Shipments.
-
-## API Endpoints Overview
-
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| **POST** | `/api/auth/register` | Public | Register new user. |
-| **POST** | `/api/auth/login` | Public | Authenticate user & get token. |
-| **GET** | `/api/productos` | Public | List available products. |
-| **POST** | `/api/productos` | Admin | Create a new product. |
-| **GET** | `/api/direcciones/mis-direcciones` | Authenticated | List user addresses. |
-| **POST** | `/api/ordenes/checkout` | Customer | Convert Cart to Order (CREATED state). |
-| **POST** | `/api/payments/procesar` | Customer | Process Payment (PAID / OUT_OF_STOCK). |
-| **POST** | `/api/shipments/despachar/{id}`| Admin | Dispatch order (SHIPPED). |
-| **POST** | `/api/shipments/entregar/{id}` | Admin | Mark delivery (DELIVERED). |
-
-For a complete list of endpoints, import the provided Postman collection (if available) or check the underlying Controllers.
 
 ### Nuevos Endpoints API
 

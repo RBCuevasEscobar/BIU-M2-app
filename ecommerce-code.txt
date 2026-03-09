@@ -336,7 +336,7 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
 
 ================ backend\README.md ================
 
-# E-Commerce Backend v2.0
+# E-Commerce Backend v3.0
 
 ## 🎯 Propósito del Backend
 
@@ -1124,8 +1124,8 @@ El ciclo de vida de la orden está modelado bajo una estricta **Máquina de Esta
 3. **`PAID`**: Transacción de pago confirmada exitosa. Solo en este punto el **Stock** del `ProductoFisico` es descontado de la BD real.
 4. **`OUT_OF_STOCK`**: Intentó pagar pero los `GestorInventario` respondieron false en `verificarStock()`. Queda en limbo de falla para recuperar.
 5. **`CANCELLED`**: Anulada desde UI de Cliente/Admin.
-6. **`SHIPPED`**: Entidad `Shipment` creada con empresa mensajera (`courier`) y código de rastreo.
-7. **`DELIVERED`**: Ciclo completado. El artículo está en manos del cliente.
+6. **`SHIPPED`**: Entidad `Shipment` creada con empresa mensajera (`courier`) y número de guía de rastreo.
+7. **`DELIVERED`**: Ciclo completado. El artículo fue entregado en la dirección del cliente.
 
 ---
 
@@ -1148,7 +1148,7 @@ BIU License - Proyecto Académico - Módulo Object-Oriented Programming.
 
 ---
 
-## 🔄 Phase 2 – Nuevas Funcionalidades
+## 🔄 Fase 3 – Nuevas Funcionalidades
 
 ### Extensión de la Entidad `Producto`
 
@@ -1232,26 +1232,31 @@ public class Direccion {
 
 ---
 
+###- `GestorInventario`: Interfaz para la gestión de inventario físico vs. digital.
+- `ProcesoPago`: Interfaz para múltiples proveedores de pago (Tarjeta, PayPal, Transferencia).
+- **Comprobación de seguridad**: Implementada mediante Spring Security (`@PreAuthorize`).
+- **Adiciones de la Fase 3**: Gestión del ciclo de vida de pedidos (`EstadoOrden`), Checkout unificado, Transacciones de pago y Envíos.
+
+## Resumen de los Endpoints de la API
+
+| Método | Punto de conexión | Acceso | Descripción |
+| :--- | :--- | :--- | :--- |
+| **POST** | `/api/auth/register` | Público | Registrar nuevo usuario. |
+| **POST** | `/api/auth/login` | Público | Autenticar usuario y obtener token. |
+| **GET** | `/api/productos` | Público | Listar productos disponibles. | 
+| **POST** | `/api/productos` | Administrador | Crear un nuevo producto. |
+| **GET** | `/api/direcciones/mis-direcciones` | Autenticado | Listar direcciones de usuario. |
+| **POST** | `/api/ordenes/checkout` | Cliente | Convertir carrito en pedido (estado CREATED). |
+| **POST** | `/api/payments/procesar` | Cliente | Procesar pago (PAID / OUT_OF_STOCK). |
+| **POST** | `/api/shipments/despachar/{id}`| Administrador | Enviar pedido (SHIPPED). |
+| **POST** | `/api/shipments/entregar/{id}` | Administrador | Marcar entrega (DELIVERED). |
+
+Para obtener una lista completa de los puntos finales, importe la colección de Postman proporcionada (..\backend\ECommerce_Collection.json) o revise los controladores subyacentes.
+
 ###- `GestorInventario`: Interface for physical vs digital inventory handling.
 - `ProcesoPago`: Interface for multiple payment providers (Tarjeta, PayPal, Transfer).
 - **Security Check**: Enforced via Spring Security (`@PreAuthorize`).
 - **Phase 3 additions**: Order lifecycle management (`EstadoOrden`), unified Checkout, Payment Transactions, and Shipments.
-
-## API Endpoints Overview
-
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| **POST** | `/api/auth/register` | Public | Register new user. |
-| **POST** | `/api/auth/login` | Public | Authenticate user & get token. |
-| **GET** | `/api/productos` | Public | List available products. |
-| **POST** | `/api/productos` | Admin | Create a new product. |
-| **GET** | `/api/direcciones/mis-direcciones` | Authenticated | List user addresses. |
-| **POST** | `/api/ordenes/checkout` | Customer | Convert Cart to Order (CREATED state). |
-| **POST** | `/api/payments/procesar` | Customer | Process Payment (PAID / OUT_OF_STOCK). |
-| **POST** | `/api/shipments/despachar/{id}`| Admin | Dispatch order (SHIPPED). |
-| **POST** | `/api/shipments/entregar/{id}` | Admin | Mark delivery (DELIVERED). |
-
-For a complete list of endpoints, import the provided Postman collection (if available) or check the underlying Controllers.
 
 ### Nuevos Endpoints API
 
@@ -4643,13 +4648,6 @@ spring.jpa.show-sql=true
 server.error.include-message=always
 
 
-================ backend\target\maven-archiver\pom.properties ================
-
-artifactId=backend
-groupId=com.ecommerce
-version=0.0.1-SNAPSHOT
-
-
 ================ backend\target\maven-status\maven-compiler-plugin\compile\default-compile\createdFiles.lst ================
 
 com\ecommerce\repository\DireccionRepository.class
@@ -4908,8 +4906,8 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
     <main class="flex-grow container mx-auto px-4 py-8">
         <div class="flex items-center justify-between mb-8">
             <h1 class="text-3xl font-bold text-gray-800">Finalizar Compra</h1>
-            <a href="carrito.html" class="text-blue-600 hover:text-blue-800">
-                <i class="fas fa-arrow-left mr-2"></i>Volver al Carrito
+            <a href="ordenes.html" class="text-blue-600 hover:text-blue-800">
+                <i class="fas fa-arrow-left mr-2"></i>Volver a las Ordenes
             </a>
         </div>
 
@@ -5004,7 +5002,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 
                         <div class="pt-6 border-t border-gray-200">
                             <button type="submit" id="btnProcesarPago"
-                                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition duration-300 disabled:opacity-50">
                                 Procesar Pago
                             </button>
                         </div>
@@ -5049,7 +5047,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                                 <span id="resumenSubtotal" class="font-medium">$0.00</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-gray-600">Impuestos (15%)</span>
+                                <span class="text-gray-600">Impuestos (16%)</span>
                                 <span id="resumenImpuestos" class="font-medium">$0.00</span>
                             </div>
                         </div>
@@ -7127,7 +7125,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 
 ================ frontend\README.md ================
 
-# E-Commerce Frontend v2.0
+# E-Commerce Frontend v3.0
 
 ## 🎯 Propósito del Proyecto
 
@@ -7143,27 +7141,27 @@ Este frontend forma parte de una solución completa de **E-Commerce** que permit
 - **Gestión de inventario** para administradores y proveedores
 - **Experiencia de compra** fluida para clientes
 - **Control de acceso** granular según el tipo de usuario
-- **Administración centralizada** de usuarios, productos y órdenes
+- **Administración centralizada** de usuarios, productos, órdenes y envíos
 
-### Phase 3 Features
+### Características de la Fase 3
 
-### Checkout and Payments
-- **`checkout.html`**: A full checkout sequence with address selection.
-- **Dynamic Validation**: Real-time form validation applied to credit card inputs (simulated data).
-- **Payment Processing**: Replaces direct cart-to-order flow with a step-by-step confirmation.
+### Proceso de compra y pagos
+- **`checkout.html`**: Secuencia de pago completa con selección de dirección.
+- **Validación dinámica**: Validación de formulario en tiempo real aplicada a la entrada de datos de tarjeta de crédito (datos simulados).
+- **Procesamiento de pagos**: Sustituye el proceso directo del carrito al pedido por una confirmación paso a paso.
 
-### Order Management (Customer & Admin)
-- **`ordenes.html`**: New page to list orders and their current lifecycle state.
-- **State Badges**: Visual indicators for `CREATED`, `PAYMENT_PENDING`, `PAID`, `OUT_OF_STOCK`, `CANCELLED`, `SHIPPED`, `DELIVERED`.
-- **Order Details Modal**: Deep view into what products, payment trx, and shipment info an order holds.
-- **Admin Dispatch Modal**: Forms with dynamic validation to register Courier and Tracking numbers.
+### Gestión de órdenes (Cliente y administrador)
+- **`ordenes.html`**: Nueva página para listar las órdenes y su estado actual.
+- **Indicadores de estado**: Indicadores visuales para `CREATED`, `PAYMENT_PENDING`, `PAID`, `OUT_OF_STOCK`, `CANCELLED`, `SHIPPED`, `DELIVERED`.
+- **Modalidad de detalles de la orden**: Vista detallada de los productos, las transacciones de pago y la información de envío que contiene un pedido. 
+- **Modalidad de Despacho de Administrador**: Formularios con validación dinámica para registrar la empresa de mensajería y el número de la guía para seguimiento.
 
-### Inventory Visibility
-- **`productos.html`**: Product grid now optionally displays real-time `Stock` for Admir/Supplier roles.
+### Visibilidad de Inventario
+- **`productos.html`**: La cuadrícula de productos ahora muestra opcionalmente el `Stock` en tiempo real para los roles de Administrador/Proveedor.
 
 ---
 
-## Technical Detailsonal
+## Detalles Técnicos
 - ✅ Autenticación y gestión de sesiones
 - ✅ CRUD de productos (físicos y digitales)
 - ✅ Carrito de compras personalizado
@@ -7174,9 +7172,9 @@ Este frontend forma parte de una solución completa de **E-Commerce** que permit
 ### Tipos de Usuarios
 |       Rol     | Permisos                                                                  |
 |---------------|---------------------------------------------------------------------------|
-| **ADMIN**     | Gestión completa: productos, usuarios, órdenes                            |
+| **ADMIN**     | Gestión completa: productos, usuarios, órdenes, envíos                            |
 | **SUPPLIER**  | Edición de productos, visualización de órdenes                            |
-| **CUSTOMER**  | Compra de productos, gestión de carrito, visualización de propias órdenes |
+| **CUSTOMER**  | Compra de productos, gestión de carrito, proceso de pago, cancelación de órdenes, visualización de propias órdenes |
 
 ---
 
@@ -7428,7 +7426,7 @@ UI.showNotification('Error al guardar usuario: ' + error.message, 'error');
 | Tailwind CSS   | 3.x     | Framework utility-first |
 | JavaScript     | ES6+    | Lógica de aplicación    |
 | FontAwesome    | 6.4.0   | Iconografía             |
-| Fetch API      | -       | Peticiones HTTP         |
+| Fetch API      | -       | Gestión de peticiones HTTP hacia el backend (Métodos GET, POST) mediante el uso de Fetch         |
 
 ---
 
@@ -7530,7 +7528,7 @@ BIU License - Proyecto Académico - Módulo Programming the Internet
 
 ---
 
-## 🔄 Phase 2 – Nuevas Funcionalidades
+## 🔄 Fase 3 – Nuevas Funcionalidades
 
 ### Alcance Ampliado
 | Rol | Acceso Nuevo |
@@ -8068,7 +8066,7 @@ module.exports = {
 ================ frontend\css\output.css ================
 
 /*! tailwindcss v4.1.18 | MIT License | https://tailwindcss.com */
-@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-scale-x:1;--tw-scale-y:1;--tw-scale-z:1;--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-space-y-reverse:0;--tw-space-x-reverse:0;--tw-border-style:solid;--tw-leading:initial;--tw-font-weight:initial;--tw-shadow:0 0 #0000;--tw-shadow-color:initial;--tw-shadow-alpha:100%;--tw-inset-shadow:0 0 #0000;--tw-inset-shadow-color:initial;--tw-inset-shadow-alpha:100%;--tw-ring-color:initial;--tw-ring-shadow:0 0 #0000;--tw-inset-ring-color:initial;--tw-inset-ring-shadow:0 0 #0000;--tw-ring-inset:initial;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-offset-shadow:0 0 #0000;--tw-blur:initial;--tw-brightness:initial;--tw-contrast:initial;--tw-grayscale:initial;--tw-hue-rotate:initial;--tw-invert:initial;--tw-opacity:initial;--tw-saturate:initial;--tw-sepia:initial;--tw-drop-shadow:initial;--tw-drop-shadow-color:initial;--tw-drop-shadow-alpha:100%;--tw-drop-shadow-size:initial;--tw-duration:initial}}}@layer theme{:root,:host{--font-sans:ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";--font-mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;--color-red-100:oklch(93.6% .032 17.717);--color-red-200:oklch(88.5% .062 18.334);--color-red-500:oklch(63.7% .237 25.331);--color-red-600:oklch(57.7% .245 27.325);--color-red-700:oklch(50.5% .213 27.518);--color-red-800:oklch(44.4% .177 26.899);--color-yellow-500:oklch(79.5% .184 86.047);--color-yellow-700:oklch(55.4% .135 66.442);--color-green-100:oklch(96.2% .044 156.743);--color-green-500:oklch(72.3% .219 149.579);--color-green-600:oklch(62.7% .194 149.214);--color-green-800:oklch(44.8% .119 151.328);--color-blue-100:oklch(93.2% .032 255.585);--color-blue-500:oklch(62.3% .214 259.815);--color-blue-600:oklch(54.6% .245 262.881);--color-blue-700:oklch(48.8% .243 264.376);--color-blue-800:oklch(42.4% .199 265.638);--color-purple-100:oklch(94.6% .033 307.174);--color-purple-800:oklch(43.8% .218 303.724);--color-gray-50:oklch(98.5% .002 247.839);--color-gray-100:oklch(96.7% .003 264.542);--color-gray-200:oklch(92.8% .006 264.531);--color-gray-300:oklch(87.2% .01 258.338);--color-gray-400:oklch(70.7% .022 261.325);--color-gray-500:oklch(55.1% .027 264.364);--color-gray-600:oklch(44.6% .03 256.802);--color-gray-700:oklch(37.3% .034 259.733);--color-gray-800:oklch(27.8% .033 256.848);--color-gray-900:oklch(21% .034 264.665);--color-black:#000;--color-white:#fff;--spacing:.25rem;--container-sm:24rem;--container-md:28rem;--container-7xl:80rem;--text-xs:.75rem;--text-xs--line-height:calc(1/.75);--text-sm:.875rem;--text-sm--line-height:calc(1.25/.875);--text-lg:1.125rem;--text-lg--line-height:calc(1.75/1.125);--text-xl:1.25rem;--text-xl--line-height:calc(1.75/1.25);--text-2xl:1.5rem;--text-2xl--line-height:calc(2/1.5);--text-3xl:1.875rem;--text-3xl--line-height:calc(2.25/1.875);--text-4xl:2.25rem;--text-4xl--line-height:calc(2.5/2.25);--font-weight-light:300;--font-weight-medium:500;--font-weight-semibold:600;--font-weight-bold:700;--font-weight-extrabold:800;--leading-normal:1.5;--radius-md:.375rem;--radius-lg:.5rem;--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4,0,.2,1);--default-font-family:var(--font-sans);--default-mono-font-family:var(--font-mono)}}@layer base{*,:after,:before,::backdrop{box-sizing:border-box;border:0 solid;margin:0;padding:0}::file-selector-button{box-sizing:border-box;border:0 solid;margin:0;padding:0}html,:host{-webkit-text-size-adjust:100%;tab-size:4;line-height:1.5;font-family:var(--default-font-family,ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji");font-feature-settings:var(--default-font-feature-settings,normal);font-variation-settings:var(--default-font-variation-settings,normal);-webkit-tap-highlight-color:transparent}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:var(--default-mono-font-family,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace);font-feature-settings:var(--default-mono-font-feature-settings,normal);font-variation-settings:var(--default-mono-font-variation-settings,normal);font-size:1em}small{font-size:80%}sub,sup{vertical-align:baseline;font-size:75%;line-height:0;position:relative}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}:-moz-focusring{outline:auto}progress{vertical-align:baseline}summary{display:list-item}ol,ul,menu{list-style:none}img,svg,video,canvas,audio,iframe,embed,object{vertical-align:middle;display:block}img,video{max-width:100%;height:auto}button,input,select,optgroup,textarea{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}::file-selector-button{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}:where(select:is([multiple],[size])) optgroup{font-weight:bolder}:where(select:is([multiple],[size])) optgroup option{padding-inline-start:20px}::file-selector-button{margin-inline-end:4px}::placeholder{opacity:1}@supports (not ((-webkit-appearance:-apple-pay-button))) or (contain-intrinsic-size:1px){::placeholder{color:currentColor}@supports (color:color-mix(in lab, red, red)){::placeholder{color:color-mix(in oklab,currentcolor 50%,transparent)}}}textarea{resize:vertical}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-date-and-time-value{min-height:1lh;text-align:inherit}::-webkit-datetime-edit{display:inline-flex}::-webkit-datetime-edit-fields-wrapper{padding:0}::-webkit-datetime-edit{padding-block:0}::-webkit-datetime-edit-year-field{padding-block:0}::-webkit-datetime-edit-month-field{padding-block:0}::-webkit-datetime-edit-day-field{padding-block:0}::-webkit-datetime-edit-hour-field{padding-block:0}::-webkit-datetime-edit-minute-field{padding-block:0}::-webkit-datetime-edit-second-field{padding-block:0}::-webkit-datetime-edit-millisecond-field{padding-block:0}::-webkit-datetime-edit-meridiem-field{padding-block:0}::-webkit-calendar-picker-indicator{line-height:1}:-moz-ui-invalid{box-shadow:none}button,input:where([type=button],[type=reset],[type=submit]){appearance:button}::file-selector-button{appearance:button}::-webkit-inner-spin-button{height:auto}::-webkit-outer-spin-button{height:auto}[hidden]:where(:not([hidden=until-found])){display:none!important}}@layer components;@layer utilities{.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.static{position:static}.sticky{position:sticky}.inset-0{inset:calc(var(--spacing)*0)}.inset-y-0{inset-block:calc(var(--spacing)*0)}.top-0{top:calc(var(--spacing)*0)}.top-5{top:calc(var(--spacing)*5)}.right-5{right:calc(var(--spacing)*5)}.left-0{left:calc(var(--spacing)*0)}.z-10{z-index:10}.z-50{z-index:50}.container{width:100%}@media (min-width:40rem){.container{max-width:40rem}}@media (min-width:48rem){.container{max-width:48rem}}@media (min-width:64rem){.container{max-width:64rem}}@media (min-width:80rem){.container{max-width:80rem}}@media (min-width:96rem){.container{max-width:96rem}}.mx-1{margin-inline:calc(var(--spacing)*1)}.mx-4{margin-inline:calc(var(--spacing)*4)}.mx-auto{margin-inline:auto}.my-4{margin-block:calc(var(--spacing)*4)}.mt-1{margin-top:calc(var(--spacing)*1)}.mt-2{margin-top:calc(var(--spacing)*2)}.mt-3{margin-top:calc(var(--spacing)*3)}.mt-4{margin-top:calc(var(--spacing)*4)}.mb-1{margin-bottom:calc(var(--spacing)*1)}.mb-2{margin-bottom:calc(var(--spacing)*2)}.mb-4{margin-bottom:calc(var(--spacing)*4)}.mb-6{margin-bottom:calc(var(--spacing)*6)}.mb-8{margin-bottom:calc(var(--spacing)*8)}.mb-12{margin-bottom:calc(var(--spacing)*12)}.ml-2{margin-left:calc(var(--spacing)*2)}.block{display:block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.inline{display:inline}.inline-block{display:inline-block}.h-1{height:calc(var(--spacing)*1)}.h-8{height:calc(var(--spacing)*8)}.h-12{height:calc(var(--spacing)*12)}.h-16{height:calc(var(--spacing)*16)}.h-full{height:100%}.min-h-screen{min-height:100vh}.w-0{width:calc(var(--spacing)*0)}.w-8{width:calc(var(--spacing)*8)}.w-12{width:calc(var(--spacing)*12)}.w-full{width:100%}.max-w-7xl{max-width:var(--container-7xl)}.max-w-md{max-width:var(--container-md)}.max-w-sm{max-width:var(--container-sm)}.flex-grow{flex-grow:1}.table-auto{table-layout:auto}.border-collapse{border-collapse:collapse}.scale-100{--tw-scale-x:100%;--tw-scale-y:100%;--tw-scale-z:100%;scale:var(--tw-scale-x)var(--tw-scale-y)}.transform{transform:var(--tw-rotate-x,)var(--tw-rotate-y,)var(--tw-rotate-z,)var(--tw-skew-x,)var(--tw-skew-y,)}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-between{justify-content:space-between}.justify-center{justify-content:center}.justify-end{justify-content:flex-end}.gap-2{gap:calc(var(--spacing)*2)}.gap-3{gap:calc(var(--spacing)*3)}.gap-4{gap:calc(var(--spacing)*4)}.gap-6{gap:calc(var(--spacing)*6)}:where(.space-y-4>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*4)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*4)*calc(1 - var(--tw-space-y-reverse)))}.gap-x-6{column-gap:calc(var(--spacing)*6)}:where(.space-x-4>:not(:last-child)){--tw-space-x-reverse:0;margin-inline-start:calc(calc(var(--spacing)*4)*var(--tw-space-x-reverse));margin-inline-end:calc(calc(var(--spacing)*4)*calc(1 - var(--tw-space-x-reverse)))}.gap-y-10{row-gap:calc(var(--spacing)*10)}.overflow-hidden{overflow:hidden}.rounded{border-radius:.25rem}.rounded-full{border-radius:3.40282e38px}.rounded-lg{border-radius:var(--radius-lg)}.rounded-md{border-radius:var(--radius-md)}.rounded-t-lg{border-top-left-radius:var(--radius-lg);border-top-right-radius:var(--radius-lg)}.border{border-style:var(--tw-border-style);border-width:1px}.border-b{border-bottom-style:var(--tw-border-style);border-bottom-width:1px}.border-gray-200{border-color:var(--color-gray-200)}.border-gray-300{border-color:var(--color-gray-300)}.bg-black{background-color:var(--color-black)}.bg-blue-100{background-color:var(--color-blue-100)}.bg-blue-600{background-color:var(--color-blue-600)}.bg-gray-50{background-color:var(--color-gray-50)}.bg-gray-100{background-color:var(--color-gray-100)}.bg-gray-200{background-color:var(--color-gray-200)}.bg-green-100{background-color:var(--color-green-100)}.bg-green-500{background-color:var(--color-green-500)}.bg-purple-100{background-color:var(--color-purple-100)}.bg-red-100{background-color:var(--color-red-100)}.bg-red-500{background-color:var(--color-red-500)}.bg-white{background-color:var(--color-white)}.bg-yellow-500{background-color:var(--color-yellow-500)}.p-4{padding:calc(var(--spacing)*4)}.p-6{padding:calc(var(--spacing)*6)}.p-8{padding:calc(var(--spacing)*8)}.px-2{padding-inline:calc(var(--spacing)*2)}.px-3{padding-inline:calc(var(--spacing)*3)}.px-4{padding-inline:calc(var(--spacing)*4)}.px-6{padding-inline:calc(var(--spacing)*6)}.py-1{padding-block:calc(var(--spacing)*1)}.py-2{padding-block:calc(var(--spacing)*2)}.py-3{padding-block:calc(var(--spacing)*3)}.py-4{padding-block:calc(var(--spacing)*4)}.py-8{padding-block:calc(var(--spacing)*8)}.py-10{padding-block:calc(var(--spacing)*10)}.py-12{padding-block:calc(var(--spacing)*12)}.pt-4{padding-top:calc(var(--spacing)*4)}.pr-3{padding-right:calc(var(--spacing)*3)}.pl-3{padding-left:calc(var(--spacing)*3)}.pl-10{padding-left:calc(var(--spacing)*10)}.text-center{text-align:center}.text-left{text-align:left}.text-right{text-align:right}.font-sans{font-family:var(--font-sans)}.text-2xl{font-size:var(--text-2xl);line-height:var(--tw-leading,var(--text-2xl--line-height))}.text-3xl{font-size:var(--text-3xl);line-height:var(--tw-leading,var(--text-3xl--line-height))}.text-4xl{font-size:var(--text-4xl);line-height:var(--tw-leading,var(--text-4xl--line-height))}.text-lg{font-size:var(--text-lg);line-height:var(--tw-leading,var(--text-lg--line-height))}.text-sm{font-size:var(--text-sm);line-height:var(--tw-leading,var(--text-sm--line-height))}.text-xl{font-size:var(--text-xl);line-height:var(--tw-leading,var(--text-xl--line-height))}.text-xs{font-size:var(--text-xs);line-height:var(--tw-leading,var(--text-xs--line-height))}.leading-normal{--tw-leading:var(--leading-normal);line-height:var(--leading-normal)}.font-bold{--tw-font-weight:var(--font-weight-bold);font-weight:var(--font-weight-bold)}.font-extrabold{--tw-font-weight:var(--font-weight-extrabold);font-weight:var(--font-weight-extrabold)}.font-light{--tw-font-weight:var(--font-weight-light);font-weight:var(--font-weight-light)}.font-medium{--tw-font-weight:var(--font-weight-medium);font-weight:var(--font-weight-medium)}.font-semibold{--tw-font-weight:var(--font-weight-semibold);font-weight:var(--font-weight-semibold)}.whitespace-nowrap{white-space:nowrap}.text-blue-500{color:var(--color-blue-500)}.text-blue-600{color:var(--color-blue-600)}.text-blue-800{color:var(--color-blue-800)}.text-gray-400{color:var(--color-gray-400)}.text-gray-500{color:var(--color-gray-500)}.text-gray-600{color:var(--color-gray-600)}.text-gray-700{color:var(--color-gray-700)}.text-gray-800{color:var(--color-gray-800)}.text-gray-900{color:var(--color-gray-900)}.text-green-500{color:var(--color-green-500)}.text-green-600{color:var(--color-green-600)}.text-green-800{color:var(--color-green-800)}.text-purple-800{color:var(--color-purple-800)}.text-red-500{color:var(--color-red-500)}.text-red-600{color:var(--color-red-600)}.text-red-800{color:var(--color-red-800)}.text-white{color:var(--color-white)}.text-yellow-500{color:var(--color-yellow-500)}.uppercase{text-transform:uppercase}.opacity-0{opacity:0}.shadow{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a),0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px var(--tw-shadow-color,#0000001a),0 4px 6px -4px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px var(--tw-shadow-color,#0000001a),0 2px 4px -2px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a),0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px var(--tw-shadow-color,#0000001a),0 8px 10px -6px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.blur{--tw-blur:blur(8px);filter:var(--tw-blur,)var(--tw-brightness,)var(--tw-contrast,)var(--tw-grayscale,)var(--tw-hue-rotate,)var(--tw-invert,)var(--tw-saturate,)var(--tw-sepia,)var(--tw-drop-shadow,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter,display,content-visibility,overlay,pointer-events;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-all{transition-property:all;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-opacity{transition-property:opacity;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-shadow{transition-property:box-shadow;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.duration-200{--tw-duration:.2s;transition-duration:.2s}.duration-300{--tw-duration:.3s;transition-duration:.3s}.outline-none{--tw-outline-style:none;outline-style:none}@media (hover:hover){.hover\:scale-110:hover{--tw-scale-x:110%;--tw-scale-y:110%;--tw-scale-z:110%;scale:var(--tw-scale-x)var(--tw-scale-y)}.hover\:bg-blue-700:hover{background-color:var(--color-blue-700)}.hover\:bg-gray-50:hover{background-color:var(--color-gray-50)}.hover\:bg-gray-100:hover{background-color:var(--color-gray-100)}.hover\:bg-gray-200:hover{background-color:var(--color-gray-200)}.hover\:bg-gray-300:hover{background-color:var(--color-gray-300)}.hover\:bg-red-200:hover{background-color:var(--color-red-200)}.hover\:text-blue-600:hover{color:var(--color-blue-600)}.hover\:text-gray-600:hover{color:var(--color-gray-600)}.hover\:text-red-700:hover{color:var(--color-red-700)}.hover\:text-yellow-700:hover{color:var(--color-yellow-700)}.hover\:underline:hover{text-decoration-line:underline}.hover\:shadow-md:hover{--tw-shadow:0 4px 6px -1px var(--tw-shadow-color,#0000001a),0 2px 4px -2px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}}.focus\:ring-2:focus{--tw-ring-shadow:var(--tw-ring-inset,)0 0 0 calc(2px + var(--tw-ring-offset-width))var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.focus\:ring-blue-500:focus{--tw-ring-color:var(--color-blue-500)}.focus\:outline-none:focus{--tw-outline-style:none;outline-style:none}.disabled\:cursor-not-allowed:disabled{cursor:not-allowed}.disabled\:opacity-50:disabled{opacity:.5}@media (min-width:40rem){.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.sm\:px-6{padding-inline:calc(var(--spacing)*6)}.sm\:text-4xl{font-size:var(--text-4xl);line-height:var(--tw-leading,var(--text-4xl--line-height))}}@media (min-width:48rem){.md\:w-1\/3{width:33.3333%}.md\:w-2\/3{width:66.6667%}.md\:flex-row{flex-direction:row}}@media (min-width:64rem){.lg\:h-60{height:calc(var(--spacing)*60)}.lg\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.lg\:px-8{padding-inline:calc(var(--spacing)*8)}}@media (min-width:80rem){.xl\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.xl\:gap-x-8{column-gap:calc(var(--spacing)*8)}}}body{background-color:var(--color-gray-50);font-family:var(--font-sans);color:var(--color-gray-800)}@property --tw-scale-x{syntax:"*";inherits:false;initial-value:1}@property --tw-scale-y{syntax:"*";inherits:false;initial-value:1}@property --tw-scale-z{syntax:"*";inherits:false;initial-value:1}@property --tw-rotate-x{syntax:"*";inherits:false}@property --tw-rotate-y{syntax:"*";inherits:false}@property --tw-rotate-z{syntax:"*";inherits:false}@property --tw-skew-x{syntax:"*";inherits:false}@property --tw-skew-y{syntax:"*";inherits:false}@property --tw-space-y-reverse{syntax:"*";inherits:false;initial-value:0}@property --tw-space-x-reverse{syntax:"*";inherits:false;initial-value:0}@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}@property --tw-leading{syntax:"*";inherits:false}@property --tw-font-weight{syntax:"*";inherits:false}@property --tw-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:"*";inherits:false}@property --tw-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-inset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:"*";inherits:false}@property --tw-inset-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-ring-color{syntax:"*";inherits:false}@property --tw-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:"*";inherits:false}@property --tw-inset-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:"*";inherits:false}@property --tw-ring-offset-width{syntax:"<length>";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:"*";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-blur{syntax:"*";inherits:false}@property --tw-brightness{syntax:"*";inherits:false}@property --tw-contrast{syntax:"*";inherits:false}@property --tw-grayscale{syntax:"*";inherits:false}@property --tw-hue-rotate{syntax:"*";inherits:false}@property --tw-invert{syntax:"*";inherits:false}@property --tw-opacity{syntax:"*";inherits:false}@property --tw-saturate{syntax:"*";inherits:false}@property --tw-sepia{syntax:"*";inherits:false}@property --tw-drop-shadow{syntax:"*";inherits:false}@property --tw-drop-shadow-color{syntax:"*";inherits:false}@property --tw-drop-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-drop-shadow-size{syntax:"*";inherits:false}@property --tw-duration{syntax:"*";inherits:false}
+@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-space-y-reverse:0;--tw-space-x-reverse:0;--tw-border-style:solid;--tw-leading:initial;--tw-font-weight:initial;--tw-shadow:0 0 #0000;--tw-shadow-color:initial;--tw-shadow-alpha:100%;--tw-inset-shadow:0 0 #0000;--tw-inset-shadow-color:initial;--tw-inset-shadow-alpha:100%;--tw-ring-color:initial;--tw-ring-shadow:0 0 #0000;--tw-inset-ring-color:initial;--tw-inset-ring-shadow:0 0 #0000;--tw-ring-inset:initial;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-offset-shadow:0 0 #0000;--tw-blur:initial;--tw-brightness:initial;--tw-contrast:initial;--tw-grayscale:initial;--tw-hue-rotate:initial;--tw-invert:initial;--tw-opacity:initial;--tw-saturate:initial;--tw-sepia:initial;--tw-drop-shadow:initial;--tw-drop-shadow-color:initial;--tw-drop-shadow-alpha:100%;--tw-drop-shadow-size:initial;--tw-duration:initial;--tw-scale-x:1;--tw-scale-y:1;--tw-scale-z:1}}}@layer theme{:root,:host{--font-sans:ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";--font-mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;--color-red-100:oklch(93.6% .032 17.717);--color-red-200:oklch(88.5% .062 18.334);--color-red-400:oklch(70.4% .191 22.216);--color-red-500:oklch(63.7% .237 25.331);--color-red-600:oklch(57.7% .245 27.325);--color-red-700:oklch(50.5% .213 27.518);--color-red-800:oklch(44.4% .177 26.899);--color-orange-500:oklch(70.5% .213 47.604);--color-yellow-100:oklch(97.3% .071 103.193);--color-yellow-500:oklch(79.5% .184 86.047);--color-yellow-600:oklch(68.1% .162 75.834);--color-yellow-700:oklch(55.4% .135 66.442);--color-yellow-800:oklch(47.6% .114 61.907);--color-green-100:oklch(96.2% .044 156.743);--color-green-500:oklch(72.3% .219 149.579);--color-green-600:oklch(62.7% .194 149.214);--color-green-700:oklch(52.7% .154 150.069);--color-green-800:oklch(44.8% .119 151.328);--color-blue-50:oklch(97% .014 254.604);--color-blue-100:oklch(93.2% .032 255.585);--color-blue-200:oklch(88.2% .059 254.128);--color-blue-400:oklch(70.7% .165 254.624);--color-blue-500:oklch(62.3% .214 259.815);--color-blue-600:oklch(54.6% .245 262.881);--color-blue-700:oklch(48.8% .243 264.376);--color-blue-800:oklch(42.4% .199 265.638);--color-purple-100:oklch(94.6% .033 307.174);--color-purple-500:oklch(62.7% .265 303.9);--color-purple-700:oklch(49.6% .265 301.924);--color-purple-800:oklch(43.8% .218 303.724);--color-gray-50:oklch(98.5% .002 247.839);--color-gray-100:oklch(96.7% .003 264.542);--color-gray-200:oklch(92.8% .006 264.531);--color-gray-300:oklch(87.2% .01 258.338);--color-gray-400:oklch(70.7% .022 261.325);--color-gray-500:oklch(55.1% .027 264.364);--color-gray-600:oklch(44.6% .03 256.802);--color-gray-700:oklch(37.3% .034 259.733);--color-gray-800:oklch(27.8% .033 256.848);--color-gray-900:oklch(21% .034 264.665);--color-black:#000;--color-white:#fff;--spacing:.25rem;--container-sm:24rem;--container-md:28rem;--container-lg:32rem;--container-2xl:42rem;--container-7xl:80rem;--text-xs:.75rem;--text-xs--line-height:calc(1/.75);--text-sm:.875rem;--text-sm--line-height:calc(1.25/.875);--text-base:1rem;--text-base--line-height:calc(1.5/1);--text-lg:1.125rem;--text-lg--line-height:calc(1.75/1.125);--text-xl:1.25rem;--text-xl--line-height:calc(1.75/1.25);--text-2xl:1.5rem;--text-2xl--line-height:calc(2/1.5);--text-3xl:1.875rem;--text-3xl--line-height:calc(2.25/1.875);--text-4xl:2.25rem;--text-4xl--line-height:calc(2.5/2.25);--text-5xl:3rem;--text-5xl--line-height:1;--font-weight-light:300;--font-weight-medium:500;--font-weight-semibold:600;--font-weight-bold:700;--font-weight-extrabold:800;--leading-normal:1.5;--radius-md:.375rem;--radius-lg:.5rem;--radius-xl:.75rem;--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4,0,.2,1);--default-font-family:var(--font-sans);--default-mono-font-family:var(--font-mono)}}@layer base{*,:after,:before,::backdrop{box-sizing:border-box;border:0 solid;margin:0;padding:0}::file-selector-button{box-sizing:border-box;border:0 solid;margin:0;padding:0}html,:host{-webkit-text-size-adjust:100%;tab-size:4;line-height:1.5;font-family:var(--default-font-family,ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji");font-feature-settings:var(--default-font-feature-settings,normal);font-variation-settings:var(--default-font-variation-settings,normal);-webkit-tap-highlight-color:transparent}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:var(--default-mono-font-family,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace);font-feature-settings:var(--default-mono-font-feature-settings,normal);font-variation-settings:var(--default-mono-font-variation-settings,normal);font-size:1em}small{font-size:80%}sub,sup{vertical-align:baseline;font-size:75%;line-height:0;position:relative}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}:-moz-focusring{outline:auto}progress{vertical-align:baseline}summary{display:list-item}ol,ul,menu{list-style:none}img,svg,video,canvas,audio,iframe,embed,object{vertical-align:middle;display:block}img,video{max-width:100%;height:auto}button,input,select,optgroup,textarea{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}::file-selector-button{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}:where(select:is([multiple],[size])) optgroup{font-weight:bolder}:where(select:is([multiple],[size])) optgroup option{padding-inline-start:20px}::file-selector-button{margin-inline-end:4px}::placeholder{opacity:1}@supports (not ((-webkit-appearance:-apple-pay-button))) or (contain-intrinsic-size:1px){::placeholder{color:currentColor}@supports (color:color-mix(in lab, red, red)){::placeholder{color:color-mix(in oklab,currentcolor 50%,transparent)}}}textarea{resize:vertical}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-date-and-time-value{min-height:1lh;text-align:inherit}::-webkit-datetime-edit{display:inline-flex}::-webkit-datetime-edit-fields-wrapper{padding:0}::-webkit-datetime-edit{padding-block:0}::-webkit-datetime-edit-year-field{padding-block:0}::-webkit-datetime-edit-month-field{padding-block:0}::-webkit-datetime-edit-day-field{padding-block:0}::-webkit-datetime-edit-hour-field{padding-block:0}::-webkit-datetime-edit-minute-field{padding-block:0}::-webkit-datetime-edit-second-field{padding-block:0}::-webkit-datetime-edit-millisecond-field{padding-block:0}::-webkit-datetime-edit-meridiem-field{padding-block:0}::-webkit-calendar-picker-indicator{line-height:1}:-moz-ui-invalid{box-shadow:none}button,input:where([type=button],[type=reset],[type=submit]){appearance:button}::file-selector-button{appearance:button}::-webkit-inner-spin-button{height:auto}::-webkit-outer-spin-button{height:auto}[hidden]:where(:not([hidden=until-found])){display:none!important}}@layer components;@layer utilities{.\@container{container-type:inline-size}.visible{visibility:visible}.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.static{position:static}.sticky{position:sticky}.inset-0{inset:calc(var(--spacing)*0)}.inset-y-0{inset-block:calc(var(--spacing)*0)}.top-0{top:calc(var(--spacing)*0)}.top-5{top:calc(var(--spacing)*5)}.top-8{top:calc(var(--spacing)*8)}.right-5{right:calc(var(--spacing)*5)}.left-0{left:calc(var(--spacing)*0)}.z-10{z-index:10}.z-50{z-index:50}.col-span-full{grid-column:1/-1}.container{width:100%}@media (min-width:40rem){.container{max-width:40rem}}@media (min-width:48rem){.container{max-width:48rem}}@media (min-width:64rem){.container{max-width:64rem}}@media (min-width:80rem){.container{max-width:80rem}}@media (min-width:96rem){.container{max-width:96rem}}.mx-1{margin-inline:calc(var(--spacing)*1)}.mx-4{margin-inline:calc(var(--spacing)*4)}.mx-auto{margin-inline:auto}.my-4{margin-block:calc(var(--spacing)*4)}.mt-0\.5{margin-top:calc(var(--spacing)*.5)}.mt-1{margin-top:calc(var(--spacing)*1)}.mt-1\.5{margin-top:calc(var(--spacing)*1.5)}.mt-2{margin-top:calc(var(--spacing)*2)}.mt-3{margin-top:calc(var(--spacing)*3)}.mt-4{margin-top:calc(var(--spacing)*4)}.mt-6{margin-top:calc(var(--spacing)*6)}.mt-12{margin-top:calc(var(--spacing)*12)}.mt-auto{margin-top:auto}.mr-1{margin-right:calc(var(--spacing)*1)}.mr-2{margin-right:calc(var(--spacing)*2)}.mr-3{margin-right:calc(var(--spacing)*3)}.mb-1{margin-bottom:calc(var(--spacing)*1)}.mb-2{margin-bottom:calc(var(--spacing)*2)}.mb-3{margin-bottom:calc(var(--spacing)*3)}.mb-4{margin-bottom:calc(var(--spacing)*4)}.mb-6{margin-bottom:calc(var(--spacing)*6)}.mb-8{margin-bottom:calc(var(--spacing)*8)}.mb-12{margin-bottom:calc(var(--spacing)*12)}.ml-1{margin-left:calc(var(--spacing)*1)}.ml-2{margin-left:calc(var(--spacing)*2)}.line-clamp-2{-webkit-line-clamp:2;-webkit-box-orient:vertical;display:-webkit-box;overflow:hidden}.block{display:block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.inline{display:inline}.inline-block{display:inline-block}.table{display:table}.aspect-\[4\/3\]{aspect-ratio:4/3}.h-1{height:calc(var(--spacing)*1)}.h-4{height:calc(var(--spacing)*4)}.h-8{height:calc(var(--spacing)*8)}.h-12{height:calc(var(--spacing)*12)}.h-16{height:calc(var(--spacing)*16)}.h-full{height:100%}.max-h-48{max-height:calc(var(--spacing)*48)}.min-h-screen{min-height:100vh}.w-0{width:calc(var(--spacing)*0)}.w-4{width:calc(var(--spacing)*4)}.w-8{width:calc(var(--spacing)*8)}.w-12{width:calc(var(--spacing)*12)}.w-full{width:100%}.max-w-2xl{max-width:var(--container-2xl)}.max-w-7xl{max-width:var(--container-7xl)}.max-w-lg{max-width:var(--container-lg)}.max-w-md{max-width:var(--container-md)}.max-w-sm{max-width:var(--container-sm)}.flex-1{flex:1}.shrink-0{flex-shrink:0}.flex-grow{flex-grow:1}.table-auto{table-layout:auto}.border-collapse{border-collapse:collapse}.transform{transform:var(--tw-rotate-x,)var(--tw-rotate-y,)var(--tw-rotate-z,)var(--tw-skew-x,)var(--tw-skew-y,)}.cursor-not-allowed{cursor:not-allowed}.cursor-pointer{cursor:pointer}.resize-none{resize:none}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.items-end{align-items:flex-end}.items-start{align-items:flex-start}.justify-between{justify-content:space-between}.justify-center{justify-content:center}.justify-end{justify-content:flex-end}.gap-1{gap:calc(var(--spacing)*1)}.gap-1\.5{gap:calc(var(--spacing)*1.5)}.gap-2{gap:calc(var(--spacing)*2)}.gap-3{gap:calc(var(--spacing)*3)}.gap-4{gap:calc(var(--spacing)*4)}.gap-6{gap:calc(var(--spacing)*6)}.gap-8{gap:calc(var(--spacing)*8)}:where(.space-y-0\.5>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*.5)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*.5)*calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-2>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*2)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*2)*calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-3>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*3)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*3)*calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-4>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*4)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*4)*calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-6>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*6)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*6)*calc(1 - var(--tw-space-y-reverse)))}.gap-x-6{column-gap:calc(var(--spacing)*6)}:where(.space-x-4>:not(:last-child)){--tw-space-x-reverse:0;margin-inline-start:calc(calc(var(--spacing)*4)*var(--tw-space-x-reverse));margin-inline-end:calc(calc(var(--spacing)*4)*calc(1 - var(--tw-space-x-reverse)))}.gap-y-10{row-gap:calc(var(--spacing)*10)}.truncate{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.rounded{border-radius:.25rem}.rounded-full{border-radius:3.40282e38px}.rounded-lg{border-radius:var(--radius-lg)}.rounded-md{border-radius:var(--radius-md)}.rounded-xl{border-radius:var(--radius-xl)}.rounded-t-xl{border-top-left-radius:var(--radius-xl);border-top-right-radius:var(--radius-xl)}.border{border-style:var(--tw-border-style);border-width:1px}.border-t{border-top-style:var(--tw-border-style);border-top-width:1px}.border-b{border-bottom-style:var(--tw-border-style);border-bottom-width:1px}.border-blue-100{border-color:var(--color-blue-100)}.border-blue-200{border-color:var(--color-blue-200)}.border-gray-100{border-color:var(--color-gray-100)}.border-gray-200{border-color:var(--color-gray-200)}.border-gray-300{border-color:var(--color-gray-300)}.border-green-500{border-color:var(--color-green-500)}.border-red-500{border-color:var(--color-red-500)}.bg-black{background-color:var(--color-black)}.bg-blue-50{background-color:var(--color-blue-50)}.bg-blue-100{background-color:var(--color-blue-100)}.bg-blue-600{background-color:var(--color-blue-600)}.bg-gray-50{background-color:var(--color-gray-50)}.bg-gray-100{background-color:var(--color-gray-100)}.bg-gray-200{background-color:var(--color-gray-200)}.bg-gray-300{background-color:var(--color-gray-300)}.bg-gray-600{background-color:var(--color-gray-600)}.bg-gray-800{background-color:var(--color-gray-800)}.bg-green-100{background-color:var(--color-green-100)}.bg-green-500{background-color:var(--color-green-500)}.bg-purple-100{background-color:var(--color-purple-100)}.bg-red-100{background-color:var(--color-red-100)}.bg-red-500{background-color:var(--color-red-500)}.bg-white{background-color:var(--color-white)}.bg-yellow-100{background-color:var(--color-yellow-100)}.bg-yellow-500{background-color:var(--color-yellow-500)}.object-cover{object-fit:cover}.p-1{padding:calc(var(--spacing)*1)}.p-2{padding:calc(var(--spacing)*2)}.p-3{padding:calc(var(--spacing)*3)}.p-4{padding:calc(var(--spacing)*4)}.p-6{padding:calc(var(--spacing)*6)}.p-8{padding:calc(var(--spacing)*8)}.px-1{padding-inline:calc(var(--spacing)*1)}.px-2{padding-inline:calc(var(--spacing)*2)}.px-3{padding-inline:calc(var(--spacing)*3)}.px-4{padding-inline:calc(var(--spacing)*4)}.px-5{padding-inline:calc(var(--spacing)*5)}.px-6{padding-inline:calc(var(--spacing)*6)}.py-0\.5{padding-block:calc(var(--spacing)*.5)}.py-1{padding-block:calc(var(--spacing)*1)}.py-1\.5{padding-block:calc(var(--spacing)*1.5)}.py-2{padding-block:calc(var(--spacing)*2)}.py-3{padding-block:calc(var(--spacing)*3)}.py-4{padding-block:calc(var(--spacing)*4)}.py-5{padding-block:calc(var(--spacing)*5)}.py-6{padding-block:calc(var(--spacing)*6)}.py-8{padding-block:calc(var(--spacing)*8)}.py-10{padding-block:calc(var(--spacing)*10)}.py-12{padding-block:calc(var(--spacing)*12)}.py-16{padding-block:calc(var(--spacing)*16)}.pt-2{padding-top:calc(var(--spacing)*2)}.pt-3{padding-top:calc(var(--spacing)*3)}.pt-4{padding-top:calc(var(--spacing)*4)}.pt-6{padding-top:calc(var(--spacing)*6)}.pr-2{padding-right:calc(var(--spacing)*2)}.pr-3{padding-right:calc(var(--spacing)*3)}.pb-1{padding-bottom:calc(var(--spacing)*1)}.pb-2{padding-bottom:calc(var(--spacing)*2)}.pb-3{padding-bottom:calc(var(--spacing)*3)}.pb-4{padding-bottom:calc(var(--spacing)*4)}.pb-6{padding-bottom:calc(var(--spacing)*6)}.pl-3{padding-left:calc(var(--spacing)*3)}.pl-10{padding-left:calc(var(--spacing)*10)}.text-center{text-align:center}.text-left{text-align:left}.text-right{text-align:right}.font-sans{font-family:var(--font-sans)}.text-2xl{font-size:var(--text-2xl);line-height:var(--tw-leading,var(--text-2xl--line-height))}.text-3xl{font-size:var(--text-3xl);line-height:var(--tw-leading,var(--text-3xl--line-height))}.text-4xl{font-size:var(--text-4xl);line-height:var(--tw-leading,var(--text-4xl--line-height))}.text-5xl{font-size:var(--text-5xl);line-height:var(--tw-leading,var(--text-5xl--line-height))}.text-base{font-size:var(--text-base);line-height:var(--tw-leading,var(--text-base--line-height))}.text-lg{font-size:var(--text-lg);line-height:var(--tw-leading,var(--text-lg--line-height))}.text-sm{font-size:var(--text-sm);line-height:var(--tw-leading,var(--text-sm--line-height))}.text-xl{font-size:var(--text-xl);line-height:var(--tw-leading,var(--text-xl--line-height))}.text-xs{font-size:var(--text-xs);line-height:var(--tw-leading,var(--text-xs--line-height))}.leading-normal{--tw-leading:var(--leading-normal);line-height:var(--leading-normal)}.font-bold{--tw-font-weight:var(--font-weight-bold);font-weight:var(--font-weight-bold)}.font-extrabold{--tw-font-weight:var(--font-weight-extrabold);font-weight:var(--font-weight-extrabold)}.font-light{--tw-font-weight:var(--font-weight-light);font-weight:var(--font-weight-light)}.font-medium{--tw-font-weight:var(--font-weight-medium);font-weight:var(--font-weight-medium)}.font-semibold{--tw-font-weight:var(--font-weight-semibold);font-weight:var(--font-weight-semibold)}.whitespace-nowrap{white-space:nowrap}.text-blue-400{color:var(--color-blue-400)}.text-blue-500{color:var(--color-blue-500)}.text-blue-600{color:var(--color-blue-600)}.text-blue-700{color:var(--color-blue-700)}.text-blue-800{color:var(--color-blue-800)}.text-gray-300{color:var(--color-gray-300)}.text-gray-400{color:var(--color-gray-400)}.text-gray-500{color:var(--color-gray-500)}.text-gray-600{color:var(--color-gray-600)}.text-gray-700{color:var(--color-gray-700)}.text-gray-800{color:var(--color-gray-800)}.text-gray-900{color:var(--color-gray-900)}.text-green-500{color:var(--color-green-500)}.text-green-600{color:var(--color-green-600)}.text-green-800{color:var(--color-green-800)}.text-orange-500{color:var(--color-orange-500)}.text-purple-500{color:var(--color-purple-500)}.text-purple-700{color:var(--color-purple-700)}.text-purple-800{color:var(--color-purple-800)}.text-red-400{color:var(--color-red-400)}.text-red-500{color:var(--color-red-500)}.text-red-600{color:var(--color-red-600)}.text-red-800{color:var(--color-red-800)}.text-white{color:var(--color-white)}.text-yellow-500{color:var(--color-yellow-500)}.text-yellow-600{color:var(--color-yellow-600)}.text-yellow-800{color:var(--color-yellow-800)}.uppercase{text-transform:uppercase}.italic{font-style:italic}.not-italic{font-style:normal}.underline{text-decoration-line:underline}.accent-blue-600{accent-color:var(--color-blue-600)}.opacity-0{opacity:0}.opacity-50{opacity:.5}.shadow{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a),0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-2xl{--tw-shadow:0 25px 50px -12px var(--tw-shadow-color,#00000040);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px var(--tw-shadow-color,#0000001a),0 4px 6px -4px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px var(--tw-shadow-color,#0000001a),0 2px 4px -2px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a),0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px var(--tw-shadow-color,#0000001a),0 8px 10px -6px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.ring-2{--tw-ring-shadow:var(--tw-ring-inset,)0 0 0 calc(2px + var(--tw-ring-offset-width))var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.ring-blue-400{--tw-ring-color:var(--color-blue-400)}.blur{--tw-blur:blur(8px);filter:var(--tw-blur,)var(--tw-brightness,)var(--tw-contrast,)var(--tw-grayscale,)var(--tw-hue-rotate,)var(--tw-invert,)var(--tw-saturate,)var(--tw-sepia,)var(--tw-drop-shadow,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter,display,content-visibility,overlay,pointer-events;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-all{transition-property:all;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-colors{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-shadow{transition-property:box-shadow;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-transform{transition-property:transform,translate,scale,rotate;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.duration-200{--tw-duration:.2s;transition-duration:.2s}.duration-300{--tw-duration:.3s;transition-duration:.3s}.outline-none{--tw-outline-style:none;outline-style:none}@media (hover:hover){.group-hover\:scale-105:is(:where(.group):hover *){--tw-scale-x:105%;--tw-scale-y:105%;--tw-scale-z:105%;scale:var(--tw-scale-x)var(--tw-scale-y)}}.invalid\:border-red-500:invalid{border-color:var(--color-red-500)}.invalid\:ring-red-500:invalid{--tw-ring-color:var(--color-red-500)}.focus-within\:ring-2:focus-within{--tw-ring-shadow:var(--tw-ring-inset,)0 0 0 calc(2px + var(--tw-ring-offset-width))var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.focus-within\:ring-blue-500:focus-within{--tw-ring-color:var(--color-blue-500)}@media (hover:hover){.hover\:border-blue-500:hover{border-color:var(--color-blue-500)}.hover\:bg-blue-50:hover{background-color:var(--color-blue-50)}.hover\:bg-blue-200:hover{background-color:var(--color-blue-200)}.hover\:bg-blue-600:hover{background-color:var(--color-blue-600)}.hover\:bg-blue-700:hover{background-color:var(--color-blue-700)}.hover\:bg-gray-50:hover{background-color:var(--color-gray-50)}.hover\:bg-gray-100:hover{background-color:var(--color-gray-100)}.hover\:bg-gray-200:hover{background-color:var(--color-gray-200)}.hover\:bg-gray-300:hover{background-color:var(--color-gray-300)}.hover\:bg-gray-400:hover{background-color:var(--color-gray-400)}.hover\:bg-red-200:hover{background-color:var(--color-red-200)}.hover\:text-blue-600:hover{color:var(--color-blue-600)}.hover\:text-blue-700:hover{color:var(--color-blue-700)}.hover\:text-blue-800:hover{color:var(--color-blue-800)}.hover\:text-gray-600:hover{color:var(--color-gray-600)}.hover\:text-green-700:hover{color:var(--color-green-700)}.hover\:text-purple-700:hover{color:var(--color-purple-700)}.hover\:text-red-600:hover{color:var(--color-red-600)}.hover\:text-red-700:hover{color:var(--color-red-700)}.hover\:text-white:hover{color:var(--color-white)}.hover\:text-yellow-700:hover{color:var(--color-yellow-700)}.hover\:underline:hover{text-decoration-line:underline}.hover\:shadow-lg:hover{--tw-shadow:0 10px 15px -3px var(--tw-shadow-color,#0000001a),0 4px 6px -4px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.hover\:shadow-md:hover{--tw-shadow:0 4px 6px -1px var(--tw-shadow-color,#0000001a),0 2px 4px -2px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}}.focus\:ring-2:focus{--tw-ring-shadow:var(--tw-ring-inset,)0 0 0 calc(2px + var(--tw-ring-offset-width))var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.focus\:ring-blue-400:focus{--tw-ring-color:var(--color-blue-400)}.focus\:ring-blue-500:focus{--tw-ring-color:var(--color-blue-500)}.focus\:outline-none:focus{--tw-outline-style:none;outline-style:none}.disabled\:cursor-not-allowed:disabled{cursor:not-allowed}.disabled\:opacity-50:disabled{opacity:.5}@media (min-width:40rem){.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.sm\:px-6{padding-inline:calc(var(--spacing)*6)}.sm\:text-4xl{font-size:var(--text-4xl);line-height:var(--tw-leading,var(--text-4xl--line-height))}}@media (min-width:48rem){.md\:w-1\/3{width:33.3333%}.md\:w-2\/3{width:66.6667%}.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.md\:flex-row{flex-direction:row}}@media (min-width:64rem){.lg\:col-span-1{grid-column:span 1/span 1}.lg\:col-span-2{grid-column:span 2/span 2}.lg\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.lg\:px-8{padding-inline:calc(var(--spacing)*8)}}@media (min-width:80rem){.xl\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.xl\:gap-x-8{column-gap:calc(var(--spacing)*8)}}@media (min-width:96rem){.\32 xl\:grid-cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}}}body{background-color:var(--color-gray-50);font-family:var(--font-sans);color:var(--color-gray-800)}@property --tw-rotate-x{syntax:"*";inherits:false}@property --tw-rotate-y{syntax:"*";inherits:false}@property --tw-rotate-z{syntax:"*";inherits:false}@property --tw-skew-x{syntax:"*";inherits:false}@property --tw-skew-y{syntax:"*";inherits:false}@property --tw-space-y-reverse{syntax:"*";inherits:false;initial-value:0}@property --tw-space-x-reverse{syntax:"*";inherits:false;initial-value:0}@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}@property --tw-leading{syntax:"*";inherits:false}@property --tw-font-weight{syntax:"*";inherits:false}@property --tw-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:"*";inherits:false}@property --tw-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-inset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:"*";inherits:false}@property --tw-inset-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-ring-color{syntax:"*";inherits:false}@property --tw-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:"*";inherits:false}@property --tw-inset-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:"*";inherits:false}@property --tw-ring-offset-width{syntax:"<length>";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:"*";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-blur{syntax:"*";inherits:false}@property --tw-brightness{syntax:"*";inherits:false}@property --tw-contrast{syntax:"*";inherits:false}@property --tw-grayscale{syntax:"*";inherits:false}@property --tw-hue-rotate{syntax:"*";inherits:false}@property --tw-invert{syntax:"*";inherits:false}@property --tw-opacity{syntax:"*";inherits:false}@property --tw-saturate{syntax:"*";inherits:false}@property --tw-sepia{syntax:"*";inherits:false}@property --tw-drop-shadow{syntax:"*";inherits:false}@property --tw-drop-shadow-color{syntax:"*";inherits:false}@property --tw-drop-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-drop-shadow-size{syntax:"*";inherits:false}@property --tw-duration{syntax:"*";inherits:false}@property --tw-scale-x{syntax:"*";inherits:false;initial-value:1}@property --tw-scale-y{syntax:"*";inherits:false;initial-value:1}@property --tw-scale-z{syntax:"*";inherits:false;initial-value:1}
 
 ================ frontend\css\styles.css ================
 
@@ -8084,14 +8082,16 @@ body {
 const API_BASE_URL = 'http://localhost:8080/api';
 
 class Api {
+
     static async request(endpoint, method = 'GET', body = null, options = {}) {
+
         const isPublic = options.public === true;
 
         const headers = {};
 
-        // Solo agregar token si NO es endpoint público
         if (!isPublic) {
             const token = localStorage.getItem('token');
+
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
@@ -8103,7 +8103,7 @@ class Api {
 
         const fetchOptions = {
             method,
-            headers,
+            headers
         };
 
         if (body) {
@@ -8112,12 +8112,29 @@ class Api {
 
         const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
 
-        // ❗ Manejo de seguridad SOLO para endpoints protegidos
-        if (!isPublic && (response.status === 401 || response.status === 403)) {
+        /* --------------------------------------------------
+           MANEJO DE AUTENTICACIÓN CORREGIDO
+        -------------------------------------------------- */
+
+        // SOLO 401 significa token inválido
+        if (!isPublic && response.status === 401) {
+
+            console.warn("Token inválido o expirado");
+
             localStorage.removeItem('user');
             localStorage.removeItem('token');
+
             window.location.href = 'login.html';
-            throw new Error('Sesión expirada o no autorizada');
+
+            throw new Error('Sesión expirada');
+        }
+
+        // 403 = permiso denegado
+        if (response.status === 403) {
+
+            console.warn("Acceso denegado:", endpoint);
+
+            throw new Error('No tienes permisos para realizar esta acción');
         }
 
         if (response.status === 204) {
@@ -8125,15 +8142,18 @@ class Api {
         }
 
         if (!response.ok) {
+
             let message = `Error ${response.status}`;
 
             try {
                 const errorData = await response.json();
+
                 if (errorData && errorData.message) {
                     message = errorData.message;
                 }
+
             } catch {
-                // Ignorar errores de parseo
+                // ignore
             }
 
             throw new Error(message);
@@ -8142,20 +8162,20 @@ class Api {
         return response.json();
     }
 
-    static get(endpoint) {
-        return this.request(endpoint, 'GET');
+    static get(endpoint, options = {}) {
+        return this.request(endpoint, 'GET', null, options);
     }
 
     static post(endpoint, body, options = {}) {
         return this.request(endpoint, 'POST', body, options);
     }
 
-    static put(endpoint, body) {
-        return this.request(endpoint, 'PUT', body);
+    static put(endpoint, body, options = {}) {
+        return this.request(endpoint, 'PUT', body, options);
     }
 
-    static delete(endpoint) {
-        return this.request(endpoint, 'DELETE');
+    static delete(endpoint, options = {}) {
+        return this.request(endpoint, 'DELETE', null, options);
     }
 }
 
@@ -8328,6 +8348,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── Construir tarjeta de producto (grid) ──────────────────────────────────────
 function buildProductCard(product) {
+
+    if (!Auth.requireAuth(["CUSTOMER"])) return;
 
     const imagenes = product.imagenes || [];
     const imgDefault = imagenes.find(i => i.isDefault) || imagenes[0];
@@ -8620,33 +8642,45 @@ window.__galeriaGoTo = (idx) => {
 import Api from './api.js';
 
 const Auth = {
+
     login: async (email, password) => {
         try {
-            console.log('Login attempt:', { email, password });
+
             const response = await Api.post(
                 '/auth/login',
-                { email, password },
-                { public: true } // 🔑 CLAVE
+                { email, password },    // 🔑 CLAVE
+                { public: true }
             );
-            // Save session
+            // Save session 
             localStorage.setItem('user', JSON.stringify(response));
             localStorage.setItem('token', response.token);
 
             Auth.redirectBasedOnRole(response.role);
+
         } catch (error) {
             throw error;
         }
     },
 
     logout: () => {
+        // Limpiar sesión
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+
         window.location.href = 'index.html';
     },
 
     getCurrentUser: () => {
+
         const userStr = localStorage.getItem('user');
-        return userStr ? JSON.parse(userStr) : null;
+
+        if (!userStr) return null;
+
+        try {
+            return JSON.parse(userStr);
+        } catch {
+            return null;
+        }
     },
 
     getToken: () => {
@@ -8654,64 +8688,104 @@ const Auth = {
     },
 
     isAuthenticated: () => {
-        return !!Auth.getToken();
+
+        const token = Auth.getToken();
+
+        if (!token) return false;
+
+        return token !== null && token !== undefined && token.length > 0;
     },
 
     requireAuth: (allowedRoles = []) => {
+
         const user = Auth.getCurrentUser();
 
-        if (user.role === 'ADMIN') {
+        if (!Auth.isAuthenticated() || !user) {
+            window.location.href = 'login.html';
+            return false;
+        }
+
+        // Validación ADMIN expirado
+        if (user.role === 'ADMIN' && user.validUntil) {
+
             const validUntil = new Date(user.validUntil);
+
             if (validUntil < new Date()) {
+
                 alert('Tu rol de administrador ha expirado');
+
                 Auth.logout();
+
+                return false;
             }
         }
 
-        if (!user) {
-            window.location.href = 'login.html';
-            return;
+        // Validación de roles permitidos
+        if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+
+            alert('Acceso no autorizado para tu rol.');
+
+            window.location.href = 'index.html'; // Fallback
+
+            return false;
         }
 
-        if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-            alert('Acceso no autorizado para su rol.');
-            window.location.href = 'index.html'; // Fallback
-        }
+        return true;
     },
 
     redirectBasedOnRole: (role) => {
+
         if (role === 'ADMIN' || role === 'SUPPLIER') {
+
             window.location.href = 'productos.html';
+
         } else {
-            window.location.href = 'productoscustomer.html'; // Customers also go to store
+
+            window.location.href = 'productoscustomer.html';
+
         }
     }
+
 };
 
-// Handle Login Form
+
+// -----------------------------
+// LOGIN FORM
+// -----------------------------
+
 const loginForm = document.getElementById('loginForm');
+
 if (loginForm) {
+
     loginForm.addEventListener('submit', async (e) => {
+
         e.preventDefault();
+
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
+
         const errorMessage = document.getElementById('errorMessage');
 
         try {
+
             await Auth.login(email, password);
+
         } catch (error) {
+
             console.error(error.message);
+
             errorMessage.textContent = 'Credenciales inválidas o error de conexión';
+
             errorMessage.classList.remove('hidden');
         }
     });
 }
 
-// Global logout exposure
+
+// Exponer logout globalmente
 window.logout = Auth.logout;
 
 export default Auth;
-
 
 ================ frontend\js\carrito.js ================
 
@@ -8887,16 +8961,17 @@ window.eliminarDelCarrito = async (productoId) => {
 };
 
 async function realizarOrder() {
-    if (!confirm('¿Ir al cajero para completar tu pedido?')) return;
+    if (!confirm('¿Confirmar pedido?')) return;
 
     try {
-        const ordenCreated = await Api.post('/ordenes/checkout');
-        UI.showNotification('Orden iniciada. Redirigiendo al checkout...', 'success');
+        await Api.post('/ordenes/checkout');
+        // Redirect or show success
+        UI.showNotification('¡Pedido realizado con éxito!', 'success');
         setTimeout(() => {
-            window.location.href = `checkout.html?ordenId=${ordenCreated.id}`;
-        }, 1000);
+            window.location.href = 'ordenes.html';
+        }, 1500);
     } catch (error) {
-        UI.showNotification('Error al iniciar el checkout: ' + error.message, 'error');
+        UI.showNotification('Error en la generacion del pedido: ' + error.message, 'error');
     }
 }
 
@@ -8912,358 +8987,246 @@ async function vaciarCarrito() {
     }
 }
 
-
 ================ frontend\js\checkout.js ================
 
-import Api from './api.js';
-import { UI } from './ui.js';
-import Auth from './auth.js';
+import Api from './api.js'
+import { UI } from './ui.js'
+import Auth from './auth.js'
 
-document.addEventListener('DOMContentLoaded', () => {
+const Checkout = {
 
-    const user = Auth.getCurrentUser();
-    const role = user.role;
+    orden: null,
+    direccion: null,
+    metodoPago: "Tarjeta",
 
-    if (!Auth.isAuthenticated() || role !== 'CUSTOMER') {
-        window.location.href = 'index.html';
-        return;
-    }
+    async init() {
 
-    UI.renderNavBar({
-        containerId: 'mainNav',
-        context: 'checkout'
-    });
+        if (!Auth.requireAuth(["CUSTOMER", "ADMIN"])) return
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const ordenId = urlParams.get('ordenId');
+        UI.renderNavBar({
+            containerId: "mainNav",
+            context: "checkout"
+        })
 
-    if (!ordenId) {
-        UI.showNotification('Orden no encontrada. Regresando al carrito...', 'error');
-        setTimeout(() => window.location.href = 'carrito.html', 2000);
-        return;
-    }
+        const params = new URLSearchParams(window.location.search)
+        const id = params.get("ordenId")
 
-    CheckoutManager.init(ordenId);
-});
+        if (!id) {
+            window.location.href = "ordenes.html"
+            return
+        }
 
-const CheckoutManager = {
-    ordenId: null,
-    ordenActual: null,
-    direccionSeleccionada: null,
-    metodoPago: 'Tarjeta',
-    formValido: false,
+        await this.loadData(id)
 
-    validationState: {
-        cardNumber: false,
-        cardExpiry: false,
-        cardCvv: false,
-        cardName: false
+        this.bindEvents()
+
     },
 
-    async init(ordenId) {
-        this.ordenId = ordenId;
-        this.setupEventListeners();
+    async loadData(id) {
 
-        await Promise.all([
-            this.cargarOrden(),
-            this.cargarDirecciones()
-        ]);
+        const [orden, direcciones] = await Promise.all([
+            Api.get("/ordenes"),
+            Api.get("/direcciones/mis-direcciones")
+        ])
+
+        this.orden = orden.find(o => o.id == id)
+
+        this.renderResumen()
+        this.renderDirecciones(direcciones)
+
     },
 
-    setupEventListeners() {
-        const form = document.getElementById('checkoutForm');
-        form.addEventListener('submit', (e) => this.procesarPago(e));
+    bindEvents() {
 
-        const radiosPago = document.querySelectorAll('input[name="metodoPago"]');
-        radiosPago.forEach(radio => {
-            radio.addEventListener('change', (e) => this.cambiarMetodoPago(e.target.value));
-        });
+        document
+            .querySelectorAll('input[name="metodoPago"]')
+            .forEach(r => {
 
-        // Configuración de validación dinámica (estilo register.html)
-        const inputsTarjeta = document.querySelectorAll('#panelTarjeta input');
-        inputsTarjeta.forEach(input => {
-            input.addEventListener('input', () => this.validateInput(input));
-            input.addEventListener('blur', () => this.validateInput(input));
-        });
+                r.addEventListener("change", (e) => {
+                    this.metodoPago = e.target.value
+                    this.updateMetodoPago()
+                })
+
+            })
+
+        document
+            .getElementById("checkoutForm")
+            .addEventListener("submit", (e) => this.procesarPago(e))
+
     },
 
-    cambiarMetodoPago(metodo) {
-        this.metodoPago = metodo;
-        const panelTarjeta = document.getElementById('panelTarjeta');
-        const panelMensaje = document.getElementById('panelMensajeStatic');
-        const mensajeText = document.getElementById('mensajeEstatico');
-        const btnProcesar = document.getElementById('btnProcesarPago');
+    renderDirecciones(list) {
 
-        if (metodo === 'Tarjeta') {
-            panelTarjeta.classList.remove('hidden');
-            panelMensaje.classList.add('hidden');
+        const cont = document.getElementById("listaDirecciones")
+        const loading = document.getElementById("loadingDirecciones")
 
-            const inputs = document.querySelectorAll('#panelTarjeta input');
-            inputs.forEach(input => input.setAttribute('required', 'true'));
+        loading.classList.add("hidden")
+        cont.classList.remove("hidden")
 
-            this.checkFormValidity();
-        } else {
-            panelTarjeta.classList.add('hidden');
-            panelMensaje.classList.remove('hidden');
+        cont.innerHTML = ""
 
-            if (metodo === 'PayPal') {
-                mensajeText.textContent = 'Serás redirigido a PayPal para completar tu pago de forma segura.';
-            } else if (metodo === 'Transferencia') {
-                mensajeText.textContent = 'Al procesar, te mostraremos los datos bancarios para realizar tu depósito.';
+        if (!list || list.length === 0) {
+
+            document.getElementById("noDirecciones").classList.remove("hidden")
+            return
+        }
+
+        list.sort((a, b) => b.preferida - a.preferida);
+
+        list.forEach((dir, index) => {
+
+            const card = document.createElement("div")
+
+            card.className =
+                "direccion-card border p-4 rounded-lg cursor-pointer hover:border-blue-500 transition"
+
+            card.innerHTML = `
+                <strong class="inline-block text-gray-800">${dir.alias || "Dirección"}</strong> ${dir.preferida ? '<span class="badge-preferida"><i class="fas fa-star"></i> Preferida</span>' : ''}
+                <p class="text-sm text-gray-600">${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ', Int. ' + dir.numeroInterior : ''}</p>
+                <p class="text-sm text-gray-600">${dir.colonia}</p>
+                <p class="text-sm text-gray-600">${dir.ciudad}</p>
+                <p class="text-sm text-gray-600">${dir.municipio}, ${dir.estado}</p>
+                <p class="text-sm text-gray-600">C.P. ${dir.codigoPostal}</p>
+                <p class="text-sm text-gray-600">${dir.referencia ? `<p class="text-xs text-gray-400">${dir.referencia}</p>` : ''}</p>
+            `
+            card.addEventListener("click", () => {
+
+                this.direccion = dir.id
+
+                document
+                    .querySelectorAll(".direccion-card")
+                    .forEach(c => {
+                        c.classList.remove("ring-2", "ring-blue-400", "bg-blue-50")
+                    })
+
+                card.classList.add("ring-2", "ring-blue-400", "bg-blue-50", "shadow-sm")
+
+            })
+
+            cont.appendChild(card)
+
+            // seleccionar direccion preferida automaticamente
+            if (index === 0) {
+
+                this.direccion = dir.id
+                card.classList.add("ring-2", "ring-blue-400", "bg-blue-50", "shadow-sm")
+
             }
 
-            const inputs = document.querySelectorAll('#panelTarjeta input');
-            inputs.forEach(input => input.removeAttribute('required'));
+        })
 
-            // Si es paypal o transferencia, no requerimos validar campos de tarjeta
-            btnProcesar.disabled = !this.direccionSeleccionada;
-            this.formValido = !!this.direccionSeleccionada;
-        }
     },
 
-    validateInput(input) {
-        if (this.metodoPago !== 'Tarjeta') return;
+    renderResumen() {
 
-        const id = input.id;
-        let value = input.value.trim();
-        let isValid = false;
-        const errorMsg = document.getElementById(`error-${id}`);
+        const orden = this.orden
 
-        if (!errorMsg) return;
+        document.getElementById("loadingResumen").classList.add("hidden")
+        document.getElementById("resumenContent").classList.remove("hidden")
 
-        switch (id) {
-            case 'cardNumber':
-                value = value.replace(/\D/g, ''); // Solo números
-                input.value = value;
-                isValid = value.length === 16;
-                break;
-            case 'cardExpiry':
-                value = value.replace(/[^0-9/]/g, '');
-                if (value.length === 2 && !value.includes('/')) value += '/';
-                input.value = value;
-                isValid = /^(0[1-9]|1[0-2])\/\d{2}$/.test(value);
-                break;
-            case 'cardCvv':
-                value = value.replace(/\D/g, '');
-                input.value = value;
-                isValid = value.length === 3 || value.length === 4;
-                break;
-            case 'cardName':
-                isValid = value.length > 3;
-                break;
-        }
+        document.getElementById("ordenIdDisplay").textContent = orden.id
+        document.getElementById("ordenEstadoDisplay").textContent = orden.estado
 
-        this.validationState[id] = isValid;
+        const ul = document.getElementById("listaResumenItems")
+        ul.innerHTML = ""
 
-        if (isValid) {
-            input.classList.remove('border-red-500', 'invalid');
-            input.classList.add('border-green-500', 'valid');
-            errorMsg.classList.add('hidden');
-        } else {
-            input.classList.remove('border-green-500', 'valid');
-            input.classList.add('border-red-500', 'invalid');
-            errorMsg.classList.remove('hidden');
-        }
+        let subtotal = 0
 
-        this.checkFormValidity();
-    },
+        orden.detalles.forEach(d => {
 
-    checkFormValidity() {
-        if (this.metodoPago !== 'Tarjeta') {
-            this.formValido = !!this.direccionSeleccionada;
-        } else {
-            const allValid = Object.values(this.validationState).every(v => v);
-            this.formValido = allValid && !!this.direccionSeleccionada;
-        }
+            const nombre = d.productoNombre || (d.producto?.nombre) || "Producto"
+            const sub = d.subtotal || (d.precio * d.cantidad)
 
-        const btn = document.getElementById('btnProcesarPago');
-        btn.disabled = !this.formValido;
+            subtotal += sub
 
-        if (!this.direccionSeleccionada && btn.disabled) {
-            btn.title = 'Debes seleccionar una dirección de envío';
-        } else {
-            btn.title = '';
-        }
-    },
+            const li = document.createElement("li")
 
-    async cargarOrden() {
-        try {
-            const userOrders = await Api.get('/ordenes');
-            const orden = userOrders.find(o => o.id === parseInt(this.ordenId));
+            li.className = "flex justify-between text-sm"
 
-            if (!orden) {
-                throw new Error("Orden no encontrada o no te pertenece.");
-            }
-
-            if (orden.estado !== 'CREATED' && orden.estado !== 'PAYMENT_PENDING' && orden.estado !== 'OUT_OF_STOCK') {
-                UI.showNotification(`La orden está en estado ${orden.estado} y no puede pagarse.`, 'info');
-                setTimeout(() => window.location.href = 'ordenes.html', 2000);
-                return;
-            }
-
-            this.ordenActual = orden;
-            this.renderizarResumen();
-
-        } catch (error) {
-            UI.showNotification('Error cargando orden: ' + error.message, 'error');
-            document.getElementById('loadingResumen').innerHTML = `<p class="text-red-500"><i class="fas fa-exclamation-triangle"></i> Error al cargar</p>`;
-        }
-    },
-
-    renderizarResumen() {
-        document.getElementById('loadingResumen').classList.add('hidden');
-        document.getElementById('resumenContent').classList.remove('hidden');
-
-        document.getElementById('ordenIdDisplay').textContent = this.ordenActual.id;
-
-        const estadoEl = document.getElementById('ordenEstadoDisplay');
-        estadoEl.textContent = this.ordenActual.estado;
-
-        if (this.ordenActual.estado === 'OUT_OF_STOCK') {
-            estadoEl.classList.replace('bg-gray-200', 'bg-red-100');
-            estadoEl.classList.replace('text-gray-800', 'text-red-800');
-        } else {
-            estadoEl.classList.replace('bg-gray-200', 'bg-yellow-100');
-            estadoEl.classList.replace('text-gray-800', 'text-yellow-800');
-        }
-
-        const lista = document.getElementById('listaResumenItems');
-        lista.innerHTML = '';
-
-        this.ordenActual.detalles.slice(0, 3).forEach(detalle => {
-            const li = document.createElement('li');
-            li.className = 'flex justify-between items-center text-sm';
             li.innerHTML = `
-                <span class="text-gray-700 truncate mr-2" title="${detalle.producto.nombre}">${detalle.cantidad}x ${detalle.producto.nombre}</span>
-                <span class="text-gray-600 font-medium">${UI.formatCurrency(detalle.subtotal)}</span>
-            `;
-            lista.appendChild(li);
-        });
+                <span>${d.cantidad}x ${nombre}</span>
+                <span>${UI.formatCurrency(sub)}</span>
+            `
 
-        if (this.ordenActual.detalles.length > 3) {
-            const overlay = document.getElementById('moreItemsOverlay');
-            overlay.classList.remove('hidden');
-            overlay.textContent = `+ ${this.ordenActual.detalles.length - 3} productos más...`;
-        }
+            ul.appendChild(li)
 
-        const subtotal = this.ordenActual.detalles.reduce((acc, d) => acc + d.subtotal, 0);
-        const taxes = subtotal * 0.15;
-        const total = subtotal + taxes;
+        })
 
-        document.getElementById('resumenSubtotal').textContent = UI.formatCurrency(subtotal);
-        document.getElementById('resumenImpuestos').textContent = UI.formatCurrency(taxes);
-        document.getElementById('resumenTotal').textContent = UI.formatCurrency(total);
+        const tax = subtotal * 0.16
+        const total = subtotal + tax
+
+        document.getElementById("resumenSubtotal").textContent = UI.formatCurrency(subtotal)
+        document.getElementById("resumenImpuestos").textContent = UI.formatCurrency(tax)
+        document.getElementById("resumenTotal").textContent = UI.formatCurrency(total)
+
     },
 
-    async cargarDirecciones() {
-        try {
-            const user = await Api.get('/usuarios/me');
-            if (!user) throw new Error("No autenticado");
+    updateMetodoPago() {
 
-            const direcciones = await Api.get('/direcciones/mis-direcciones');
+        const panel = document.getElementById("panelTarjeta")
+        const msg = document.getElementById("panelMensajeStatic")
+        const text = document.getElementById("mensajeEstatico")
 
-            document.getElementById('loadingDirecciones').classList.add('hidden');
+        if (this.metodoPago === "Tarjeta") {
 
-            if (direcciones.length === 0) {
-                document.getElementById('noDirecciones').classList.remove('hidden');
-                return;
-            }
+            panel.classList.remove("hidden")
+            msg.classList.add("hidden")
 
-            const container = document.getElementById('listaDirecciones');
-            container.classList.remove('hidden');
-            container.innerHTML = '';
+        } else {
 
-            let preseleccionada = false;
+            panel.classList.add("hidden")
+            msg.classList.remove("hidden")
 
-            direcciones.forEach(dir => {
-                const card = document.createElement('div');
-                card.className = `border rounded-lg p-4 cursor-pointer hover:border-blue-400 transition-colors relative bg-white`;
-                card.dataset.id = dir.id;
+            text.textContent =
+                this.metodoPago === "PayPal"
+                    ? "Serás redirigido a PayPal"
+                    : "Se mostrarán datos bancarios"
 
-                // Si preferida, la preseleccionamos
-                const isSelected = dir.preferida || (direcciones.length === 1 && !preseleccionada);
-
-                if (isSelected && !preseleccionada) {
-                    card.classList.add('border-blue-500', 'bg-blue-50', 'ring-2', 'ring-blue-200');
-                    this.direccionSeleccionada = dir.id;
-                    preseleccionada = true;
-                }
-
-                card.innerHTML = `
-                    ${dir.preferida ? '<span class="absolute top-2 right-2 text-yellow-500"><i class="fas fa-star"></i></span>' : ''}
-                    <h3 class="font-bold text-gray-800">${dir.alias ? dir.alias : 'Dirección'}</h3>
-                    <p class="text-sm text-gray-600 truncate">${dir.calle} ${dir.numeroExterior}</p>
-                    <p class="text-sm text-gray-600 truncate">${dir.colonia}, ${dir.municipio}</p>
-                    <p class="text-sm text-gray-600">CP: ${dir.codigoPostal}</p>
-                `;
-
-                card.addEventListener('click', () => {
-                    document.querySelectorAll('#listaDirecciones > div').forEach(c => {
-                        c.classList.remove('border-blue-500', 'bg-blue-50', 'ring-2', 'ring-blue-200');
-                    });
-                    card.classList.add('border-blue-500', 'bg-blue-50', 'ring-2', 'ring-blue-200');
-                    this.direccionSeleccionada = dir.id;
-                    this.checkFormValidity();
-                });
-
-                container.appendChild(card);
-            });
-
-            this.checkFormValidity();
-
-        } catch (error) {
-            UI.showNotification('Error cargando direcciones', 'error');
-            document.getElementById('loadingDirecciones').textContent = 'Error al cargar direcciones.';
         }
+
     },
 
     async procesarPago(e) {
-        e.preventDefault();
 
-        if (!this.formValido) {
-            UI.showNotification('Por favor, completa correctamente el formulario y selecciona una dirección.', 'warning');
-            return;
+        e.preventDefault()
+
+        if (!this.direccion) {
+            UI.showNotification("Selecciona una dirección", "warning")
+            return
         }
 
-        const btnProcess = document.getElementById('btnProcesarPago');
-        const originalText = btnProcess.innerHTML;
-
-        btnProcess.disabled = true;
-        btnProcess.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i> Procesando...';
+        const btn = document.getElementById("btnProcesarPago")
+        btn.disabled = true
 
         try {
-            const bodyInfo = {
-                ordenId: this.ordenId,
+
+            const res = await Api.post("/payments/procesar", {
+                ordenId: this.orden.id,
                 metodoPago: this.metodoPago
-                // Dirección omitida del DTO de Orden en backend Phase 1, pero se validó en Fronend para UX
-            };
+            })
 
-            const response = await Api.post('/payments/procesar', bodyInfo);
+            if (res.estado === "PAID") {
 
-            if (response.estado === 'PAID') {
-                UI.showNotification('¡Pago procesado exitosamente!', 'success');
+                UI.showNotification("Pago exitoso", "success")
+
                 setTimeout(() => {
-                    window.location.href = 'ordenes.html';
-                }, 2000);
-            } else if (response.estado === 'OUT_OF_STOCK') {
-                UI.showNotification('Lo sentimos, algunos productos ya no tienen stock suficiente.', 'error');
-                btnProcess.disabled = false;
-                btnProcess.innerHTML = originalText;
-                this.init(this.ordenId); // Recargar orden para ver estados nuevos
-            } else {
-                UI.showNotification(`Error en el pago (Estado: ${response.estado}). Intenta nuevamente.`, 'error');
-                btnProcess.disabled = false;
-                btnProcess.innerHTML = originalText;
+                    window.location.href = "ordenes.html"
+                }, 1500)
+
             }
 
-        } catch (error) {
-            UI.showNotification('Error del sistema al procesar pago: ' + error.message, 'error');
-            btnProcess.disabled = false;
-            btnProcess.innerHTML = originalText;
-        }
-    }
-};
+        } catch (err) {
 
+            UI.showNotification(err.message, "error")
+            btn.disabled = false
+
+        }
+
+    }
+
+}
+
+document.addEventListener("DOMContentLoaded", () => Checkout.init())
 
 ================ frontend\js\direcciones.js ================
 
@@ -9275,10 +9238,9 @@ import Auth from './auth.js';
 let telefonosModal = []; // string[]
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!Auth.isAuthenticated()) {
-        window.location.href = 'login.html';
-        return;
-    }
+
+    if (!Auth.requireAuth(['CUSTOMER', 'ADMIN', 'SUPPLIER'])) return;
+
     UI.renderNavBar({ containerId: 'mainNav', context: 'addresses' });
     cargarDirecciones();
     setupEventListeners();
@@ -9613,10 +9575,8 @@ let roleActual = '';
 let userActual = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
-    if (!Auth.isAuthenticated()) {
-        window.location.href = 'login.html';
-        return;
-    }
+
+    if (!Auth.requireAuth(["CUSTOMER", "ADMIN"])) return;
 
     userActual = Auth.getCurrentUser();
     roleActual = userActual.role;
@@ -9721,7 +9681,7 @@ function getBadgeHTML(estado) {
         'PAYMENT_PENDING': 'bg-yellow-100 text-yellow-800',
         'PAID': 'bg-green-100 text-green-800',
         'OUT_OF_STOCK': 'bg-red-100 text-red-800',
-        'CANCELLED': 'bg-gray-800 text-white',
+        'CANCELLED': 'bg-gray-200 text-red-800',
         'SHIPPED': 'bg-blue-100 text-blue-800',
         'DELIVERED': 'bg-purple-100 text-purple-800'
     };
@@ -9736,7 +9696,7 @@ function getActionHTML(orden) {
     if (roleActual === 'CUSTOMER') {
         const puedePagar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
         if (puedePagar) {
-            html += `<button onclick="window.location.href='checkout.html?ordenId=${orden.id}'" class="text-green-500 hover:text-green-700 p-1 title="Pagar">
+            html += `<button onclick="window.location.href='checkout.html?ordenId=${orden.id}'" class="text-green-500 hover:text-green-700 p-1" title="Pagar">
                         <i class="fas fa-credit-card"></i> Pagar
                      </button>`;
         }
@@ -9750,7 +9710,7 @@ function getActionHTML(orden) {
     } else if (roleActual === 'ADMIN') {
         const puedePagar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
         if (puedePagar) {
-            html += `<button onclick="window.location.href='checkout.html?ordenId=${orden.id}'" class="text-green-500 hover:text-green-700 p-1 title="Pagar">
+            html += `<button onclick="window.location.href='checkout.html?ordenId=${orden.id}'" class="text-green-500 hover:text-green-700 p-1" title="Pagar">
                         <i class="fas fa-credit-card"></i> Pagar
                      </button>`;
         }
@@ -9763,11 +9723,11 @@ function getActionHTML(orden) {
         }
 
         if (estado === 'PAID') {
-            html += `<button onclick="window.abrirModalDespacho(${orden.id})" class="text-blue-500 hover:text-blue-700 p-1 title="Despachar">
+            html += `<button onclick="window.abrirModalDespacho(${orden.id})" class="text-blue-500 hover:text-blue-700 p-1" title="Despachar">
                         <i class="fas fa-truck"></i> Despachar
                      </button>`;
         } else if (estado === 'SHIPPED') {
-            html += `<button onclick="window.marcarEntregado(${orden.id})" class="text-purple-500 hover:text-purple-700 p-1 title="Marcar Entregado">
+            html += `<button onclick="window.marcarEntregado(${orden.id})" class="text-purple-500 hover:text-purple-700 p-1" title="Marcar Entregado">
                         <i class="fas fa-box-open"></i> Entregar
                      </button>`;
         }
@@ -9812,12 +9772,13 @@ window.verDetalles = (id) => {
                 <p class="text-gray-500 mb-1">Estado Actual</p>
                 ${getBadgeHTML(orden.estado)}
             </div>
-            <div>
-                <p class="text-gray-500 mb-1">Total</p>
-                <p class="font-bold text-lg text-blue-600">${UI.formatCurrency(orden.total)}</p>
-            </div>
         </div>
     `;
+
+    function getNombreProducto(detalle) {
+        return detalle.productoNombre
+            || (detalle.producto ? detalle.producto.nombre : 'Producto');
+    }
 
     if (orden.paymentTransaction) {
         const trx = orden.paymentTransaction;
@@ -9857,18 +9818,27 @@ window.verDetalles = (id) => {
     `;
 
     orden.detalles.forEach(d => {
+
+        const subtotal =
+            d.subtotal ||
+            (d.precio * d.cantidad);
+
         html += `
             <li class="flex justify-between items-center text-sm p-2 hover:bg-gray-50 rounded">
                 <div>
                     <span class="font-bold text-gray-800 mr-2">${d.cantidad}x</span> 
-                    <span>${d.producto.nombre}</span>
+                    <span>${getNombreProducto(d)}</span>
                 </div>
-                <span class="font-medium">${UI.formatCurrency(d.subtotal)}</span>
+                <span class="font-medium">${UI.formatCurrency(subtotal)}</span>
             </li>
         `;
     });
 
-    html += `</ul></div></div>`;
+    html += `</ul></div></div>
+            <div>
+                <p class="text-gray-500 mb-1">Total</p>
+                <p class="font-bold text-lg text-blue-600">${UI.formatCurrency(orden.total)}</p>
+            </div>`;
 
     cont.innerHTML = html;
     document.getElementById('modalDetalle').classList.remove('hidden');
@@ -9967,10 +9937,8 @@ import Auth from './auth.js';
 let imagenesModal = []; // [{ url: String, isDefault: Boolean }]
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!Auth.isAuthenticated()) {
-        window.location.href = 'login.html';
-        return;
-    }
+
+    if (!Auth.requireAuth(["ADMIN", "SUPPLIER"])) return;
 
     UI.renderNavBar({ containerId: 'mainNav', context: 'products' });
     setupRoleBasedUI();
@@ -10544,10 +10512,9 @@ let adminTargetUserId = null;
 let adirTelefonos = [];  // teléfonos en el sub-form de dirección
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!Auth.isAuthenticated()) {
-        window.location.href = 'login.html';
-        return;
-    }
+
+    if (!Auth.requireAuth(["ADMIN"])) return;
+
     const user = Auth.getCurrentUser();
     if (user.role !== 'ADMIN') {
         window.location.href = 'productos.html';

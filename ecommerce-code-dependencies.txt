@@ -19,7 +19,7 @@ Source: frontend\package.json (devDependencies)
 - tailwindcss ^4.1.18
 
 Internal dependency graph
-Nodes: 101
+Nodes: 100
 Edges: 22
 
 Nodes:
@@ -94,7 +94,6 @@ Nodes:
 - backend\src\main\java\com\ecommerce\service\UsuarioService.java
 - backend\src\main\resources\application.properties
 - backend\target\classes\application.properties
-- backend\target\maven-archiver\pom.properties
 - backend\target\maven-status\maven-compiler-plugin\compile\default-compile\createdFiles.lst
 - backend\target\maven-status\maven-compiler-plugin\compile\default-compile\inputFiles.lst
 - frontend\README.md

@@ -1,4 +1,4 @@
-# E-Commerce Frontend v2.0
+# E-Commerce Frontend v3.0
 
 ## 🎯 Propósito del Proyecto
 
@@ -14,27 +14,27 @@ Este frontend forma parte de una solución completa de **E-Commerce** que permit
 - **Gestión de inventario** para administradores y proveedores
 - **Experiencia de compra** fluida para clientes
 - **Control de acceso** granular según el tipo de usuario
-- **Administración centralizada** de usuarios, productos y órdenes
+- **Administración centralizada** de usuarios, productos, órdenes y envíos
 
-### Phase 3 Features
+### Características de la Fase 3
 
-### Checkout and Payments
-- **`checkout.html`**: A full checkout sequence with address selection.
-- **Dynamic Validation**: Real-time form validation applied to credit card inputs (simulated data).
-- **Payment Processing**: Replaces direct cart-to-order flow with a step-by-step confirmation.
+### Proceso de compra y pagos
+- **`checkout.html`**: Secuencia de pago completa con selección de dirección.
+- **Validación dinámica**: Validación de formulario en tiempo real aplicada a la entrada de datos de tarjeta de crédito (datos simulados).
+- **Procesamiento de pagos**: Sustituye el proceso directo del carrito al pedido por una confirmación paso a paso.
 
-### Order Management (Customer & Admin)
-- **`ordenes.html`**: New page to list orders and their current lifecycle state.
-- **State Badges**: Visual indicators for `CREATED`, `PAYMENT_PENDING`, `PAID`, `OUT_OF_STOCK`, `CANCELLED`, `SHIPPED`, `DELIVERED`.
-- **Order Details Modal**: Deep view into what products, payment trx, and shipment info an order holds.
-- **Admin Dispatch Modal**: Forms with dynamic validation to register Courier and Tracking numbers.
+### Gestión de órdenes (Cliente y administrador)
+- **`ordenes.html`**: Nueva página para listar las órdenes y su estado actual.
+- **Indicadores de estado**: Indicadores visuales para `CREATED`, `PAYMENT_PENDING`, `PAID`, `OUT_OF_STOCK`, `CANCELLED`, `SHIPPED`, `DELIVERED`.
+- **Modalidad de detalles de la orden**: Vista detallada de los productos, las transacciones de pago y la información de envío que contiene un pedido. 
+- **Modalidad de Despacho de Administrador**: Formularios con validación dinámica para registrar la empresa de mensajería y el número de la guía para seguimiento.
 
-### Inventory Visibility
-- **`productos.html`**: Product grid now optionally displays real-time `Stock` for Admir/Supplier roles.
+### Visibilidad de Inventario
+- **`productos.html`**: La cuadrícula de productos ahora muestra opcionalmente el `Stock` en tiempo real para los roles de Administrador/Proveedor.
 
 ---
 
-## Technical Detailsonal
+## Detalles Técnicos
 - ✅ Autenticación y gestión de sesiones
 - ✅ CRUD de productos (físicos y digitales)
 - ✅ Carrito de compras personalizado
@@ -45,9 +45,9 @@ Este frontend forma parte de una solución completa de **E-Commerce** que permit
 ### Tipos de Usuarios
 |       Rol     | Permisos                                                                  |
 |---------------|---------------------------------------------------------------------------|
-| **ADMIN**     | Gestión completa: productos, usuarios, órdenes                            |
+| **ADMIN**     | Gestión completa: productos, usuarios, órdenes, envíos                            |
 | **SUPPLIER**  | Edición de productos, visualización de órdenes                            |
-| **CUSTOMER**  | Compra de productos, gestión de carrito, visualización de propias órdenes |
+| **CUSTOMER**  | Compra de productos, gestión de carrito, proceso de pago, cancelación de órdenes, visualización de propias órdenes |
 
 ---
 
@@ -299,7 +299,7 @@ UI.showNotification('Error al guardar usuario: ' + error.message, 'error');
 | Tailwind CSS   | 3.x     | Framework utility-first |
 | JavaScript     | ES6+    | Lógica de aplicación    |
 | FontAwesome    | 6.4.0   | Iconografía             |
-| Fetch API      | -       | Peticiones HTTP         |
+| Fetch API      | -       | Gestión de peticiones HTTP hacia el backend (Métodos GET, POST) mediante el uso de Fetch         |
 
 ---
 
@@ -401,7 +401,7 @@ BIU License - Proyecto Académico - Módulo Programming the Internet
 
 ---
 
-## 🔄 Phase 2 – Nuevas Funcionalidades
+## 🔄 Fase 3 – Nuevas Funcionalidades
 
 ### Alcance Ampliado
 | Rol | Acceso Nuevo |
