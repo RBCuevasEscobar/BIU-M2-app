@@ -16,7 +16,25 @@ Este frontend forma parte de una solución completa de **E-Commerce** que permit
 - **Control de acceso** granular según el tipo de usuario
 - **Administración centralizada** de usuarios, productos y órdenes
 
-### Alcance Funcional
+### Phase 3 Features
+
+### Checkout and Payments
+- **`checkout.html`**: A full checkout sequence with address selection.
+- **Dynamic Validation**: Real-time form validation applied to credit card inputs (simulated data).
+- **Payment Processing**: Replaces direct cart-to-order flow with a step-by-step confirmation.
+
+### Order Management (Customer & Admin)
+- **`ordenes.html`**: New page to list orders and their current lifecycle state.
+- **State Badges**: Visual indicators for `CREATED`, `PAYMENT_PENDING`, `PAID`, `OUT_OF_STOCK`, `CANCELLED`, `SHIPPED`, `DELIVERED`.
+- **Order Details Modal**: Deep view into what products, payment trx, and shipment info an order holds.
+- **Admin Dispatch Modal**: Forms with dynamic validation to register Courier and Tracking numbers.
+
+### Inventory Visibility
+- **`productos.html`**: Product grid now optionally displays real-time `Stock` for Admir/Supplier roles.
+
+---
+
+## Technical Detailsonal
 - ✅ Autenticación y gestión de sesiones
 - ✅ CRUD de productos (físicos y digitales)
 - ✅ Carrito de compras personalizado

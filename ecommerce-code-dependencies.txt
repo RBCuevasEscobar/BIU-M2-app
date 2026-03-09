@@ -19,11 +19,12 @@ Source: frontend\package.json (devDependencies)
 - tailwindcss ^4.1.18
 
 Internal dependency graph
-Nodes: 77
-Edges: 19
+Nodes: 101
+Edges: 22
 
 Nodes:
 - .mvn\wrapper\maven-wrapper.properties
+- backend\ECommerce_Collection.json
 - backend\README.md
 - backend\pom.xml
 - backend\src\main\java\com\ecommerce\BackendApplication.java
@@ -34,34 +35,54 @@ Nodes:
 - backend\src\main\java\com\ecommerce\controller\CarritoController.java
 - backend\src\main\java\com\ecommerce\controller\DireccionController.java
 - backend\src\main\java\com\ecommerce\controller\OrdenController.java
+- backend\src\main\java\com\ecommerce\controller\PaymentController.java
 - backend\src\main\java\com\ecommerce\controller\ProductoController.java
+- backend\src\main\java\com\ecommerce\controller\ShipmentController.java
 - backend\src\main\java\com\ecommerce\controller\UsuarioController.java
 - backend\src\main\java\com\ecommerce\dto\DireccionDTO.java
 - backend\src\main\java\com\ecommerce\dto\DireccionRequestDTO.java
 - backend\src\main\java\com\ecommerce\dto\LoginRequest.java
 - backend\src\main\java\com\ecommerce\dto\LoginResponse.java
+- backend\src\main\java\com\ecommerce\dto\OrdenDTO.java
+- backend\src\main\java\com\ecommerce\dto\OrdenDetalleDTO.java
+- backend\src\main\java\com\ecommerce\dto\PaymentTransactionDTO.java
 - backend\src\main\java\com\ecommerce\dto\ProductUpdateRequest.java
 - backend\src\main\java\com\ecommerce\dto\ProductoDTO.java
 - backend\src\main\java\com\ecommerce\dto\ProductoImagenDTO.java
 - backend\src\main\java\com\ecommerce\dto\ProductoRequestDTO.java
+- backend\src\main\java\com\ecommerce\dto\ShipmentDTO.java
 - backend\src\main\java\com\ecommerce\dto\UsuarioUpdateRequest.java
+- backend\src\main\java\com\ecommerce\inventory\GestorInventario.java
+- backend\src\main\java\com\ecommerce\inventory\GestorInventarioDigital.java
+- backend\src\main\java\com\ecommerce\inventory\GestorInventarioFactory.java
+- backend\src\main\java\com\ecommerce\inventory\GestorInventarioFisico.java
 - backend\src\main\java\com\ecommerce\model\Administrador.java
 - backend\src\main\java\com\ecommerce\model\Carrito.java
 - backend\src\main\java\com\ecommerce\model\Cliente.java
 - backend\src\main\java\com\ecommerce\model\Direccion.java
+- backend\src\main\java\com\ecommerce\model\EstadoOrden.java
 - backend\src\main\java\com\ecommerce\model\Orden.java
 - backend\src\main\java\com\ecommerce\model\OrdenDetalle.java
+- backend\src\main\java\com\ecommerce\model\PaymentTransaction.java
 - backend\src\main\java\com\ecommerce\model\Producto.java
 - backend\src\main\java\com\ecommerce\model\ProductoDigital.java
 - backend\src\main\java\com\ecommerce\model\ProductoFisico.java
 - backend\src\main\java\com\ecommerce\model\ProductoImagen.java
 - backend\src\main\java\com\ecommerce\model\Proveedor.java
 - backend\src\main\java\com\ecommerce\model\Role.java
+- backend\src\main\java\com\ecommerce\model\Shipment.java
 - backend\src\main\java\com\ecommerce\model\Usuario.java
+- backend\src\main\java\com\ecommerce\payment\PagoPayPal.java
+- backend\src\main\java\com\ecommerce\payment\PagoTarjeta.java
+- backend\src\main\java\com\ecommerce\payment\PagoTransferencia.java
+- backend\src\main\java\com\ecommerce\payment\ProcesoPago.java
+- backend\src\main\java\com\ecommerce\payment\ProcesoPagoFactory.java
 - backend\src\main\java\com\ecommerce\repository\CarritoRepository.java
 - backend\src\main\java\com\ecommerce\repository\DireccionRepository.java
 - backend\src\main\java\com\ecommerce\repository\OrdenRepository.java
+- backend\src\main\java\com\ecommerce\repository\PaymentTransactionRepository.java
 - backend\src\main\java\com\ecommerce\repository\ProductoRepository.java
+- backend\src\main\java\com\ecommerce\repository\ShipmentRepository.java
 - backend\src\main\java\com\ecommerce\repository\UsuarioRepository.java
 - backend\src\main\java\com\ecommerce\security\TokenAuthenticationFilter.java
 - backend\src\main\java\com\ecommerce\security\UsuarioSecurity.java
@@ -73,10 +94,12 @@ Nodes:
 - backend\src\main\java\com\ecommerce\service\UsuarioService.java
 - backend\src\main\resources\application.properties
 - backend\target\classes\application.properties
+- backend\target\maven-archiver\pom.properties
 - backend\target\maven-status\maven-compiler-plugin\compile\default-compile\createdFiles.lst
 - backend\target\maven-status\maven-compiler-plugin\compile\default-compile\inputFiles.lst
 - frontend\README.md
 - frontend\carrito.html
+- frontend\checkout.html
 - frontend\css\output.css
 - frontend\css\styles.css
 - frontend\direcciones.html
@@ -86,6 +109,7 @@ Nodes:
 - frontend\js\appcust.js
 - frontend\js\auth.js
 - frontend\js\carrito.js
+- frontend\js\checkout.js
 - frontend\js\direcciones.js
 - frontend\js\ordenes.js
 - frontend\js\productos.js
@@ -109,6 +133,9 @@ Edges:
 - frontend\js\carrito.js -> frontend\js\api.js (import)
 - frontend\js\carrito.js -> frontend\js\auth.js (import)
 - frontend\js\carrito.js -> frontend\js\ui.js (import)
+- frontend\js\checkout.js -> frontend\js\api.js (import)
+- frontend\js\checkout.js -> frontend\js\auth.js (import)
+- frontend\js\checkout.js -> frontend\js\ui.js (import)
 - frontend\js\direcciones.js -> frontend\js\api.js (import)
 - frontend\js\direcciones.js -> frontend\js\auth.js (import)
 - frontend\js\direcciones.js -> frontend\js\ui.js (import)

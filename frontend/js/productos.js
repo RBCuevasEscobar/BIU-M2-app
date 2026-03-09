@@ -6,10 +6,8 @@ import Auth from './auth.js';
 let imagenesModal = []; // [{ url: String, isDefault: Boolean }]
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!Auth.isAuthenticated()) {
-        window.location.href = 'login.html';
-        return;
-    }
+
+    if (!Auth.requireAuth(["ADMIN", "SUPPLIER"])) return;
 
     UI.renderNavBar({ containerId: 'mainNav', context: 'products' });
     setupRoleBasedUI();
@@ -32,6 +30,12 @@ function setupRoleBasedUI() {
     const campoProveedor = document.getElementById('campoProveedor');
     if (campoProveedor && role !== 'ADMIN') {
         campoProveedor.classList.add('hidden');
+    }
+
+    // Ocultar columna de Stock para CUSTOMER
+    const thStock = document.getElementById('thStock');
+    if (thStock && role === 'CUSTOMER') {
+        thStock.classList.add('hidden');
     }
 }
 
@@ -165,6 +169,19 @@ function renderizarTabla(productos, filtro) {
             ? `<span class="text-xs text-gray-500 truncate" style="max-width:120px" title="${p.proveedor}">${p.proveedor}</span>`
             : '<span class="text-xs text-gray-400 italic">—</span>';
 
+        // Lógica de Stock (Visible solo para ADMIN / SUPPLIER)
+        let stockDisplay = '';
+        if (role !== 'CUSTOMER') {
+            if (esFisico) {
+                const isLow = p.stock > 0 && p.stock <= 5;
+                const isOut = p.stock === 0;
+                const cssClass = isOut ? 'text-red-600 font-bold' : (isLow ? 'text-orange-500 font-bold' : 'text-green-600');
+                stockDisplay = `<td class="py-3 px-4"><span class="${cssClass}">${p.stock}</span></td>`;
+            } else {
+                stockDisplay = `<td class="py-3 px-4"><span class="text-gray-400 text-xs italic">∞ (Digital)</span></td>`;
+            }
+        }
+
         const row = document.createElement('tr');
         row.className = 'border-b border-gray-200 hover:bg-gray-50';
         row.innerHTML = `
@@ -175,6 +192,7 @@ function renderizarTabla(productos, filtro) {
                 ${p.descripcion ? `<div class="text-xs text-gray-400 truncate" style="max-width:200px" title="${p.descripcion}">${p.descripcion}</div>` : ''}
             </td>
             <td class="py-3 px-4 font-bold text-gray-700">${UI.formatCurrency(p.precio)}</td>
+            ${stockDisplay}
             <td class="py-3 px-4">${tipoBadge}</td>
             <td class="py-3 px-4">${proveedorDisplay}</td>
             <td class="py-3 px-4 text-center">

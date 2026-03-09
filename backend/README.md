@@ -735,6 +735,23 @@ public ResponseEntity<Usuario> obtenerUsuario(@PathVariable Long id) { }
 
 ## 🛠️ Tecnologías
 
+### 1. Spring Boot para Java - Arquitectura y Funciones
+Spring Boot es un framework sobre la plataforma Java que facilita la creación de aplicaciones stand-alone y preparadas para producción.
+**Funciones Clave:**
+- **Inversión de Control (IoC):** A través de su contenedor de Inyección de Dependencias, Spring "inyecta" los componentes (Beans) en tiempo de ejecución, por ejemplo el `@Autowired` entre `Controller`, `Service` y `Repository`.
+- **Auto-Configuración:** Deduce automáticamente las configuraciones basándose en las dependencias presentes en el `pom.xml`, sin necesidad de archivos XML engorrosos.
+- **Spring Data JPA:** Abstracción sobre la persistencia que reduce drásticamente el "boilerplate" al escribir queries directas con JDBC, mapeando anotaciones sobre entidades Java (`@Entity`) directamente a modelos relacionales.
+- **Spring Security (Filtros):** Opera con una cadena de filtros (como visto en el log `FilterChainProxy`) validando los JSON Web Tokens (`TokenAuthenticationFilter`) antes de que la petición llegue al Controlador.
+- **Servidor Web Embebido:** Contiene internamente a Tomcat/Undertow, obviando la configuración e instalación de servidores adicionales para el despliegue.
+
+### 2. Integración de Base de Datos (MySQL) y Modelo de Datos
+La aplicación se conecta a una base de datos relacional **MySQL** e implementa **Hibernate** como proveedor JPA para ORM (Object-Relational Mapping). 
+- **Estrategia en `application.properties`:** Generalmente expone `spring.jpa.hibernate.ddl-auto=update` o `create-drop` en fase de desarrollo para recrear el esquema a base de las clases OOP marcadas como `@Entity`.
+- **Relaciones implementadas:**
+  - `OneToMany / ManyToOne`: Relaciona a múltiples `Ordenes` referenciadas a un único `Usuario`.
+  - `ManyToMany`: Resuelto usando tablas pivote intermedias abstractas en SQL y mapeos transparentes en Java (e.g. `Carrito` contiene los `Producto`s).
+  - Paginación e índices para acelerar búsquedas de acuerdo a atributos como `email`.
+
 | Tecnología | Versión | Uso |
 |-----------|---------|-----|
 | Java | 21 | Lenguaje base |
@@ -744,6 +761,33 @@ public ResponseEntity<Usuario> obtenerUsuario(@PathVariable Long id) { }
 | Hibernate | 6.x | ORM |
 | MySQL | 8.x | Base de datos |
 | Lombok | 1.18.x | Reducción de boilerplate |
+
+---
+
+## 📦 Gestión de Órdenes y Transición de Estados
+
+El ciclo de vida de la orden está modelado bajo una estricta **Máquina de Estados**, dictada por las operaciones del dominio según el rol del usuario utilizando anotaciones de autorización (`@PreAuthorize("hasRole('...')")`).
+
+### Relación Rol-Operación
+1. **[CUSTOMER]**: 
+   - Puede crear órdenes convirtiendo su Carrito -> `CREATED`. 
+   - Puede elegir pago (procesando a `PAID` o `PAYMENT_PENDING` u `OUT_OF_STOCK`). 
+   - Puede Cancelar su propia orden mientras esté en estado inicial. No tiene permiso ni vista para despachar.
+2. **[ADMIN]**: 
+   - No crea órdenes directas, pero supervisa el catálogo completo de operaciones de los usuarios. 
+   - Único rol con autorización de `POST /api/shipments/despachar/{id}` -> `SHIPPED`. Solo aplicable para transacciones que ya estén garantizadas bajo `PAID`.
+   - Único rol que aprueba el cierre logístico -> `DELIVERED`.
+3. **[SUPPLIER]**: 
+   - No tiene interacciones sobre las órdenes. Se orienta únicamente a inyección de inventario local o modificación del contenido del producto.
+
+### Ciclo de Estados (`EstadoOrden.java`)
+1. **`CREATED`**: Creado desde un carrito. Espera configuración de check-out en GUI.
+2. **`PAYMENT_PENDING`**: Cuando el pago inició en el proveedor externo pero fue rechazado temporalmente.
+3. **`PAID`**: Transacción de pago confirmada exitosa. Solo en este punto el **Stock** del `ProductoFisico` es descontado de la BD real.
+4. **`OUT_OF_STOCK`**: Intentó pagar pero los `GestorInventario` respondieron false en `verificarStock()`. Queda en limbo de falla para recuperar.
+5. **`CANCELLED`**: Anulada desde UI de Cliente/Admin.
+6. **`SHIPPED`**: Entidad `Shipment` creada con empresa mensajera (`courier`) y código de rastreo.
+7. **`DELIVERED`**: Ciclo completado. El artículo está en manos del cliente.
 
 ---
 
@@ -849,6 +893,27 @@ public class Direccion {
 - SUPPLIER puede crear/editar sus propias direcciones, pero NO eliminar
 
 ---
+
+###- `GestorInventario`: Interface for physical vs digital inventory handling.
+- `ProcesoPago`: Interface for multiple payment providers (Tarjeta, PayPal, Transfer).
+- **Security Check**: Enforced via Spring Security (`@PreAuthorize`).
+- **Phase 3 additions**: Order lifecycle management (`EstadoOrden`), unified Checkout, Payment Transactions, and Shipments.
+
+## API Endpoints Overview
+
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| **POST** | `/api/auth/register` | Public | Register new user. |
+| **POST** | `/api/auth/login` | Public | Authenticate user & get token. |
+| **GET** | `/api/productos` | Public | List available products. |
+| **POST** | `/api/productos` | Admin | Create a new product. |
+| **GET** | `/api/direcciones/mis-direcciones` | Authenticated | List user addresses. |
+| **POST** | `/api/ordenes/checkout` | Customer | Convert Cart to Order (CREATED state). |
+| **POST** | `/api/payments/procesar` | Customer | Process Payment (PAID / OUT_OF_STOCK). |
+| **POST** | `/api/shipments/despachar/{id}`| Admin | Dispatch order (SHIPPED). |
+| **POST** | `/api/shipments/entregar/{id}` | Admin | Mark delivery (DELIVERED). |
+
+For a complete list of endpoints, import the provided Postman collection (if available) or check the underlying Controllers.
 
 ### Nuevos Endpoints API
 

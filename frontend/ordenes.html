@@ -5,41 +5,104 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Commerce - Mis Órdenes</title>
-    <!--    <script src="https://cdn.tailwindcss.com"></script> -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/output.css">
 </head>
 
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col">
 
     <nav id="mainNav" class="bg-white shadow-md"></nav>
 
-    <div class="container mx-auto px-6 py-8">
+    <main class="flex-grow container mx-auto px-6 py-8">
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800">Órdenes</h1>
         </header>
 
         <div class="bg-white rounded-lg shadow overflow-hidden">
-            <table class="w-full table-auto">
-                <thead class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                    <tr>
-                        <th class="py-3 px-6 text-left">Orden ID</th>
-                        <th class="py-3 px-6 text-left">Fecha</th>
-                        <th class="py-3 px-6 text-right">Total</th>
-                        <!-- <th class="py-3 px-6 text-center">Acciones</th> -->
-                    </tr>
-                </thead>
-                <tbody id="listaOrdenes" class="text-gray-600 text-sm font-light">
-                    <!-- Dynamic Content -->
-                </tbody>
-            </table>
+            <div class="overflow-x-auto">
+                <table class="w-full table-auto">
+                    <thead class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <tr>
+                            <th class="py-3 px-6 text-left">Orden</th>
+                            <th class="py-3 px-6 text-left">Estado</th>
+                            <th class="py-3 px-6 text-left">Fecha</th>
+                            <th class="py-3 px-6 text-right">Total</th>
+                            <th class="py-3 px-6 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaOrdenes" class="text-gray-600 text-sm font-light">
+                        <!-- Dynamic Content -->
+                    </tbody>
+                </table>
+            </div>
             <div id="emptyState" class="hidden text-center py-10">
-                <p class="text-gray-500 text-lg">No tienes órdenes aún.</p>
-                <a href="productos.html" class="text-blue-500 hover:underline mt-2 inline-block">Ir a comprar</a>
+                <p class="text-gray-500 text-lg">No hay órdenes para mostrar.</p>
+                <a href="productos.html" class="text-blue-500 hover:underline mt-2 inline-block">Ir a productos</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Despachar Orden (Sólo ADMIN) -->
+    <div id="modalDespacho"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full flex items-center justify-center z-50">
+        <div class="relative w-full max-w-md bg-white rounded-lg shadow-xl p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Despachar Orden #<span
+                    id="despachoOrdenId"></span></h3>
+            <form id="formDespacho" novalidate>
+                <div class="mb-4">
+                    <label for="courier" class="block text-gray-700 text-sm font-bold mb-2">Empresa de Mensajería
+                        (Courier)</label>
+                    <input type="text" id="courier"
+                        class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                        placeholder="Ej. FedEx, DHL, UPS" required minlength="2">
+                    <p id="error-courier" class="hidden text-red-500 text-xs italic mt-1">Ingresa el nombre de la
+                        empresa.</p>
+                </div>
+                <div class="mb-6">
+                    <label for="trackingNumber" class="block text-gray-700 text-sm font-bold mb-2">Número de Seguimiento
+                        (Tracking)</label>
+                    <input type="text" id="trackingNumber"
+                        class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                        placeholder="Ej. 1Z9999999999" required minlength="5">
+                    <p id="error-trackingNumber" class="hidden text-red-500 text-xs italic mt-1">Ingresa un número de
+                        guía válido (min. 5 caracteres).</p>
+                </div>
+                <div class="flex items-center justify-end border-t pt-4">
+                    <button type="button" onclick="cerrarModalDespacho()"
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btnConfirmarDespacho"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                        Confirmar Despacho
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalles de Orden (Todos) -->
+    <div id="modalDetalle"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full flex items-center justify-center z-50">
+        <div class="relative w-full max-w-2xl bg-white rounded-lg shadow-xl p-6">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h3 class="text-2xl font-bold text-gray-900">Detalles de Orden #<span id="detalleId"></span></h3>
+                <button onclick="cerrarModalDetalle()" class="text-gray-400 hover:text-gray-600"><i
+                        class="fas fa-times fa-lg"></i></button>
+            </div>
+
+            <div id="detalleContenido" class="space-y-4">
+                <!-- Inyectado por JS -->
+            </div>
+
+            <div class="mt-6 border-t pt-4 text-right">
+                <button onclick="cerrarModalDetalle()"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded">Cerrar</button>
             </div>
         </div>
     </div>
 
+    <script type="module" src="js/ui.js"></script>
     <script type="module" src="js/ordenes.js"></script>
 </body>
 

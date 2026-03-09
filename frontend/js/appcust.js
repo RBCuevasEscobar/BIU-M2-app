@@ -65,6 +65,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ── Construir tarjeta de producto (grid) ──────────────────────────────────────
 function buildProductCard(product) {
 
+    if (!Auth.requireAuth(["CUSTOMER"])) return;
+
     const imagenes = product.imagenes || [];
     const imgDefault = imagenes.find(i => i.isDefault) || imagenes[0];
 

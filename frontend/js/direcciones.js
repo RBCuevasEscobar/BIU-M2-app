@@ -6,10 +6,9 @@ import Auth from './auth.js';
 let telefonosModal = []; // string[]
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!Auth.isAuthenticated()) {
-        window.location.href = 'login.html';
-        return;
-    }
+
+    if (!Auth.requireAuth(['CUSTOMER', 'ADMIN', 'SUPPLIER'])) return;
+
     UI.renderNavBar({ containerId: 'mainNav', context: 'addresses' });
     cargarDirecciones();
     setupEventListeners();

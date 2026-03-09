@@ -1,0 +1,244 @@
+{
+  "info": {
+    "name": "E-Commerce API Tests Phase 3",
+    "description": "Pruebas de CRUD de usuarios, productos, y ciclo completo de orden y checkout.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"admin_token\", jsonData.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+             "method": "POST",
+             "header": [{ "key": "Content-Type", "value": "application/json" }],
+             "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+             },
+             "url": {
+                "raw": "{{baseUrl}}/api/auth/login",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "auth", "login"]
+             }
+          }
+        },
+        {
+          "name": "Login Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"customer_token\", jsonData.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+               "mode": "raw",
+               "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"customer123\"\n}"
+            },
+            "url": {
+               "raw": "{{baseUrl}}/api/auth/login",
+               "host": ["{{baseUrl}}"],
+               "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuario CRUD",
+      "item": [
+        {
+          "name": "1. GET All Usuarios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+             "method": "GET",
+             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+             "url": { "raw": "{{baseUrl}}/api/usuarios", "host": ["{{baseUrl}}"], "path": ["api", "usuarios"] }
+          }
+        },
+        {
+          "name": "2. CREATE Usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test(\"Status code is 200/201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+             "method": "POST",
+             "header": [
+                { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+             ],
+             "body": {
+                "mode": "raw",
+                "raw": "{\n  \"nombre\": \"Test User\",\n  \"email\": \"test@user.com\",\n  \"password\": \"password\",\n  \"role\": \"CUSTOMER\"\n}"
+             },
+             "url": { "raw": "{{baseUrl}}/api/usuarios", "host": ["{{baseUrl}}"], "path": ["api", "usuarios"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Producto CRUD",
+      "item": [
+        {
+          "name": "1. GET All Productos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json();",
+                  "if(data.length > 0) { pm.environment.set('producto_id', data[0].id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+             "method": "GET",
+             "header": [],
+             "url": { "raw": "{{baseUrl}}/api/productos", "host": ["{{baseUrl}}"], "path": ["api", "productos"] }
+          }
+        },
+        {
+          "name": "2. CREATE Producto",
+          "request": {
+             "method": "POST",
+             "header": [
+                { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+             ],
+             "body": {
+                "mode": "raw",
+                "raw": "{\n  \"type\": \"Fisico\",\n  \"nombre\": \"Nuevo Teclado\",\n  \"descripcion\": \"Teclado\",\n  \"precio\": 500,\n  \"proveedor\": \"Logitech\",\n  \"stock\": 10,\n  \"peso\": 1.2\n}"
+             },
+             "url": { "raw": "{{baseUrl}}/api/productos", "host": ["{{baseUrl}}"], "path": ["api", "productos"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Checkout Flow",
+      "item": [
+        {
+          "name": "1. ADD Item",
+          "request": {
+             "method": "POST",
+             "header": [
+                { "key": "Authorization", "value": "Bearer {{customer_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+             ],
+             "body": {
+                "mode": "raw",
+                "raw": "{\n  \"productoId\": {{producto_id}}\n}"
+             },
+             "url": { "raw": "{{baseUrl}}/api/carrito/agregar", "host": ["{{baseUrl}}"], "path": ["api", "carrito", "agregar"] }
+          }
+        },
+        {
+          "name": "2. CHECKOUT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json();",
+                  "pm.environment.set(\"orden_id\", data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+             "method": "POST",
+             "header": [{ "key": "Authorization", "value": "Bearer {{customer_token}}" }],
+             "url": { "raw": "{{baseUrl}}/api/ordenes/checkout", "host": ["{{baseUrl}}"], "path": ["api", "ordenes", "checkout"] }
+          }
+        },
+        {
+          "name": "3. PAY",
+          "request": {
+             "method": "POST",
+             "header": [
+                { "key": "Authorization", "value": "Bearer {{customer_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+             ],
+             "body": {
+                "mode": "raw",
+                "raw": "{\n  \"ordenId\": {{orden_id}},\n  \"metodoPago\": \"Tarjeta\"\n}"
+             },
+             "url": { "raw": "{{baseUrl}}/api/payments/procesar", "host": ["{{baseUrl}}"], "path": ["api", "payments", "procesar"] }
+          }
+        },
+        {
+          "name": "4. DISPATCH (Admin)",
+          "request": {
+             "method": "POST",
+             "header": [
+                { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+             ],
+             "body": {
+                "mode": "raw",
+                "raw": "{\n  \"courier\": \"FedEx\",\n  \"trackingNumber\": \"TRK123\"\n}"
+             },
+             "url": { "raw": "{{baseUrl}}/api/shipments/despachar/{{orden_id}}", "host": ["{{baseUrl}}"], "path": ["api", "shipments", "despachar", "{{orden_id}}"] }
+          }
+        },
+        {
+          "name": "5. DELIVER (Admin)",
+          "request": {
+             "method": "POST",
+             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+             "url": { "raw": "{{baseUrl}}/api/shipments/entregar/{{orden_id}}", "host": ["{{baseUrl}}"], "path": ["api", "shipments", "entregar", "{{orden_id}}"] }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ]
+}

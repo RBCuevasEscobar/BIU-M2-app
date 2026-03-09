@@ -7,6 +7,254 @@ distributionType=only-script
 distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.11/apache-maven-3.9.11-bin.zip
 
 
+================ backend\ECommerce_Collection.json ================
+
+{
+  "info": {
+    "name": "E-Commerce API Tests Phase 3",
+    "description": "Pruebas de CRUD de usuarios, productos, y ciclo completo de orden y checkout.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"admin_token\", jsonData.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+             "method": "POST",
+             "header": [{ "key": "Content-Type", "value": "application/json" }],
+             "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+             },
+             "url": {
+                "raw": "{{baseUrl}}/api/auth/login",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "auth", "login"]
+             }
+          }
+        },
+        {
+          "name": "Login Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"customer_token\", jsonData.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+               "mode": "raw",
+               "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"customer123\"\n}"
+            },
+            "url": {
+               "raw": "{{baseUrl}}/api/auth/login",
+               "host": ["{{baseUrl}}"],
+               "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuario CRUD",
+      "item": [
+        {
+          "name": "1. GET All Usuarios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+             "method": "GET",
+             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+             "url": { "raw": "{{baseUrl}}/api/usuarios", "host": ["{{baseUrl}}"], "path": ["api", "usuarios"] }
+          }
+        },
+        {
+          "name": "2. CREATE Usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test(\"Status code is 200/201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+             "method": "POST",
+             "header": [
+                { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+             ],
+             "body": {
+                "mode": "raw",
+                "raw": "{\n  \"nombre\": \"Test User\",\n  \"email\": \"test@user.com\",\n  \"password\": \"password\",\n  \"role\": \"CUSTOMER\"\n}"
+             },
+             "url": { "raw": "{{baseUrl}}/api/usuarios", "host": ["{{baseUrl}}"], "path": ["api", "usuarios"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Producto CRUD",
+      "item": [
+        {
+          "name": "1. GET All Productos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json();",
+                  "if(data.length > 0) { pm.environment.set('producto_id', data[0].id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+             "method": "GET",
+             "header": [],
+             "url": { "raw": "{{baseUrl}}/api/productos", "host": ["{{baseUrl}}"], "path": ["api", "productos"] }
+          }
+        },
+        {
+          "name": "2. CREATE Producto",
+          "request": {
+             "method": "POST",
+             "header": [
+                { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+             ],
+             "body": {
+                "mode": "raw",
+                "raw": "{\n  \"type\": \"Fisico\",\n  \"nombre\": \"Nuevo Teclado\",\n  \"descripcion\": \"Teclado\",\n  \"precio\": 500,\n  \"proveedor\": \"Logitech\",\n  \"stock\": 10,\n  \"peso\": 1.2\n}"
+             },
+             "url": { "raw": "{{baseUrl}}/api/productos", "host": ["{{baseUrl}}"], "path": ["api", "productos"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Checkout Flow",
+      "item": [
+        {
+          "name": "1. ADD Item",
+          "request": {
+             "method": "POST",
+             "header": [
+                { "key": "Authorization", "value": "Bearer {{customer_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+             ],
+             "body": {
+                "mode": "raw",
+                "raw": "{\n  \"productoId\": {{producto_id}}\n}"
+             },
+             "url": { "raw": "{{baseUrl}}/api/carrito/agregar", "host": ["{{baseUrl}}"], "path": ["api", "carrito", "agregar"] }
+          }
+        },
+        {
+          "name": "2. CHECKOUT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json();",
+                  "pm.environment.set(\"orden_id\", data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+             "method": "POST",
+             "header": [{ "key": "Authorization", "value": "Bearer {{customer_token}}" }],
+             "url": { "raw": "{{baseUrl}}/api/ordenes/checkout", "host": ["{{baseUrl}}"], "path": ["api", "ordenes", "checkout"] }
+          }
+        },
+        {
+          "name": "3. PAY",
+          "request": {
+             "method": "POST",
+             "header": [
+                { "key": "Authorization", "value": "Bearer {{customer_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+             ],
+             "body": {
+                "mode": "raw",
+                "raw": "{\n  \"ordenId\": {{orden_id}},\n  \"metodoPago\": \"Tarjeta\"\n}"
+             },
+             "url": { "raw": "{{baseUrl}}/api/payments/procesar", "host": ["{{baseUrl}}"], "path": ["api", "payments", "procesar"] }
+          }
+        },
+        {
+          "name": "4. DISPATCH (Admin)",
+          "request": {
+             "method": "POST",
+             "header": [
+                { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+             ],
+             "body": {
+                "mode": "raw",
+                "raw": "{\n  \"courier\": \"FedEx\",\n  \"trackingNumber\": \"TRK123\"\n}"
+             },
+             "url": { "raw": "{{baseUrl}}/api/shipments/despachar/{{orden_id}}", "host": ["{{baseUrl}}"], "path": ["api", "shipments", "despachar", "{{orden_id}}"] }
+          }
+        },
+        {
+          "name": "5. DELIVER (Admin)",
+          "request": {
+             "method": "POST",
+             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+             "url": { "raw": "{{baseUrl}}/api/shipments/entregar/{{orden_id}}", "host": ["{{baseUrl}}"], "path": ["api", "shipments", "entregar", "{{orden_id}}"] }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ]
+}
+
+
 ================ backend\pom.xml ================
 
 <?xml version="1.0" encoding="UTF-8"?>
@@ -825,6 +1073,23 @@ public ResponseEntity<Usuario> obtenerUsuario(@PathVariable Long id) { }
 
 ## 🛠️ Tecnologías
 
+### 1. Spring Boot para Java - Arquitectura y Funciones
+Spring Boot es un framework sobre la plataforma Java que facilita la creación de aplicaciones stand-alone y preparadas para producción.
+**Funciones Clave:**
+- **Inversión de Control (IoC):** A través de su contenedor de Inyección de Dependencias, Spring "inyecta" los componentes (Beans) en tiempo de ejecución, por ejemplo el `@Autowired` entre `Controller`, `Service` y `Repository`.
+- **Auto-Configuración:** Deduce automáticamente las configuraciones basándose en las dependencias presentes en el `pom.xml`, sin necesidad de archivos XML engorrosos.
+- **Spring Data JPA:** Abstracción sobre la persistencia que reduce drásticamente el "boilerplate" al escribir queries directas con JDBC, mapeando anotaciones sobre entidades Java (`@Entity`) directamente a modelos relacionales.
+- **Spring Security (Filtros):** Opera con una cadena de filtros (como visto en el log `FilterChainProxy`) validando los JSON Web Tokens (`TokenAuthenticationFilter`) antes de que la petición llegue al Controlador.
+- **Servidor Web Embebido:** Contiene internamente a Tomcat/Undertow, obviando la configuración e instalación de servidores adicionales para el despliegue.
+
+### 2. Integración de Base de Datos (MySQL) y Modelo de Datos
+La aplicación se conecta a una base de datos relacional **MySQL** e implementa **Hibernate** como proveedor JPA para ORM (Object-Relational Mapping). 
+- **Estrategia en `application.properties`:** Generalmente expone `spring.jpa.hibernate.ddl-auto=update` o `create-drop` en fase de desarrollo para recrear el esquema a base de las clases OOP marcadas como `@Entity`.
+- **Relaciones implementadas:**
+  - `OneToMany / ManyToOne`: Relaciona a múltiples `Ordenes` referenciadas a un único `Usuario`.
+  - `ManyToMany`: Resuelto usando tablas pivote intermedias abstractas en SQL y mapeos transparentes en Java (e.g. `Carrito` contiene los `Producto`s).
+  - Paginación e índices para acelerar búsquedas de acuerdo a atributos como `email`.
+
 | Tecnología | Versión | Uso |
 |-----------|---------|-----|
 | Java | 21 | Lenguaje base |
@@ -834,6 +1099,33 @@ public ResponseEntity<Usuario> obtenerUsuario(@PathVariable Long id) { }
 | Hibernate | 6.x | ORM |
 | MySQL | 8.x | Base de datos |
 | Lombok | 1.18.x | Reducción de boilerplate |
+
+---
+
+## 📦 Gestión de Órdenes y Transición de Estados
+
+El ciclo de vida de la orden está modelado bajo una estricta **Máquina de Estados**, dictada por las operaciones del dominio según el rol del usuario utilizando anotaciones de autorización (`@PreAuthorize("hasRole('...')")`).
+
+### Relación Rol-Operación
+1. **[CUSTOMER]**: 
+   - Puede crear órdenes convirtiendo su Carrito -> `CREATED`. 
+   - Puede elegir pago (procesando a `PAID` o `PAYMENT_PENDING` u `OUT_OF_STOCK`). 
+   - Puede Cancelar su propia orden mientras esté en estado inicial. No tiene permiso ni vista para despachar.
+2. **[ADMIN]**: 
+   - No crea órdenes directas, pero supervisa el catálogo completo de operaciones de los usuarios. 
+   - Único rol con autorización de `POST /api/shipments/despachar/{id}` -> `SHIPPED`. Solo aplicable para transacciones que ya estén garantizadas bajo `PAID`.
+   - Único rol que aprueba el cierre logístico -> `DELIVERED`.
+3. **[SUPPLIER]**: 
+   - No tiene interacciones sobre las órdenes. Se orienta únicamente a inyección de inventario local o modificación del contenido del producto.
+
+### Ciclo de Estados (`EstadoOrden.java`)
+1. **`CREATED`**: Creado desde un carrito. Espera configuración de check-out en GUI.
+2. **`PAYMENT_PENDING`**: Cuando el pago inició en el proveedor externo pero fue rechazado temporalmente.
+3. **`PAID`**: Transacción de pago confirmada exitosa. Solo en este punto el **Stock** del `ProductoFisico` es descontado de la BD real.
+4. **`OUT_OF_STOCK`**: Intentó pagar pero los `GestorInventario` respondieron false en `verificarStock()`. Queda en limbo de falla para recuperar.
+5. **`CANCELLED`**: Anulada desde UI de Cliente/Admin.
+6. **`SHIPPED`**: Entidad `Shipment` creada con empresa mensajera (`courier`) y código de rastreo.
+7. **`DELIVERED`**: Ciclo completado. El artículo está en manos del cliente.
 
 ---
 
@@ -939,6 +1231,27 @@ public class Direccion {
 - SUPPLIER puede crear/editar sus propias direcciones, pero NO eliminar
 
 ---
+
+###- `GestorInventario`: Interface for physical vs digital inventory handling.
+- `ProcesoPago`: Interface for multiple payment providers (Tarjeta, PayPal, Transfer).
+- **Security Check**: Enforced via Spring Security (`@PreAuthorize`).
+- **Phase 3 additions**: Order lifecycle management (`EstadoOrden`), unified Checkout, Payment Transactions, and Shipments.
+
+## API Endpoints Overview
+
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| **POST** | `/api/auth/register` | Public | Register new user. |
+| **POST** | `/api/auth/login` | Public | Authenticate user & get token. |
+| **GET** | `/api/productos` | Public | List available products. |
+| **POST** | `/api/productos` | Admin | Create a new product. |
+| **GET** | `/api/direcciones/mis-direcciones` | Authenticated | List user addresses. |
+| **POST** | `/api/ordenes/checkout` | Customer | Convert Cart to Order (CREATED state). |
+| **POST** | `/api/payments/procesar` | Customer | Process Payment (PAID / OUT_OF_STOCK). |
+| **POST** | `/api/shipments/despachar/{id}`| Admin | Dispatch order (SHIPPED). |
+| **POST** | `/api/shipments/entregar/{id}` | Admin | Mark delivery (DELIVERED). |
+
+For a complete list of endpoints, import the provided Postman collection (if available) or check the underlying Controllers.
 
 ### Nuevos Endpoints API
 
@@ -1418,7 +1731,7 @@ public class DireccionController {
 
 package com.ecommerce.controller;
 
-import com.ecommerce.model.Orden;
+import com.ecommerce.dto.OrdenDTO;
 import com.ecommerce.service.OrdenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -1435,25 +1748,61 @@ public class OrdenController {
 
     @PostMapping("/checkout")
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<Orden> checkout() {
+    public ResponseEntity<OrdenDTO> checkout() {
         return ResponseEntity.ok(ordenService.crearOrdenDesdeCarrito());
     }
 
+    @PostMapping("/{id}/cancelar")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+    public ResponseEntity<OrdenDTO> cancelarOrden(@PathVariable Long id) {
+        return ResponseEntity.ok(ordenService.cancelarOrden(id));
+    }
+
     @GetMapping
-    public ResponseEntity<List<Orden>> listarOrdenes() {
+    public ResponseEntity<List<OrdenDTO>> listarOrdenes() {
         org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
                 .getContext().getAuthentication();
 
         if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-            return ResponseEntity.ok(ordenService.listarTodas());
+            return ResponseEntity.ok(ordenService.listarTodasDTO());
         }
         return ResponseEntity.ok(ordenService.listarOrdenesPropias());
     }
 
     @GetMapping("/usuario/{usuarioId}")
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @usuarioSecurity.isOwner(#usuarioId)")
-    public ResponseEntity<List<Orden>> listarOrdenesUsuario(@PathVariable Long usuarioId) {
+    public ResponseEntity<List<OrdenDTO>> listarOrdenesUsuario(@PathVariable Long usuarioId) {
         return ResponseEntity.ok(ordenService.listarOrdenesUsuario(usuarioId));
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\controller\PaymentController.java ================
+
+package com.ecommerce.controller;
+
+import com.ecommerce.dto.OrdenDTO;
+import com.ecommerce.service.OrdenService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/payments")
+public class PaymentController {
+
+    @Autowired
+    private OrdenService ordenService;
+
+    @PostMapping("/procesar")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<OrdenDTO> procesarPago(@RequestBody Map<String, Object> body) {
+        Long ordenId = Long.valueOf(body.get("ordenId").toString());
+        String metodoPago = body.getOrDefault("metodoPago", "Tarjeta").toString();
+
+        OrdenDTO ordenProcesada = ordenService.procesarPago(ordenId, metodoPago);
+        return ResponseEntity.ok(ordenProcesada);
     }
 }
 
@@ -1482,8 +1831,17 @@ public class ProductoController {
     private ProductoService productoService;
 
     @GetMapping
-    public List<ProductoDTO> listarProductos() {
-        return productoService.listarProductos();
+    public List<ProductoDTO> listarProductos(Authentication auth) {
+
+        // Caso 1: usuario NO autenticado (landing page)
+        if (auth == null) {
+            return productoService.listarProductosPublicos();
+        }
+
+        // Caso 2: usuario autenticado
+        String email = auth.getName();
+
+        return productoService.listarProductos(email);
     }
 
     @GetMapping("/{id}")
@@ -1513,6 +1871,46 @@ public class ProductoController {
     public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
         productoService.eliminarProducto(id);
         return ResponseEntity.noContent().build();
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\controller\ShipmentController.java ================
+
+package com.ecommerce.controller;
+
+import com.ecommerce.dto.OrdenDTO;
+import com.ecommerce.service.OrdenService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/shipments")
+public class ShipmentController {
+
+    @Autowired
+    private OrdenService ordenService;
+
+    @PostMapping("/despachar/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<OrdenDTO> despacharOrden(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+
+        String courier = body.get("courier");
+        String trackingNumber = body.get("trackingNumber");
+
+        OrdenDTO orden = ordenService.despacharOrden(id, courier, trackingNumber);
+        return ResponseEntity.ok(orden);
+    }
+
+    @PostMapping("/entregar/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<OrdenDTO> entregarOrden(@PathVariable Long id) {
+        OrdenDTO orden = ordenService.entregarOrden(id);
+        return ResponseEntity.ok(orden);
     }
 }
 
@@ -1724,6 +2122,64 @@ public record LoginResponse(Long id, String nombre, Role role, String token) {
 }
 
 
+================ backend\src\main\java\com\ecommerce\dto\OrdenDetalleDTO.java ================
+
+package com.ecommerce.dto;
+
+import lombok.Data;
+
+@Data
+public class OrdenDetalleDTO {
+
+    private Long productoId;
+    private String productoNombre;
+    private Double subtotal;
+    private Integer cantidad;
+}
+
+================ backend\src\main\java\com\ecommerce\dto\OrdenDTO.java ================
+
+package com.ecommerce.dto;
+
+import lombok.Data;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Data
+public class OrdenDTO {
+
+    private Long id;
+    private String estado;
+    private LocalDateTime fechaCreacion;
+    private LocalDateTime ultimaModificacion;
+
+    private String usuarioEmail;
+
+    private Double total;
+
+    private List<OrdenDetalleDTO> detalles;
+
+    private PaymentTransactionDTO paymentTransaction;
+    private ShipmentDTO shipment;
+}
+
+================ backend\src\main\java\com\ecommerce\dto\PaymentTransactionDTO.java ================
+
+package com.ecommerce.dto;
+
+import lombok.Data;
+import java.time.LocalDateTime;
+
+@Data
+public class PaymentTransactionDTO {
+    private Long id;
+    private String paymentMethod;
+    private String status;
+    private Double amount;
+    private LocalDateTime transactionDate;
+}
+
+
 ================ backend\src\main\java\com\ecommerce\dto\ProductoDTO.java ================
 
 package com.ecommerce.dto;
@@ -1857,6 +2313,23 @@ public record ProductUpdateRequest(
 }
 
 
+================ backend\src\main\java\com\ecommerce\dto\ShipmentDTO.java ================
+
+package com.ecommerce.dto;
+
+import lombok.Data;
+import java.time.LocalDateTime;
+
+@Data
+public class ShipmentDTO {
+    private Long id;
+    private LocalDateTime dateDispatch;
+    private LocalDateTime dateDelivered;
+    private String courier;
+    private String trackingNumber;
+}
+
+
 ================ backend\src\main\java\com\ecommerce\dto\UsuarioUpdateRequest.java ================
 
 // src/main/java/com/ecommerce/dto/UsuarioUpdateRequest.java
@@ -1873,6 +2346,140 @@ public record UsuarioUpdateRequest(
         LocalDate fechaNacimiento,
         Role role) {
 }
+
+================ backend\src\main\java\com\ecommerce\inventory\GestorInventario.java ================
+
+package com.ecommerce.inventory;
+
+import com.ecommerce.model.Producto;
+
+/**
+ * Clase abstracta que define el contrato para la gestión de inventario.
+ * Demuestra los principios OOP de Abstracción y Polimorfismo.
+ */
+public abstract class GestorInventario {
+
+    /**
+     * Verifica si hay stock suficiente para un producto.
+     * 
+     * @param producto el producto a verificar
+     * @param cantidad la cantidad requerida
+     * @return true si hay disponibilidad, false de lo contrario
+     */
+    public abstract boolean verificarStock(Producto producto, int cantidad);
+
+    /**
+     * Actualiza el stock de un producto. Positivo para añadir, negativo para
+     * descontar.
+     * 
+     * @param producto           el producto cuyo stock se modificará
+     * @param cantidadDiferencia la diferencia a aplicar
+     */
+    public abstract void actualizarStock(Producto producto, int cantidadDiferencia);
+
+}
+
+
+================ backend\src\main\java\com\ecommerce\inventory\GestorInventarioDigital.java ================
+
+package com.ecommerce.inventory;
+
+import com.ecommerce.model.Producto;
+import com.ecommerce.model.ProductoDigital;
+import org.springframework.stereotype.Component;
+
+/**
+ * Implementación de Inventario para Productos Digitales.
+ * Los productos digitales tienen stock ilimitado infinito en cuanto a venta.
+ */
+@Component
+public class GestorInventarioDigital extends GestorInventario {
+
+    @Override
+    public boolean verificarStock(Producto producto, int cantidad) {
+        // Los productos digitales siempre tienen stock disponible en nuestra lógica de
+        // negocio
+        if (producto instanceof ProductoDigital) {
+            return true;
+        }
+        throw new IllegalArgumentException("El producto debe ser digital.");
+    }
+
+    @Override
+    public void actualizarStock(Producto producto, int cantidadDiferencia) {
+        // Nada que hacer para digitales porque no manejan inventario contable.
+        // Se deja vacío a propósito demostrando polimorfismo seguro.
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\inventory\GestorInventarioFactory.java ================
+
+package com.ecommerce.inventory;
+
+import com.ecommerce.model.Producto;
+import com.ecommerce.model.ProductoFisico;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * Factory (o Adapter) para obtener el Gestor de Inventario adecuado
+ * según el polimorfismo del Producto.
+ */
+@Service
+public class GestorInventarioFactory {
+
+    @Autowired
+    private GestorInventarioFisico gestorFisico;
+
+    @Autowired
+    private GestorInventarioDigital gestorDigital;
+
+    public GestorInventario obtenerGestor(Producto producto) {
+        if (producto instanceof ProductoFisico) {
+            return gestorFisico;
+        }
+        return gestorDigital;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\inventory\GestorInventarioFisico.java ================
+
+package com.ecommerce.inventory;
+
+import com.ecommerce.model.Producto;
+import com.ecommerce.model.ProductoFisico;
+import org.springframework.stereotype.Component;
+
+/**
+ * Implementación de Inventario para Productos Físicos.
+ * El stock decae al confirmar un pago de orden.
+ */
+@Component
+public class GestorInventarioFisico extends GestorInventario {
+
+    @Override
+    public boolean verificarStock(Producto producto, int cantidad) {
+        if (producto instanceof ProductoFisico) {
+            ProductoFisico pf = (ProductoFisico) producto;
+            return pf.getStock() != null && pf.getStock() >= cantidad;
+        }
+        throw new IllegalArgumentException("El producto debe ser físico.");
+    }
+
+    @Override
+    public void actualizarStock(Producto producto, int cantidadDiferencia) {
+        if (producto instanceof ProductoFisico) {
+            ProductoFisico pf = (ProductoFisico) producto;
+            int stockActual = pf.getStock() != null ? pf.getStock() : 0;
+            pf.setStock(stockActual + cantidadDiferencia);
+        } else {
+            throw new IllegalArgumentException("El producto debe ser físico.");
+        }
+    }
+}
+
 
 ================ backend\src\main\java\com\ecommerce\model\Administrador.java ================
 
@@ -2101,6 +2708,25 @@ public class Direccion {
 }
 
 
+================ backend\src\main\java\com\ecommerce\model\EstadoOrden.java ================
+
+package com.ecommerce.model;
+
+/**
+ * Enumeración que representa los posibles estados del ciclo de vida de una
+ * Orden.
+ */
+public enum EstadoOrden {
+    CREATED, // Orden generada desde el carrito
+    PAYMENT_PENDING, // La orden requiere pago o el pago anterior no fue exitoso
+    PAID, // El pago fue procesado exitosamente
+    OUT_OF_STOCK, // Uno o más productos no tienen stock
+    CANCELLED, // La orden fue cancelada
+    SHIPPED, // El pedido fue despachado
+    DELIVERED // El pedido fue entregado
+}
+
+
 ================ backend\src\main\java\com\ecommerce\model\Orden.java ================
 
 package com.ecommerce.model;
@@ -2123,18 +2749,44 @@ public class Orden {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private LocalDateTime fecha;
+    private EstadoOrden estado = EstadoOrden.CREATED;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime fechaCreacion;
+
+    @Column(nullable = false)
+    private LocalDateTime ultimaModificacion;
 
     @Column(nullable = false)
     private Double total;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
     @OneToMany(mappedBy = "orden", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrdenDetalle> detalles = new ArrayList<>();
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "payment_transaction_id", referencedColumnName = "id")
+    private PaymentTransaction paymentTransaction;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "shipment_id", referencedColumnName = "id")
+    private Shipment shipment;
+
+    @PrePersist
+    protected void onCreate() {
+        this.fechaCreacion = LocalDateTime.now();
+        this.ultimaModificacion = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.ultimaModificacion = LocalDateTime.now();
+    }
 
     public void agregarDetalle(OrdenDetalle detalle) {
         detalles.add(detalle);
@@ -2181,6 +2833,52 @@ public class OrdenDetalle {
         this.cantidad = cantidad;
         this.subtotal = subtotal;
         this.producto = producto;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\model\PaymentTransaction.java ================
+
+package com.ecommerce.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Data
+@NoArgsConstructor
+@Entity
+@Table(name = "payment_transactions")
+public class PaymentTransaction {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String paymentMethod; // e.g. "Tarjeta", "PayPal", "Transferencia"
+
+    @Column(nullable = false)
+    private String status; // e.g. "SUCCESS", "FAILED"
+
+    @Column(nullable = false)
+    private Double amount;
+
+    @Column(nullable = false)
+    private LocalDateTime transactionDate;
+
+    @OneToOne(mappedBy = "paymentTransaction")
+    @JsonIgnore
+    private Orden orden;
+
+    public PaymentTransaction(String paymentMethod, String status, Double amount, LocalDateTime transactionDate) {
+        this.paymentMethod = paymentMethod;
+        this.status = status;
+        this.amount = amount;
+        this.transactionDate = transactionDate;
     }
 }
 
@@ -2510,6 +3208,51 @@ public enum Role {
 }
 
 
+================ backend\src\main\java\com\ecommerce\model\Shipment.java ================
+
+package com.ecommerce.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Data
+@NoArgsConstructor
+@Entity
+@Table(name = "shipments")
+public class Shipment {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private LocalDateTime dateDispatch;
+
+    @Column
+    private LocalDateTime dateDelivered;
+
+    @Column(nullable = false)
+    private String courier;
+
+    @Column(nullable = false)
+    private String trackingNumber;
+
+    @OneToOne(mappedBy = "shipment")
+    @JsonIgnore
+    private Orden orden;
+
+    public Shipment(LocalDateTime dateDispatch, String courier, String trackingNumber) {
+        this.dateDispatch = dateDispatch;
+        this.courier = courier;
+        this.trackingNumber = trackingNumber;
+    }
+}
+
+
 ================ backend\src\main\java\com\ecommerce\model\Usuario.java ================
 
 package com.ecommerce.model;
@@ -2551,6 +3294,183 @@ public abstract class Usuario {
         this.password = password;
         this.fechaNacimiento = fechaNacimiento;
         this.role = role;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\payment\PagoPayPal.java ================
+
+package com.ecommerce.payment;
+
+import com.ecommerce.model.Orden;
+import com.ecommerce.model.PaymentTransaction;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+
+@Service("PagoPayPal")
+public class PagoPayPal implements ProcesoPago {
+
+    @Override
+    public void iniciarPago(Orden orden) {
+        System.out.println("Iniciando redirección a PayPal para la Orden: " + orden.getId());
+    }
+
+    @Override
+    public boolean verificarPago(Orden orden) {
+        // Lógica simulada
+        return Math.random() > 0.05;
+    }
+
+    @Override
+    public PaymentTransaction confirmarPago(Orden orden, Double amount) {
+        System.out.println("Pago con PayPal confirmado exitosamente.");
+        return new PaymentTransaction("PayPal", "SUCCESS", amount, LocalDateTime.now());
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\payment\PagoTarjeta.java ================
+
+package com.ecommerce.payment;
+
+import com.ecommerce.model.Orden;
+import com.ecommerce.model.PaymentTransaction;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+
+@Service("PagoTarjeta")
+public class PagoTarjeta implements ProcesoPago {
+
+    @Override
+    public void iniciarPago(Orden orden) {
+        System.out.println("Iniciando pago con Tarjeta de Crédito/Débito para la Orden: " + orden.getId());
+    }
+
+    @Override
+    public boolean verificarPago(Orden orden) {
+        // Lógica simulada: 95% de éxito
+        return Math.random() > 0.05;
+    }
+
+    @Override
+    public PaymentTransaction confirmarPago(Orden orden, Double amount) {
+        System.out.println("Pago con Tarjeta confirmado exitosamente.");
+        return new PaymentTransaction("Tarjeta", "SUCCESS", amount, LocalDateTime.now());
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\payment\PagoTransferencia.java ================
+
+package com.ecommerce.payment;
+
+import com.ecommerce.model.Orden;
+import com.ecommerce.model.PaymentTransaction;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+
+@Service("PagoTransferencia")
+public class PagoTransferencia implements ProcesoPago {
+
+    @Override
+    public void iniciarPago(Orden orden) {
+        System.out.println("Generando instrucciones de Transferencia Bancaria para Orden: " + orden.getId());
+    }
+
+    @Override
+    public boolean verificarPago(Orden orden) {
+        // Lógica simulada: asume verificación manual rápida por admin
+        return true;
+    }
+
+    @Override
+    public PaymentTransaction confirmarPago(Orden orden, Double amount) {
+        System.out.println("Pago por Transferencia validado.");
+        return new PaymentTransaction("Transferencia", "SUCCESS", amount, LocalDateTime.now());
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\payment\ProcesoPago.java ================
+
+package com.ecommerce.payment;
+
+import com.ecommerce.model.Orden;
+import com.ecommerce.model.PaymentTransaction;
+
+/**
+ * Interfaz que define el contrato para procesar pagos.
+ * Demuestra los principios OOP de Interfaces y Polimorfismo.
+ */
+public interface ProcesoPago {
+
+    /**
+     * Inicia el proceso de pago.
+     * 
+     * @param orden La orden a pagar
+     */
+    void iniciarPago(Orden orden);
+
+    /**
+     * Verifica asíncronamente si el pago fue exitoso o falló.
+     * 
+     * @param orden La orden sujeta verificación
+     * @return true si el pago está aprobado, false si falló o sigue pendiente
+     */
+    boolean verificarPago(Orden orden);
+
+    /**
+     * Consolida el pago y genera la transacción resultante.
+     * 
+     * @param orden  La orden pagada.
+     * @param amount Monto consolidado.
+     * @return Transacción de pago registrada
+     */
+    PaymentTransaction confirmarPago(Orden orden, Double amount);
+}
+
+
+================ backend\src\main\java\com\ecommerce\payment\ProcesoPagoFactory.java ================
+
+package com.ecommerce.payment;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+/**
+ * Factory para obtener la estrategia de pago correcta.
+ */
+@Service
+public class ProcesoPagoFactory {
+
+    @Autowired
+    @Qualifier("PagoTarjeta")
+    private ProcesoPago pagoTarjeta;
+
+    @Autowired
+    @Qualifier("PagoPayPal")
+    private ProcesoPago pagoPayPal;
+
+    @Autowired
+    @Qualifier("PagoTransferencia")
+    private ProcesoPago pagoTransferencia;
+
+    public ProcesoPago obtenerMetodo(String method) {
+        if (method == null)
+            return pagoTarjeta;
+        switch (method.toLowerCase()) {
+            case "paypal":
+                return pagoPayPal;
+            case "transferencia":
+                return pagoTransferencia;
+            case "tarjeta":
+            default:
+                return pagoTarjeta;
+        }
     }
 }
 
@@ -2608,6 +3528,19 @@ public interface OrdenRepository extends JpaRepository<Orden, Long> {
 }
 
 
+================ backend\src\main\java\com\ecommerce\repository\PaymentTransactionRepository.java ================
+
+package com.ecommerce.repository;
+
+import com.ecommerce.model.PaymentTransaction;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface PaymentTransactionRepository extends JpaRepository<PaymentTransaction, Long> {
+}
+
+
 ================ backend\src\main\java\com\ecommerce\repository\ProductoRepository.java ================
 
 package com.ecommerce.repository;
@@ -2615,9 +3548,27 @@ package com.ecommerce.repository;
 import com.ecommerce.model.Producto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 @Repository
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
+
+    // NUEVO MÉTODO
+    List<Producto> findByProveedor(String proveedor);
+
+}
+
+
+================ backend\src\main\java\com\ecommerce\repository\ShipmentRepository.java ================
+
+package com.ecommerce.repository;
+
+import com.ecommerce.model.Shipment;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
 }
 
 
@@ -3049,10 +4000,20 @@ public class DireccionService {
 
 package com.ecommerce.service;
 
+import com.ecommerce.dto.OrdenDTO;
+import com.ecommerce.dto.OrdenDetalleDTO;
+import com.ecommerce.dto.PaymentTransactionDTO;
+import com.ecommerce.dto.ShipmentDTO;
+import com.ecommerce.inventory.GestorInventario;
+import com.ecommerce.inventory.GestorInventarioFactory;
 import com.ecommerce.model.*;
-import com.ecommerce.repository.OrdenRepository;
-import com.ecommerce.repository.UsuarioRepository;
+import com.ecommerce.payment.ProcesoPago;
+import com.ecommerce.payment.ProcesoPagoFactory;
 import com.ecommerce.repository.CarritoRepository;
+import com.ecommerce.repository.OrdenRepository;
+import com.ecommerce.repository.PaymentTransactionRepository;
+import com.ecommerce.repository.ShipmentRepository;
+import com.ecommerce.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -3075,14 +4036,30 @@ public class OrdenService {
     @Autowired
     private CarritoRepository carritoRepository;
 
+    @Autowired
+    private PaymentTransactionRepository paymentTransactionRepository;
+
+    @Autowired
+    private ShipmentRepository shipmentRepository;
+
+    @Autowired
+    private GestorInventarioFactory inventarioFactory;
+
+    @Autowired
+    private ProcesoPagoFactory pagoFactory;
+
     private Usuario getUsuarioActual() {
         String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()
                 .getName();
         return usuarioRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
+    /**
+     * FASE 1: Creación de la Orden (CREATED)
+     * Convierte el carrito actual en una nueva orden en estado CREATED.
+     */
     @Transactional
-    public Orden crearOrdenDesdeCarrito() {
+    public OrdenDTO crearOrdenDesdeCarrito() {
         Usuario usuario = getUsuarioActual();
         Carrito carrito = carritoRepository.findByUsuario(usuario)
                 .orElseThrow(() -> new RuntimeException("Carrito no encontrado"));
@@ -3093,25 +4070,18 @@ public class OrdenService {
 
         Orden orden = new Orden();
         orden.setUsuario(usuario);
-        orden.setFecha(LocalDateTime.now());
-        // Simular cálculo de total (debería ser más robusto en producción)
+        orden.setEstado(EstadoOrden.CREATED);
 
-        // Agrupar productos para contar cantidad
         Map<Producto, Long> conteoProductos = carrito.getProductos().stream()
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
         double total = 0.0;
-
         for (Map.Entry<Producto, Long> entry : conteoProductos.entrySet()) {
             Producto producto = entry.getKey();
             Integer cantidad = entry.getValue().intValue();
             Double subtotal = producto.getPrecio() * cantidad;
 
-            OrdenDetalle detalle = new OrdenDetalle(); // Ajuste constructor si es necesario
-            detalle.setCantidad(cantidad);
-            detalle.setSubtotal(subtotal);
-            detalle.setProducto(producto);
-
+            OrdenDetalle detalle = new OrdenDetalle(cantidad, subtotal, producto);
             orden.agregarDetalle(detalle);
             total += subtotal;
         }
@@ -3122,22 +4092,207 @@ public class OrdenService {
         carrito.getProductos().clear();
         carritoRepository.save(carrito);
 
-        return ordenRepository.save(orden);
+        return toDTO(ordenRepository.save(orden));
     }
 
-    @SuppressWarnings("null")
-    public List<Orden> listarOrdenesUsuario(Long usuarioId) {
+    /**
+     * FASE 2: Procesar Pago y Verificar Stock
+     */
+    @Transactional
+    public OrdenDTO procesarPago(Long ordenId, String metodoPago) {
+        Orden orden = ordenRepository.findById(ordenId)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+        // Validaciones Máquina de Estados
+        if (orden.getEstado() == EstadoOrden.PAID || orden.getEstado() == EstadoOrden.SHIPPED
+                || orden.getEstado() == EstadoOrden.DELIVERED) {
+            throw new RuntimeException("La orden ya fue pagada o procesada.");
+        }
+        if (orden.getEstado() == EstadoOrden.CANCELLED) {
+            throw new RuntimeException("La orden está cancelada.");
+        }
+
+        // 1. Verificar Stock Múltiple (OOP Abstraction)
+        boolean hasStock = true;
+        for (OrdenDetalle detalle : orden.getDetalles()) {
+            GestorInventario gestor = inventarioFactory.obtenerGestor(detalle.getProducto());
+            if (!gestor.verificarStock(detalle.getProducto(), detalle.getCantidad())) {
+                hasStock = false;
+                break;
+            }
+        }
+
+        if (!hasStock) {
+            orden.setEstado(EstadoOrden.OUT_OF_STOCK);
+            return toDTO(ordenRepository.save(orden));
+        }
+
+        // Transición a Payment Pending si hay stock
+        orden.setEstado(EstadoOrden.PAYMENT_PENDING);
+
+        // 2. Procesar Pago (OOP Interface)
+        ProcesoPago procesoPago = pagoFactory.obtenerMetodo(metodoPago);
+        procesoPago.iniciarPago(orden);
+
+        boolean pagoExitoso = procesoPago.verificarPago(orden);
+
+        if (pagoExitoso) {
+            PaymentTransaction trx = procesoPago.confirmarPago(orden, orden.getTotal());
+            if (trx != null) {
+                trx = paymentTransactionRepository.save(trx);
+                orden.setPaymentTransaction(trx);
+            }
+            orden.setEstado(EstadoOrden.PAID);
+
+            // 3. Descontar Stock definitivo porque ya se pagó
+            for (OrdenDetalle detalle : orden.getDetalles()) {
+                GestorInventario gestor = inventarioFactory.obtenerGestor(detalle.getProducto());
+                gestor.actualizarStock(detalle.getProducto(), -detalle.getCantidad());
+            }
+        } else {
+            // Se queda en pending si falla (el prompt indica: "Si un intento de pago falla,
+            // el estado permanece PAYMENT_PENDING")
+            orden.setEstado(EstadoOrden.PAYMENT_PENDING);
+        }
+
+        return toDTO(ordenRepository.save(orden));
+    }
+
+    /**
+     * Cancelar Orden (Cualquiera mientras no esté pagada/enviada)
+     */
+    @Transactional
+    public OrdenDTO cancelarOrden(Long ordenId) {
+        Orden orden = ordenRepository.findById(ordenId)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+        validarPropietarioOAdmin(orden);
+
+        if (orden.getEstado() == EstadoOrden.PAID || orden.getEstado() == EstadoOrden.SHIPPED
+                || orden.getEstado() == EstadoOrden.DELIVERED) {
+            throw new RuntimeException("No se puede cancelar en estado: " + orden.getEstado());
+        }
+
+        orden.setEstado(EstadoOrden.CANCELLED);
+        // Si no descontamos stock sino hasta PAID, no devolvemos nada al cancelar.
+        return toDTO(ordenRepository.save(orden));
+    }
+
+    /**
+     * Despachar Orden (Solo ADMIN)
+     */
+    @Transactional
+    public OrdenDTO despacharOrden(Long ordenId, String courier, String trackingNumber) {
+        Orden orden = ordenRepository.findById(ordenId)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+        if (orden.getEstado() != EstadoOrden.PAID) {
+            throw new RuntimeException("Despacho permitido solo si estado = PAID");
+        }
+
+        Shipment shipment = new Shipment(LocalDateTime.now(), courier, trackingNumber);
+        shipment = shipmentRepository.save(shipment);
+
+        orden.setShipment(shipment);
+        orden.setEstado(EstadoOrden.SHIPPED);
+
+        return toDTO(ordenRepository.save(orden));
+    }
+
+    /**
+     * Confirmar Entrega (Solo ADMIN)
+     */
+    @Transactional
+    public OrdenDTO entregarOrden(Long ordenId) {
+        Orden orden = ordenRepository.findById(ordenId)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+        if (orden.getEstado() != EstadoOrden.SHIPPED) {
+            throw new RuntimeException("La orden debe estar despachada (SHIPPED)");
+        }
+
+        if (orden.getShipment() != null) {
+            orden.getShipment().setDateDelivered(LocalDateTime.now());
+        }
+        orden.setEstado(EstadoOrden.DELIVERED);
+
+        return toDTO(ordenRepository.save(orden));
+    }
+
+    private void validarPropietarioOAdmin(Orden orden) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin && !orden.getUsuario().getEmail().equals(auth.getName())) {
+            throw new RuntimeException("No tiene permisos sobre esta orden.");
+        }
+    }
+
+    public List<OrdenDTO> listarOrdenesUsuario(Long usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        return ordenRepository.findByUsuario(usuario);
+        return ordenRepository.findByUsuario(usuario).stream().map(this::toDTO).toList();
     }
 
-    public List<Orden> listarOrdenesPropias() {
-        return ordenRepository.findByUsuario(getUsuarioActual());
+    public List<OrdenDTO> listarOrdenesPropias() {
+        return ordenRepository.findByUsuario(getUsuarioActual()).stream().map(this::toDTO).toList();
     }
 
-    public List<Orden> listarTodas() {
-        return ordenRepository.findAll();
+    private OrdenDTO toDTO(Orden orden) {
+
+        OrdenDTO dto = new OrdenDTO();
+
+        dto.setId(orden.getId());
+        dto.setEstado(orden.getEstado().name());
+        dto.setFechaCreacion(orden.getFechaCreacion());
+        dto.setUltimaModificacion(orden.getUltimaModificacion());
+
+        dto.setUsuarioEmail(orden.getUsuario().getEmail());
+
+        dto.setTotal(
+                orden.getDetalles()
+                        .stream()
+                        .mapToDouble(d -> d.getSubtotal() * d.getCantidad())
+                        .sum());
+
+        dto.setDetalles(
+                orden.getDetalles().stream().map(d -> {
+                    OrdenDetalleDTO det = new OrdenDetalleDTO();
+                    det.setProductoId(d.getProducto().getId());
+                    det.setProductoNombre(d.getProducto().getNombre());
+                    det.setSubtotal(d.getSubtotal());
+                    det.setCantidad(d.getCantidad());
+                    return det;
+                }).toList());
+
+        if (orden.getPaymentTransaction() != null) {
+            PaymentTransactionDTO pDto = new PaymentTransactionDTO();
+            pDto.setId(orden.getPaymentTransaction().getId());
+            pDto.setPaymentMethod(orden.getPaymentTransaction().getPaymentMethod());
+            pDto.setStatus(orden.getPaymentTransaction().getStatus());
+            pDto.setAmount(orden.getPaymentTransaction().getAmount());
+            pDto.setTransactionDate(orden.getPaymentTransaction().getTransactionDate());
+            dto.setPaymentTransaction(pDto);
+        }
+
+        if (orden.getShipment() != null) {
+            ShipmentDTO sDto = new ShipmentDTO();
+            sDto.setId(orden.getShipment().getId());
+            sDto.setDateDispatch(orden.getShipment().getDateDispatch());
+            sDto.setDateDelivered(orden.getShipment().getDateDelivered());
+            sDto.setCourier(orden.getShipment().getCourier());
+            sDto.setTrackingNumber(orden.getShipment().getTrackingNumber());
+            dto.setShipment(sDto);
+        }
+
+        return dto;
+    }
+
+    public List<OrdenDTO> listarTodasDTO() {
+        return ordenRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .toList();
     }
 }
 
@@ -3152,21 +4307,26 @@ import com.ecommerce.model.Producto;
 import com.ecommerce.model.ProductoDigital;
 import com.ecommerce.model.ProductoFisico;
 import com.ecommerce.model.ProductoImagen;
+import com.ecommerce.model.Proveedor;
+import com.ecommerce.model.Role;
 import com.ecommerce.model.Usuario;
 import com.ecommerce.repository.ProductoRepository;
+import com.ecommerce.repository.UsuarioRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductoService {
 
     @Autowired
     private ProductoRepository productoRepository;
+
+    private final UsuarioRepository usuarioRepository;
 
     @Autowired
     private UsuarioService usuarioService;
@@ -3190,10 +4350,45 @@ public class ProductoService {
         return ProductoDTO.fromEntity(productoRepository.save(producto));
     }
 
-    public List<ProductoDTO> listarProductos() {
-        return productoRepository.findAll().stream()
+    public ProductoService(ProductoRepository productoRepository, UsuarioRepository usuarioRepository) {
+        this.productoRepository = productoRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
+
+    public List<ProductoDTO> listarProductosPublicos() {
+
+        return productoRepository.findAll()
+                .stream()
                 .map(ProductoDTO::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    public List<ProductoDTO> listarProductos(String emailUsuario) {
+
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        List<Producto> productos;
+
+        if (usuario.getRole() == Role.ADMIN) {
+
+            productos = productoRepository.findAll();
+
+        } else if (usuario.getRole() == Role.SUPPLIER) {
+
+            Proveedor proveedor = (Proveedor) usuario;
+
+            productos = productoRepository.findByProveedor(proveedor.getEmpresa());
+
+        } else {
+
+            // CUSTOMER
+            productos = productoRepository.findAll();
+        }
+
+        return productos.stream()
+                .map(ProductoDTO::fromEntity)
+                .toList();
     }
 
     @SuppressWarnings("null")
@@ -3448,53 +4643,80 @@ spring.jpa.show-sql=true
 server.error.include-message=always
 
 
+================ backend\target\maven-archiver\pom.properties ================
+
+artifactId=backend
+groupId=com.ecommerce
+version=0.0.1-SNAPSHOT
+
+
 ================ backend\target\maven-status\maven-compiler-plugin\compile\default-compile\createdFiles.lst ================
 
 com\ecommerce\repository\DireccionRepository.class
 com\ecommerce\dto\ProductoRequestDTO.class
 com\ecommerce\service\ProductoService.class
-com\ecommerce\security\UsuarioSecurity.class
-com\ecommerce\repository\ProductoRepository.class
-com\ecommerce\model\Cliente.class
-com\ecommerce\dto\ProductUpdateRequest.class
+com\ecommerce\inventory\GestorInventario.class
+com\ecommerce\model\PaymentTransaction.class
 com\ecommerce\service\UsuarioService.class
 com\ecommerce\service\AdministradorService.class
 com\ecommerce\repository\UsuarioRepository.class
-com\ecommerce\service\OrdenService.class
-com\ecommerce\model\Proveedor.class
-com\ecommerce\controller\OrdenController.class
-com\ecommerce\dto\DireccionDTO.class
+com\ecommerce\dto\OrdenDetalleDTO.class
 com\ecommerce\controller\AuthController.class
-com\ecommerce\model\ProductoFisico.class
+com\ecommerce\payment\ProcesoPagoFactory.class
 com\ecommerce\model\Usuario.class
 com\ecommerce\model\ProductoImagen.class
-com\ecommerce\service\DireccionService.class
 com\ecommerce\config\SecurityConfig.class
-com\ecommerce\dto\ProductoDTO.class
+com\ecommerce\model\EstadoOrden.class
 com\ecommerce\controller\DireccionController.class
-com\ecommerce\security\TokenAuthenticationFilter.class
 com\ecommerce\model\Direccion.class
 com\ecommerce\dto\LoginRequest.class
 com\ecommerce\config\WebConfig.class
 com\ecommerce\controller\ProductoController.class
-com\ecommerce\controller\CarritoController.class
-com\ecommerce\model\Producto.class
 com\ecommerce\dto\ProductoImagenDTO.class
 com\ecommerce\model\OrdenDetalle.class
+com\ecommerce\dto\ShipmentDTO.class
 com\ecommerce\dto\UsuarioUpdateRequest.class
+com\ecommerce\payment\PagoTarjeta.class
+com\ecommerce\model\Shipment.class
 com\ecommerce\dto\LoginResponse.class
-com\ecommerce\model\Role.class
 com\ecommerce\dto\DireccionRequestDTO.class
-com\ecommerce\config\DataSeeder.class
-com\ecommerce\controller\UsuarioController.class
-com\ecommerce\model\ProductoDigital.class
+com\ecommerce\controller\ShipmentController.class
 com\ecommerce\model\Carrito.class
+com\ecommerce\inventory\GestorInventarioFisico.class
 com\ecommerce\BackendApplication.class
-com\ecommerce\model\Administrador.class
-com\ecommerce\repository\CarritoRepository.class
 com\ecommerce\repository\OrdenRepository.class
 com\ecommerce\model\Orden.class
 com\ecommerce\service\CarritoService.class
+com\ecommerce\inventory\GestorInventarioFactory.class
+com\ecommerce\security\UsuarioSecurity.class
+com\ecommerce\repository\ProductoRepository.class
+com\ecommerce\model\Cliente.class
+com\ecommerce\dto\ProductUpdateRequest.class
+com\ecommerce\repository\PaymentTransactionRepository.class
+com\ecommerce\service\OrdenService.class
+com\ecommerce\model\Proveedor.class
+com\ecommerce\controller\OrdenController.class
+com\ecommerce\dto\DireccionDTO.class
+com\ecommerce\model\ProductoFisico.class
+com\ecommerce\service\DireccionService.class
+com\ecommerce\dto\ProductoDTO.class
+com\ecommerce\repository\ShipmentRepository.class
+com\ecommerce\payment\PagoPayPal.class
+com\ecommerce\payment\PagoTransferencia.class
+com\ecommerce\security\TokenAuthenticationFilter.class
+com\ecommerce\dto\OrdenDTO.class
+com\ecommerce\payment\ProcesoPago.class
+com\ecommerce\controller\CarritoController.class
+com\ecommerce\model\Producto.class
+com\ecommerce\controller\PaymentController.class
+com\ecommerce\inventory\GestorInventarioDigital.class
+com\ecommerce\model\Role.class
+com\ecommerce\config\DataSeeder.class
+com\ecommerce\controller\UsuarioController.class
+com\ecommerce\model\ProductoDigital.class
+com\ecommerce\dto\PaymentTransactionDTO.class
+com\ecommerce\model\Administrador.class
+com\ecommerce\repository\CarritoRepository.class
 
 
 ================ backend\target\maven-status\maven-compiler-plugin\compile\default-compile\inputFiles.lst ================
@@ -3507,34 +4729,54 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\CarritoController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\DireccionController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\OrdenController.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\PaymentController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\ProductoController.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\ShipmentController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\UsuarioController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\DireccionDTO.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\DireccionRequestDTO.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\LoginRequest.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\LoginResponse.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\OrdenDetalleDTO.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\OrdenDTO.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\PaymentTransactionDTO.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\ProductoDTO.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\ProductoImagenDTO.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\ProductoRequestDTO.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\ProductUpdateRequest.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\ShipmentDTO.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\UsuarioUpdateRequest.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\inventory\GestorInventario.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\inventory\GestorInventarioDigital.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\inventory\GestorInventarioFactory.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\inventory\GestorInventarioFisico.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Administrador.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Carrito.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Cliente.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Direccion.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\EstadoOrden.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Orden.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\OrdenDetalle.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\PaymentTransaction.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Producto.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\ProductoDigital.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\ProductoFisico.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\ProductoImagen.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Proveedor.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Role.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Shipment.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Usuario.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\payment\PagoPayPal.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\payment\PagoTarjeta.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\payment\PagoTransferencia.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\payment\ProcesoPago.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\payment\ProcesoPagoFactory.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\CarritoRepository.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\DireccionRepository.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\OrdenRepository.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\PaymentTransactionRepository.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\ProductoRepository.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\ShipmentRepository.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\UsuarioRepository.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\security\TokenAuthenticationFilter.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\security\UsuarioSecurity.java
@@ -3641,6 +4883,196 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
         </main>
 
         <script type="module" src="js/carrito.js"></script>
+</body>
+
+</html>
+
+================ frontend\checkout.html ================
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - E-Commerce</title>
+    <!-- Tailwind CSS -->
+    <link href="css/output.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-50 flex flex-col min-h-screen">
+
+    <div id="mainNav"></div>
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Finalizar Compra</h1>
+            <a href="carrito.html" class="text-blue-600 hover:text-blue-800">
+                <i class="fas fa-arrow-left mr-2"></i>Volver al Carrito
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Formulario y Detalles de Pago -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Opciones de Dirección -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800"><i
+                            class="fas fa-map-marker-alt text-blue-500 mr-2"></i> Dirección de Envío</h2>
+                    <div id="loadingDirecciones" class="text-center py-4 text-gray-500">Cargando direcciones...</div>
+                    <div id="listaDirecciones" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                        <!-- Direcciones renderizadas via JS -->
+                    </div>
+                    <div id="noDirecciones" class="hidden text-center py-4">
+                        <p class="text-gray-500 mb-2">No tienes direcciones registradas.</p>
+                        <a href="direcciones.html" class="text-blue-600 hover:underline">Agregar nueva dirección</a>
+                    </div>
+                </div>
+
+                <!-- Método de Pago -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800"><i
+                            class="fas fa-credit-card text-blue-500 mr-2"></i> Método de Pago</h2>
+
+                    <form id="checkoutForm" novalidate class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <label
+                                class="border rounded-lg p-4 flex items-center cursor-pointer hover:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-500 transition-colors">
+                                <input type="radio" name="metodoPago" value="Tarjeta" class="mr-3 text-blue-600"
+                                    checked>
+                                <span><i class="fas fa-credit-card mr-2"></i> Tarjeta</span>
+                            </label>
+                            <label
+                                class="border rounded-lg p-4 flex items-center cursor-pointer hover:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-500 transition-colors">
+                                <input type="radio" name="metodoPago" value="PayPal" class="mr-3 text-blue-600">
+                                <span><i class="fab fa-paypal mr-2"></i> PayPal</span>
+                            </label>
+                            <label
+                                class="border rounded-lg p-4 flex items-center cursor-pointer hover:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-500 transition-colors">
+                                <input type="radio" name="metodoPago" value="Transferencia" class="mr-3 text-blue-600">
+                                <span><i class="fas fa-university mr-2"></i> Transferencia</span>
+                            </label>
+                        </div>
+
+                        <!-- Panel de Datos de Tarjeta DYNAMIC VALIDATION (register.html style) -->
+                        <div id="panelTarjeta" class="space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div>
+                                <label for="cardNumber" class="block text-gray-700 font-medium mb-1">Número de
+                                    Tarjeta</label>
+                                <input type="text" id="cardNumber"
+                                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="1234 5678 1234 5678" maxlength="19" required>
+                                <p id="error-cardNumber" class="hidden text-red-500 text-sm mt-1">El número de tarjeta
+                                    debe tener 16 dígitos.</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="cardExpiry" class="block text-gray-700 font-medium mb-1">Vencimiento
+                                        (MM/YY)</label>
+                                    <input type="text" id="cardExpiry"
+                                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="12/25" maxlength="5" required>
+                                    <p id="error-cardExpiry" class="hidden text-red-500 text-sm mt-1">Formato inválido o
+                                        tarjeta vencida.</p>
+                                </div>
+                                <div>
+                                    <label for="cardCvv" class="block text-gray-700 font-medium mb-1">CVV</label>
+                                    <input type="text" id="cardCvv"
+                                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="123" maxlength="4" required>
+                                    <p id="error-cardCvv" class="hidden text-red-500 text-sm mt-1">El CVV debe tener 3 o
+                                        4 dígitos.</p>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="cardName" class="block text-gray-700 font-medium mb-1">Nombre en la
+                                    tarjeta</label>
+                                <input type="text" id="cardName"
+                                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required>
+                                <p id="error-cardName" class="hidden text-red-500 text-sm mt-1">Ingresa el nombre
+                                    completo tal como aparece en la tarjeta.</p>
+                            </div>
+                        </div>
+
+                        <div id="panelMensajeStatic" class="hidden bg-blue-50 text-blue-800 p-4 rounded-lg">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <span id="mensajeEstatico">Serás redirigido para completar el pago.</span>
+                        </div>
+
+                        <div class="pt-6 border-t border-gray-200">
+                            <button type="submit" id="btnProcesarPago"
+                                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Procesar Pago
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Resumen de Orden -->
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 sticky top-8">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Resumen del Pedido</h2>
+
+                    <div id="loadingResumen" class="text-center py-8 text-gray-500">
+                        <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                        <p>Cargando orden...</p>
+                    </div>
+
+                    <div id="resumenContent" class="hidden space-y-4">
+                        <div class="flex justify-between items-center text-sm text-gray-600">
+                            <span>Orden #</span>
+                            <span id="ordenIdDisplay" class="font-bold text-gray-800">--</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm text-gray-600">
+                            <span>Estado</span>
+                            <span id="ordenEstadoDisplay"
+                                class="px-2 py-1 rounded text-xs font-bold bg-gray-200 text-gray-800">CREATED</span>
+                        </div>
+
+                        <div class="my-4 border-t border-b py-4">
+                            <!-- Items limitados -->
+                            <ul id="listaResumenItems" class="space-y-3 mb-2 max-h-48 overflow-y-auto pr-2">
+                                <!-- Llenado via JS -->
+                            </ul>
+                            <div id="moreItemsOverlay" class="hidden text-center text-sm text-gray-500 pt-2 border-t">
+                                + otros productos...
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Subtotal</span>
+                                <span id="resumenSubtotal" class="font-medium">$0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Impuestos (15%)</span>
+                                <span id="resumenImpuestos" class="font-medium">$0.00</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center border-t pt-4 mt-4">
+                            <span class="text-lg font-bold text-gray-800">Total</span>
+                            <span id="resumenTotal" class="text-2xl font-bold text-blue-600">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-12 py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2026 E-Commerce. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script type="module" src="js/ui.js"></script>
+    <script type="module" src="js/checkout.js"></script>
 </body>
 
 </html>
@@ -4001,41 +5433,104 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Commerce - Mis Órdenes</title>
-    <!--    <script src="https://cdn.tailwindcss.com"></script> -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/output.css">
 </head>
 
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col">
 
     <nav id="mainNav" class="bg-white shadow-md"></nav>
 
-    <div class="container mx-auto px-6 py-8">
+    <main class="flex-grow container mx-auto px-6 py-8">
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800">Órdenes</h1>
         </header>
 
         <div class="bg-white rounded-lg shadow overflow-hidden">
-            <table class="w-full table-auto">
-                <thead class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                    <tr>
-                        <th class="py-3 px-6 text-left">Orden ID</th>
-                        <th class="py-3 px-6 text-left">Fecha</th>
-                        <th class="py-3 px-6 text-right">Total</th>
-                        <!-- <th class="py-3 px-6 text-center">Acciones</th> -->
-                    </tr>
-                </thead>
-                <tbody id="listaOrdenes" class="text-gray-600 text-sm font-light">
-                    <!-- Dynamic Content -->
-                </tbody>
-            </table>
+            <div class="overflow-x-auto">
+                <table class="w-full table-auto">
+                    <thead class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <tr>
+                            <th class="py-3 px-6 text-left">Orden</th>
+                            <th class="py-3 px-6 text-left">Estado</th>
+                            <th class="py-3 px-6 text-left">Fecha</th>
+                            <th class="py-3 px-6 text-right">Total</th>
+                            <th class="py-3 px-6 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaOrdenes" class="text-gray-600 text-sm font-light">
+                        <!-- Dynamic Content -->
+                    </tbody>
+                </table>
+            </div>
             <div id="emptyState" class="hidden text-center py-10">
-                <p class="text-gray-500 text-lg">No tienes órdenes aún.</p>
-                <a href="productos.html" class="text-blue-500 hover:underline mt-2 inline-block">Ir a comprar</a>
+                <p class="text-gray-500 text-lg">No hay órdenes para mostrar.</p>
+                <a href="productos.html" class="text-blue-500 hover:underline mt-2 inline-block">Ir a productos</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Despachar Orden (Sólo ADMIN) -->
+    <div id="modalDespacho"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full flex items-center justify-center z-50">
+        <div class="relative w-full max-w-md bg-white rounded-lg shadow-xl p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Despachar Orden #<span
+                    id="despachoOrdenId"></span></h3>
+            <form id="formDespacho" novalidate>
+                <div class="mb-4">
+                    <label for="courier" class="block text-gray-700 text-sm font-bold mb-2">Empresa de Mensajería
+                        (Courier)</label>
+                    <input type="text" id="courier"
+                        class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                        placeholder="Ej. FedEx, DHL, UPS" required minlength="2">
+                    <p id="error-courier" class="hidden text-red-500 text-xs italic mt-1">Ingresa el nombre de la
+                        empresa.</p>
+                </div>
+                <div class="mb-6">
+                    <label for="trackingNumber" class="block text-gray-700 text-sm font-bold mb-2">Número de Seguimiento
+                        (Tracking)</label>
+                    <input type="text" id="trackingNumber"
+                        class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                        placeholder="Ej. 1Z9999999999" required minlength="5">
+                    <p id="error-trackingNumber" class="hidden text-red-500 text-xs italic mt-1">Ingresa un número de
+                        guía válido (min. 5 caracteres).</p>
+                </div>
+                <div class="flex items-center justify-end border-t pt-4">
+                    <button type="button" onclick="cerrarModalDespacho()"
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btnConfirmarDespacho"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                        Confirmar Despacho
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalles de Orden (Todos) -->
+    <div id="modalDetalle"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full flex items-center justify-center z-50">
+        <div class="relative w-full max-w-2xl bg-white rounded-lg shadow-xl p-6">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h3 class="text-2xl font-bold text-gray-900">Detalles de Orden #<span id="detalleId"></span></h3>
+                <button onclick="cerrarModalDetalle()" class="text-gray-400 hover:text-gray-600"><i
+                        class="fas fa-times fa-lg"></i></button>
+            </div>
+
+            <div id="detalleContenido" class="space-y-4">
+                <!-- Inyectado por JS -->
+            </div>
+
+            <div class="mt-6 border-t pt-4 text-right">
+                <button onclick="cerrarModalDetalle()"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded">Cerrar</button>
             </div>
         </div>
     </div>
 
+    <script type="module" src="js/ui.js"></script>
     <script type="module" src="js/ordenes.js"></script>
 </body>
 
@@ -5448,6 +6943,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                         <th class="py-3 px-4">Imagen</th>
                         <th class="py-3 px-4">Producto</th>
                         <th class="py-3 px-4">Precio</th>
+                        <th class="py-3 px-4" id="thStock">Stock</th>
                         <th class="py-3 px-4">Tipo</th>
                         <th class="py-3 px-4">Proveedor</th>
                         <th class="py-3 px-4 text-center">Acciones</th>
@@ -5649,7 +7145,25 @@ Este frontend forma parte de una solución completa de **E-Commerce** que permit
 - **Control de acceso** granular según el tipo de usuario
 - **Administración centralizada** de usuarios, productos y órdenes
 
-### Alcance Funcional
+### Phase 3 Features
+
+### Checkout and Payments
+- **`checkout.html`**: A full checkout sequence with address selection.
+- **Dynamic Validation**: Real-time form validation applied to credit card inputs (simulated data).
+- **Payment Processing**: Replaces direct cart-to-order flow with a step-by-step confirmation.
+
+### Order Management (Customer & Admin)
+- **`ordenes.html`**: New page to list orders and their current lifecycle state.
+- **State Badges**: Visual indicators for `CREATED`, `PAYMENT_PENDING`, `PAID`, `OUT_OF_STOCK`, `CANCELLED`, `SHIPPED`, `DELIVERED`.
+- **Order Details Modal**: Deep view into what products, payment trx, and shipment info an order holds.
+- **Admin Dispatch Modal**: Forms with dynamic validation to register Courier and Tracking numbers.
+
+### Inventory Visibility
+- **`productos.html`**: Product grid now optionally displays real-time `Stock` for Admir/Supplier roles.
+
+---
+
+## Technical Detailsonal
 - ✅ Autenticación y gestión de sesiones
 - ✅ CRUD de productos (físicos y digitales)
 - ✅ Carrito de compras personalizado
@@ -7373,17 +8887,16 @@ window.eliminarDelCarrito = async (productoId) => {
 };
 
 async function realizarOrder() {
-    if (!confirm('¿Confirmar pedido?')) return;
+    if (!confirm('¿Ir al cajero para completar tu pedido?')) return;
 
     try {
-        await Api.post('/ordenes/checkout');
-        // Redirect or show success
-        UI.showNotification('¡Pedido realizado con éxito!', 'success');
+        const ordenCreated = await Api.post('/ordenes/checkout');
+        UI.showNotification('Orden iniciada. Redirigiendo al checkout...', 'success');
         setTimeout(() => {
-            window.location.href = 'ordenes.html';
-        }, 1500);
+            window.location.href = `checkout.html?ordenId=${ordenCreated.id}`;
+        }, 1000);
     } catch (error) {
-        UI.showNotification('Error en la generacion del pedido: ' + error.message, 'error');
+        UI.showNotification('Error al iniciar el checkout: ' + error.message, 'error');
     }
 }
 
@@ -7398,6 +8911,358 @@ async function vaciarCarrito() {
         UI.showNotification('Error al vaciar carrito', 'error');
     }
 }
+
+
+================ frontend\js\checkout.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    const user = Auth.getCurrentUser();
+    const role = user.role;
+
+    if (!Auth.isAuthenticated() || role !== 'CUSTOMER') {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'checkout'
+    });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const ordenId = urlParams.get('ordenId');
+
+    if (!ordenId) {
+        UI.showNotification('Orden no encontrada. Regresando al carrito...', 'error');
+        setTimeout(() => window.location.href = 'carrito.html', 2000);
+        return;
+    }
+
+    CheckoutManager.init(ordenId);
+});
+
+const CheckoutManager = {
+    ordenId: null,
+    ordenActual: null,
+    direccionSeleccionada: null,
+    metodoPago: 'Tarjeta',
+    formValido: false,
+
+    validationState: {
+        cardNumber: false,
+        cardExpiry: false,
+        cardCvv: false,
+        cardName: false
+    },
+
+    async init(ordenId) {
+        this.ordenId = ordenId;
+        this.setupEventListeners();
+
+        await Promise.all([
+            this.cargarOrden(),
+            this.cargarDirecciones()
+        ]);
+    },
+
+    setupEventListeners() {
+        const form = document.getElementById('checkoutForm');
+        form.addEventListener('submit', (e) => this.procesarPago(e));
+
+        const radiosPago = document.querySelectorAll('input[name="metodoPago"]');
+        radiosPago.forEach(radio => {
+            radio.addEventListener('change', (e) => this.cambiarMetodoPago(e.target.value));
+        });
+
+        // Configuración de validación dinámica (estilo register.html)
+        const inputsTarjeta = document.querySelectorAll('#panelTarjeta input');
+        inputsTarjeta.forEach(input => {
+            input.addEventListener('input', () => this.validateInput(input));
+            input.addEventListener('blur', () => this.validateInput(input));
+        });
+    },
+
+    cambiarMetodoPago(metodo) {
+        this.metodoPago = metodo;
+        const panelTarjeta = document.getElementById('panelTarjeta');
+        const panelMensaje = document.getElementById('panelMensajeStatic');
+        const mensajeText = document.getElementById('mensajeEstatico');
+        const btnProcesar = document.getElementById('btnProcesarPago');
+
+        if (metodo === 'Tarjeta') {
+            panelTarjeta.classList.remove('hidden');
+            panelMensaje.classList.add('hidden');
+
+            const inputs = document.querySelectorAll('#panelTarjeta input');
+            inputs.forEach(input => input.setAttribute('required', 'true'));
+
+            this.checkFormValidity();
+        } else {
+            panelTarjeta.classList.add('hidden');
+            panelMensaje.classList.remove('hidden');
+
+            if (metodo === 'PayPal') {
+                mensajeText.textContent = 'Serás redirigido a PayPal para completar tu pago de forma segura.';
+            } else if (metodo === 'Transferencia') {
+                mensajeText.textContent = 'Al procesar, te mostraremos los datos bancarios para realizar tu depósito.';
+            }
+
+            const inputs = document.querySelectorAll('#panelTarjeta input');
+            inputs.forEach(input => input.removeAttribute('required'));
+
+            // Si es paypal o transferencia, no requerimos validar campos de tarjeta
+            btnProcesar.disabled = !this.direccionSeleccionada;
+            this.formValido = !!this.direccionSeleccionada;
+        }
+    },
+
+    validateInput(input) {
+        if (this.metodoPago !== 'Tarjeta') return;
+
+        const id = input.id;
+        let value = input.value.trim();
+        let isValid = false;
+        const errorMsg = document.getElementById(`error-${id}`);
+
+        if (!errorMsg) return;
+
+        switch (id) {
+            case 'cardNumber':
+                value = value.replace(/\D/g, ''); // Solo números
+                input.value = value;
+                isValid = value.length === 16;
+                break;
+            case 'cardExpiry':
+                value = value.replace(/[^0-9/]/g, '');
+                if (value.length === 2 && !value.includes('/')) value += '/';
+                input.value = value;
+                isValid = /^(0[1-9]|1[0-2])\/\d{2}$/.test(value);
+                break;
+            case 'cardCvv':
+                value = value.replace(/\D/g, '');
+                input.value = value;
+                isValid = value.length === 3 || value.length === 4;
+                break;
+            case 'cardName':
+                isValid = value.length > 3;
+                break;
+        }
+
+        this.validationState[id] = isValid;
+
+        if (isValid) {
+            input.classList.remove('border-red-500', 'invalid');
+            input.classList.add('border-green-500', 'valid');
+            errorMsg.classList.add('hidden');
+        } else {
+            input.classList.remove('border-green-500', 'valid');
+            input.classList.add('border-red-500', 'invalid');
+            errorMsg.classList.remove('hidden');
+        }
+
+        this.checkFormValidity();
+    },
+
+    checkFormValidity() {
+        if (this.metodoPago !== 'Tarjeta') {
+            this.formValido = !!this.direccionSeleccionada;
+        } else {
+            const allValid = Object.values(this.validationState).every(v => v);
+            this.formValido = allValid && !!this.direccionSeleccionada;
+        }
+
+        const btn = document.getElementById('btnProcesarPago');
+        btn.disabled = !this.formValido;
+
+        if (!this.direccionSeleccionada && btn.disabled) {
+            btn.title = 'Debes seleccionar una dirección de envío';
+        } else {
+            btn.title = '';
+        }
+    },
+
+    async cargarOrden() {
+        try {
+            const userOrders = await Api.get('/ordenes');
+            const orden = userOrders.find(o => o.id === parseInt(this.ordenId));
+
+            if (!orden) {
+                throw new Error("Orden no encontrada o no te pertenece.");
+            }
+
+            if (orden.estado !== 'CREATED' && orden.estado !== 'PAYMENT_PENDING' && orden.estado !== 'OUT_OF_STOCK') {
+                UI.showNotification(`La orden está en estado ${orden.estado} y no puede pagarse.`, 'info');
+                setTimeout(() => window.location.href = 'ordenes.html', 2000);
+                return;
+            }
+
+            this.ordenActual = orden;
+            this.renderizarResumen();
+
+        } catch (error) {
+            UI.showNotification('Error cargando orden: ' + error.message, 'error');
+            document.getElementById('loadingResumen').innerHTML = `<p class="text-red-500"><i class="fas fa-exclamation-triangle"></i> Error al cargar</p>`;
+        }
+    },
+
+    renderizarResumen() {
+        document.getElementById('loadingResumen').classList.add('hidden');
+        document.getElementById('resumenContent').classList.remove('hidden');
+
+        document.getElementById('ordenIdDisplay').textContent = this.ordenActual.id;
+
+        const estadoEl = document.getElementById('ordenEstadoDisplay');
+        estadoEl.textContent = this.ordenActual.estado;
+
+        if (this.ordenActual.estado === 'OUT_OF_STOCK') {
+            estadoEl.classList.replace('bg-gray-200', 'bg-red-100');
+            estadoEl.classList.replace('text-gray-800', 'text-red-800');
+        } else {
+            estadoEl.classList.replace('bg-gray-200', 'bg-yellow-100');
+            estadoEl.classList.replace('text-gray-800', 'text-yellow-800');
+        }
+
+        const lista = document.getElementById('listaResumenItems');
+        lista.innerHTML = '';
+
+        this.ordenActual.detalles.slice(0, 3).forEach(detalle => {
+            const li = document.createElement('li');
+            li.className = 'flex justify-between items-center text-sm';
+            li.innerHTML = `
+                <span class="text-gray-700 truncate mr-2" title="${detalle.producto.nombre}">${detalle.cantidad}x ${detalle.producto.nombre}</span>
+                <span class="text-gray-600 font-medium">${UI.formatCurrency(detalle.subtotal)}</span>
+            `;
+            lista.appendChild(li);
+        });
+
+        if (this.ordenActual.detalles.length > 3) {
+            const overlay = document.getElementById('moreItemsOverlay');
+            overlay.classList.remove('hidden');
+            overlay.textContent = `+ ${this.ordenActual.detalles.length - 3} productos más...`;
+        }
+
+        const subtotal = this.ordenActual.detalles.reduce((acc, d) => acc + d.subtotal, 0);
+        const taxes = subtotal * 0.15;
+        const total = subtotal + taxes;
+
+        document.getElementById('resumenSubtotal').textContent = UI.formatCurrency(subtotal);
+        document.getElementById('resumenImpuestos').textContent = UI.formatCurrency(taxes);
+        document.getElementById('resumenTotal').textContent = UI.formatCurrency(total);
+    },
+
+    async cargarDirecciones() {
+        try {
+            const user = await Api.get('/usuarios/me');
+            if (!user) throw new Error("No autenticado");
+
+            const direcciones = await Api.get('/direcciones/mis-direcciones');
+
+            document.getElementById('loadingDirecciones').classList.add('hidden');
+
+            if (direcciones.length === 0) {
+                document.getElementById('noDirecciones').classList.remove('hidden');
+                return;
+            }
+
+            const container = document.getElementById('listaDirecciones');
+            container.classList.remove('hidden');
+            container.innerHTML = '';
+
+            let preseleccionada = false;
+
+            direcciones.forEach(dir => {
+                const card = document.createElement('div');
+                card.className = `border rounded-lg p-4 cursor-pointer hover:border-blue-400 transition-colors relative bg-white`;
+                card.dataset.id = dir.id;
+
+                // Si preferida, la preseleccionamos
+                const isSelected = dir.preferida || (direcciones.length === 1 && !preseleccionada);
+
+                if (isSelected && !preseleccionada) {
+                    card.classList.add('border-blue-500', 'bg-blue-50', 'ring-2', 'ring-blue-200');
+                    this.direccionSeleccionada = dir.id;
+                    preseleccionada = true;
+                }
+
+                card.innerHTML = `
+                    ${dir.preferida ? '<span class="absolute top-2 right-2 text-yellow-500"><i class="fas fa-star"></i></span>' : ''}
+                    <h3 class="font-bold text-gray-800">${dir.alias ? dir.alias : 'Dirección'}</h3>
+                    <p class="text-sm text-gray-600 truncate">${dir.calle} ${dir.numeroExterior}</p>
+                    <p class="text-sm text-gray-600 truncate">${dir.colonia}, ${dir.municipio}</p>
+                    <p class="text-sm text-gray-600">CP: ${dir.codigoPostal}</p>
+                `;
+
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('#listaDirecciones > div').forEach(c => {
+                        c.classList.remove('border-blue-500', 'bg-blue-50', 'ring-2', 'ring-blue-200');
+                    });
+                    card.classList.add('border-blue-500', 'bg-blue-50', 'ring-2', 'ring-blue-200');
+                    this.direccionSeleccionada = dir.id;
+                    this.checkFormValidity();
+                });
+
+                container.appendChild(card);
+            });
+
+            this.checkFormValidity();
+
+        } catch (error) {
+            UI.showNotification('Error cargando direcciones', 'error');
+            document.getElementById('loadingDirecciones').textContent = 'Error al cargar direcciones.';
+        }
+    },
+
+    async procesarPago(e) {
+        e.preventDefault();
+
+        if (!this.formValido) {
+            UI.showNotification('Por favor, completa correctamente el formulario y selecciona una dirección.', 'warning');
+            return;
+        }
+
+        const btnProcess = document.getElementById('btnProcesarPago');
+        const originalText = btnProcess.innerHTML;
+
+        btnProcess.disabled = true;
+        btnProcess.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i> Procesando...';
+
+        try {
+            const bodyInfo = {
+                ordenId: this.ordenId,
+                metodoPago: this.metodoPago
+                // Dirección omitida del DTO de Orden en backend Phase 1, pero se validó en Fronend para UX
+            };
+
+            const response = await Api.post('/payments/procesar', bodyInfo);
+
+            if (response.estado === 'PAID') {
+                UI.showNotification('¡Pago procesado exitosamente!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'ordenes.html';
+                }, 2000);
+            } else if (response.estado === 'OUT_OF_STOCK') {
+                UI.showNotification('Lo sentimos, algunos productos ya no tienen stock suficiente.', 'error');
+                btnProcess.disabled = false;
+                btnProcess.innerHTML = originalText;
+                this.init(this.ordenId); // Recargar orden para ver estados nuevos
+            } else {
+                UI.showNotification(`Error en el pago (Estado: ${response.estado}). Intenta nuevamente.`, 'error');
+                btnProcess.disabled = false;
+                btnProcess.innerHTML = originalText;
+            }
+
+        } catch (error) {
+            UI.showNotification('Error del sistema al procesar pago: ' + error.message, 'error');
+            btnProcess.disabled = false;
+            btnProcess.innerHTML = originalText;
+        }
+    }
+};
 
 
 ================ frontend\js\direcciones.js ================
@@ -7743,55 +9608,352 @@ import Api from './api.js';
 import { UI } from './ui.js';
 import Auth from './auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+let ordenesGlobal = [];
+let roleActual = '';
+let userActual = {};
+
+document.addEventListener('DOMContentLoaded', async () => {
     if (!Auth.isAuthenticated()) {
         window.location.href = 'login.html';
         return;
     }
 
+    userActual = Auth.getCurrentUser();
+    roleActual = userActual.role;
+
     UI.renderNavBar({
         containerId: 'mainNav',
         context: 'orders'
     });
-    cargarOrdenes();
+
+    setupEventListeners();
+    await cargarOrdenes();
 });
+
+function setupEventListeners() {
+    // Modal de Despacho
+    window.cerrarModalDespacho = () => {
+        document.getElementById('modalDespacho').classList.add('hidden');
+        document.getElementById('formDespacho').reset();
+        resetValidation('courier');
+        resetValidation('trackingNumber');
+    };
+
+    const formDespacho = document.getElementById('formDespacho');
+    if (formDespacho) {
+        formDespacho.addEventListener('submit', handleSubmitDespacho);
+
+        // Dynamic validation
+        ['courier', 'trackingNumber'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => validarInputDespacho(el));
+                el.addEventListener('blur', () => validarInputDespacho(el));
+            }
+        });
+    }
+
+    // Modal Detalle
+    window.cerrarModalDetalle = () => {
+        document.getElementById('modalDetalle').classList.add('hidden');
+    };
+}
 
 async function cargarOrdenes() {
     try {
-        const ordenes = await Api.get('/ordenes');
-        renderizarOrdenes(ordenes);
+        ordenesGlobal = await Api.get('/ordenes');
+
+        // Sort by ID descending (newest first)
+        ordenesGlobal.sort((a, b) => b.id - a.id);
+
+        renderizarOrdenes();
     } catch (error) {
-        UI.showNotification('Error al cargar órdenes', 'error');
+        UI.showNotification('Error al cargar órdenes. ' + error.message, 'error');
     }
 }
 
-function renderizarOrdenes(ordenes) {
+function renderizarOrdenes() {
     const tbody = document.getElementById('listaOrdenes');
     tbody.innerHTML = '';
 
-    if (!ordenes || ordenes.length === 0) {
+    if (!ordenesGlobal || ordenesGlobal.length === 0) {
         document.getElementById('emptyState').classList.remove('hidden');
+        document.querySelector('table').classList.add('hidden');
         return;
     }
+
     document.getElementById('emptyState').classList.add('hidden');
+    document.querySelector('table').classList.remove('hidden');
 
-    ordenes.forEach(orden => {
+    ordenesGlobal.forEach(orden => {
         const row = document.createElement('tr');
-        row.className = 'border-b border-gray-200 hover:bg-gray-100';
+        row.className = 'border-b border-gray-200 hover:bg-gray-50';
 
-        // Format date
-        const fecha = new Date(orden.fecha).toLocaleDateString('es-ES', {
-            year: 'numeric', month: 'long', day: 'numeric',
+        const fecha = new Date(orden.fechaCreacion).toLocaleDateString('es-ES', {
+            year: 'numeric', month: 'short', day: 'numeric',
             hour: '2-digit', minute: '2-digit'
         });
 
+        const badgeHtml = getBadgeHTML(orden.estado);
+        const actionHtml = getActionHTML(orden);
+
         row.innerHTML = `
-            <td class="py-3 px-6 text-left whitespace-nowrap font-medium">#${orden.id}</td>
-            <td class="py-3 px-6 text-left">${fecha}</td>
+            <td class="py-3 px-6 text-left whitespace-nowrap font-medium text-gray-800">#${orden.id}</td>
+            <td class="py-3 px-6 text-left">${badgeHtml}</td>
+            <td class="py-3 px-6 text-left text-xs">${fecha}</td>
             <td class="py-3 px-6 text-right font-bold text-gray-700">${UI.formatCurrency(orden.total)}</td>
+            <td class="py-3 px-6 text-center">
+                <div class="flex item-center justify-center gap-2">
+                    <button onclick="window.verDetalles(${orden.id})" class="text-blue-500 hover:text-blue-700 p-1" title="Ver Detalles">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    ${actionHtml}
+                </div>
+            </td>
         `;
         tbody.appendChild(row);
     });
+}
+
+function getBadgeHTML(estado) {
+    const colorMap = {
+        'CREATED': 'bg-gray-200 text-gray-800',
+        'PAYMENT_PENDING': 'bg-yellow-100 text-yellow-800',
+        'PAID': 'bg-green-100 text-green-800',
+        'OUT_OF_STOCK': 'bg-red-100 text-red-800',
+        'CANCELLED': 'bg-gray-800 text-white',
+        'SHIPPED': 'bg-blue-100 text-blue-800',
+        'DELIVERED': 'bg-purple-100 text-purple-800'
+    };
+    const css = colorMap[estado] || 'bg-gray-100 text-gray-800';
+    return `<span class="px-3 py-1 rounded-full text-xs font-bold ${css}">${estado}</span>`;
+}
+
+function getActionHTML(orden) {
+    let html = '';
+    const estado = orden.estado;
+
+    if (roleActual === 'CUSTOMER') {
+        const puedePagar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
+        if (puedePagar) {
+            html += `<button onclick="window.location.href='checkout.html?ordenId=${orden.id}'" class="text-green-500 hover:text-green-700 p-1 title="Pagar">
+                        <i class="fas fa-credit-card"></i> Pagar
+                     </button>`;
+        }
+
+        const puedeCancelar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
+        if (puedeCancelar) {
+            html += `<button onclick="window.cancelarOrden(${orden.id})" class="text-red-500 hover:text-red-700 p-1 ml-2" title="Cancelar">
+                        <i class="fas fa-ban"></i>
+                     </button>`;
+        }
+    } else if (roleActual === 'ADMIN') {
+        const puedePagar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
+        if (puedePagar) {
+            html += `<button onclick="window.location.href='checkout.html?ordenId=${orden.id}'" class="text-green-500 hover:text-green-700 p-1 title="Pagar">
+                        <i class="fas fa-credit-card"></i> Pagar
+                     </button>`;
+        }
+
+        const puedeCancelar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
+        if (puedeCancelar) {
+            html += `<button onclick="window.cancelarOrden(${orden.id})" class="text-red-500 hover:text-red-700 p-1 ml-2" title="Cancelar">
+                        <i class="fas fa-ban"></i>
+                     </button>`;
+        }
+
+        if (estado === 'PAID') {
+            html += `<button onclick="window.abrirModalDespacho(${orden.id})" class="text-blue-500 hover:text-blue-700 p-1 title="Despachar">
+                        <i class="fas fa-truck"></i> Despachar
+                     </button>`;
+        } else if (estado === 'SHIPPED') {
+            html += `<button onclick="window.marcarEntregado(${orden.id})" class="text-purple-500 hover:text-purple-700 p-1 title="Marcar Entregado">
+                        <i class="fas fa-box-open"></i> Entregar
+                     </button>`;
+        }
+    }
+    return html;
+}
+
+// ---------------- ACCIONES ----------------
+
+window.cancelarOrden = async (id) => {
+    if (!confirm('¿Estás seguro que deseas cancelar esta orden?')) return;
+    try {
+        await Api.post(`/ordenes/${id}/cancelar`);
+        UI.showNotification('Orden cancelada exitosamente.', 'success');
+        cargarOrdenes();
+    } catch (e) {
+        UI.showNotification('Error al cancelar: ' + e.message, 'error');
+    }
+};
+
+window.marcarEntregado = async (id) => {
+    if (!confirm('¿Confirmar que la orden fue entregada al cliente?')) return;
+    try {
+        await Api.post(`/shipments/entregar/${id}`);
+        UI.showNotification('Orden marcada como entregada.', 'success');
+        cargarOrdenes();
+    } catch (e) {
+        UI.showNotification('Error al entregar: ' + e.message, 'error');
+    }
+}
+
+window.verDetalles = (id) => {
+    const orden = ordenesGlobal.find(o => o.id === id);
+    if (!orden) return;
+
+    document.getElementById('detalleId').textContent = orden.id;
+    const cont = document.getElementById('detalleContenido');
+
+    let html = `
+        <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+            <div>
+                <p class="text-gray-500 mb-1">Estado Actual</p>
+                ${getBadgeHTML(orden.estado)}
+            </div>
+            <div>
+                <p class="text-gray-500 mb-1">Total</p>
+                <p class="font-bold text-lg text-blue-600">${UI.formatCurrency(orden.total)}</p>
+            </div>
+        </div>
+    `;
+
+    if (orden.paymentTransaction) {
+        const trx = orden.paymentTransaction;
+        html += `
+            <div class="bg-gray-50 p-4 rounded-lg mb-4 text-sm border border-gray-200">
+                <h4 class="font-bold text-gray-700 mb-2 border-b pb-1"><i class="fas fa-money-check-alt mr-2 text-green-600"></i> Información de Pago</h4>
+                <div class="grid grid-cols-2 gap-2">
+                    <p><span class="font-medium">Método:</span> ${trx.paymentMethod}</p>
+                    <p><span class="font-medium">Estado:</span> ${trx.status}</p>
+                    <p><span class="font-medium">Transacción ID:</span> #${trx.id}</p>
+                    <p><span class="font-medium">Pagado el:</span> ${new Date(trx.transactionDate).toLocaleString('es-ES')}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    if (orden.shipment) {
+        const shp = orden.shipment;
+        html += `
+            <div class="bg-blue-50 p-4 rounded-lg mb-4 text-sm border border-blue-100">
+                <h4 class="font-bold text-blue-800 mb-2 border-b border-blue-200 pb-1"><i class="fas fa-truck mr-2"></i> Información de Envío</h4>
+                <div class="grid grid-cols-2 gap-2">
+                    <p><span class="font-medium">Courier:</span> ${shp.courier}</p>
+                    <p><span class="font-medium">Tracking:</span> <a href="#" class="text-blue-600 underline">${shp.trackingNumber}</a></p>
+                    <p><span class="font-medium">Despachado:</span> ${new Date(shp.dateDispatch).toLocaleString('es-ES')}</p>
+                    <p><span class="font-medium">Entregado:</span> ${shp.dateDelivered ? new Date(shp.dateDelivered).toLocaleString('es-ES') : '<span class="italic text-gray-500">Pendiente</span>'}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `
+        <div>
+            <h4 class="font-bold text-gray-700 mb-2 text-sm">Productos (${orden.detalles.length})</h4>
+            <div class="max-h-48 overflow-y-auto border rounded-lg p-2 bg-white">
+                <ul class="space-y-2">
+    `;
+
+    orden.detalles.forEach(d => {
+        html += `
+            <li class="flex justify-between items-center text-sm p-2 hover:bg-gray-50 rounded">
+                <div>
+                    <span class="font-bold text-gray-800 mr-2">${d.cantidad}x</span> 
+                    <span>${d.producto.nombre}</span>
+                </div>
+                <span class="font-medium">${UI.formatCurrency(d.subtotal)}</span>
+            </li>
+        `;
+    });
+
+    html += `</ul></div></div>`;
+
+    cont.innerHTML = html;
+    document.getElementById('modalDetalle').classList.remove('hidden');
+}
+
+
+// ---------------- MODAL DESPACHO ADMIN ----------------
+
+const despachoValidation = {
+    courier: false,
+    trackingNumber: false
+};
+
+window.abrirModalDespacho = (id) => {
+    document.getElementById('despachoOrdenId').textContent = id;
+    window.ordenDespachoActualId = id;
+    cerrarModalDespacho(); // Reset
+    document.getElementById('modalDespacho').classList.remove('hidden');
+    checkFormDespacho();
+};
+
+function validarInputDespacho(input) {
+    const id = input.id;
+    const value = input.value.trim();
+    let isValid = false;
+    const errorMsg = document.getElementById(`error-${id}`);
+
+    if (id === 'courier') {
+        isValid = value.length >= 2;
+    } else if (id === 'trackingNumber') {
+        isValid = value.length >= 5;
+    }
+
+    despachoValidation[id] = isValid;
+
+    if (isValid) {
+        input.classList.remove('border-red-500', 'invalid');
+        input.classList.add('border-green-500', 'valid');
+        if (errorMsg) errorMsg.classList.add('hidden');
+    } else {
+        input.classList.remove('border-green-500', 'valid');
+        input.classList.add('border-red-500', 'invalid');
+        if (errorMsg) errorMsg.classList.remove('hidden');
+    }
+
+    checkFormDespacho();
+}
+
+function checkFormDespacho() {
+    const valid = despachoValidation.courier && despachoValidation.trackingNumber;
+    document.getElementById('btnConfirmarDespacho').disabled = !valid;
+}
+
+function resetValidation(id) {
+    despachoValidation[id] = false;
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.remove('border-red-500', 'border-green-500', 'valid', 'invalid');
+    }
+    const err = document.getElementById(`error-${id}`);
+    if (err) err.classList.add('hidden');
+}
+
+async function handleSubmitDespacho(e) {
+    e.preventDefault();
+    if (!despachoValidation.courier || !despachoValidation.trackingNumber) return;
+
+    const btn = document.getElementById('btnConfirmarDespacho');
+    btn.disabled = true;
+    btn.innerHTML = 'Procesando...';
+
+    const courier = document.getElementById('courier').value.trim();
+    const trackingNumber = document.getElementById('trackingNumber').value.trim();
+    const id = window.ordenDespachoActualId;
+
+    try {
+        await Api.post(`/shipments/despachar/${id}`, { courier, trackingNumber });
+        UI.showNotification('Orden despachada con éxito', 'success');
+        cerrarModalDespacho();
+        cargarOrdenes();
+    } catch (error) {
+        UI.showNotification('Error: ' + error.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = 'Confirmar Despacho';
+    }
 }
 
 
@@ -7831,6 +9993,12 @@ function setupRoleBasedUI() {
     const campoProveedor = document.getElementById('campoProveedor');
     if (campoProveedor && role !== 'ADMIN') {
         campoProveedor.classList.add('hidden');
+    }
+
+    // Ocultar columna de Stock para CUSTOMER
+    const thStock = document.getElementById('thStock');
+    if (thStock && role === 'CUSTOMER') {
+        thStock.classList.add('hidden');
     }
 }
 
@@ -7964,6 +10132,19 @@ function renderizarTabla(productos, filtro) {
             ? `<span class="text-xs text-gray-500 truncate" style="max-width:120px" title="${p.proveedor}">${p.proveedor}</span>`
             : '<span class="text-xs text-gray-400 italic">—</span>';
 
+        // Lógica de Stock (Visible solo para ADMIN / SUPPLIER)
+        let stockDisplay = '';
+        if (role !== 'CUSTOMER') {
+            if (esFisico) {
+                const isLow = p.stock > 0 && p.stock <= 5;
+                const isOut = p.stock === 0;
+                const cssClass = isOut ? 'text-red-600 font-bold' : (isLow ? 'text-orange-500 font-bold' : 'text-green-600');
+                stockDisplay = `<td class="py-3 px-4"><span class="${cssClass}">${p.stock}</span></td>`;
+            } else {
+                stockDisplay = `<td class="py-3 px-4"><span class="text-gray-400 text-xs italic">∞ (Digital)</span></td>`;
+            }
+        }
+
         const row = document.createElement('tr');
         row.className = 'border-b border-gray-200 hover:bg-gray-50';
         row.innerHTML = `
@@ -7974,6 +10155,7 @@ function renderizarTabla(productos, filtro) {
                 ${p.descripcion ? `<div class="text-xs text-gray-400 truncate" style="max-width:200px" title="${p.descripcion}">${p.descripcion}</div>` : ''}
             </td>
             <td class="py-3 px-4 font-bold text-gray-700">${UI.formatCurrency(p.precio)}</td>
+            ${stockDisplay}
             <td class="py-3 px-4">${tipoBadge}</td>
             <td class="py-3 px-4">${proveedorDisplay}</td>
             <td class="py-3 px-4 text-center">

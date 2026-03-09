@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - E-Commerce</title>
+    <!-- Tailwind CSS -->
+    <link href="css/output.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-50 flex flex-col min-h-screen">
+
+    <div id="mainNav"></div>
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Finalizar Compra</h1>
+            <a href="ordenes.html" class="text-blue-600 hover:text-blue-800">
+                <i class="fas fa-arrow-left mr-2"></i>Volver a las Ordenes
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Formulario y Detalles de Pago -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Opciones de Dirección -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800"><i
+                            class="fas fa-map-marker-alt text-blue-500 mr-2"></i> Dirección de Envío</h2>
+                    <div id="loadingDirecciones" class="text-center py-4 text-gray-500">Cargando direcciones...</div>
+                    <div id="listaDirecciones" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                        <!-- Direcciones renderizadas via JS -->
+                    </div>
+                    <div id="noDirecciones" class="hidden text-center py-4">
+                        <p class="text-gray-500 mb-2">No tienes direcciones registradas.</p>
+                        <a href="direcciones.html" class="text-blue-600 hover:underline">Agregar nueva dirección</a>
+                    </div>
+                </div>
+
+                <!-- Método de Pago -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800"><i
+                            class="fas fa-credit-card text-blue-500 mr-2"></i> Método de Pago</h2>
+
+                    <form id="checkoutForm" novalidate class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <label
+                                class="border rounded-lg p-4 flex items-center cursor-pointer hover:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-500 transition-colors">
+                                <input type="radio" name="metodoPago" value="Tarjeta" class="mr-3 text-blue-600"
+                                    checked>
+                                <span><i class="fas fa-credit-card mr-2"></i> Tarjeta</span>
+                            </label>
+                            <label
+                                class="border rounded-lg p-4 flex items-center cursor-pointer hover:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-500 transition-colors">
+                                <input type="radio" name="metodoPago" value="PayPal" class="mr-3 text-blue-600">
+                                <span><i class="fab fa-paypal mr-2"></i> PayPal</span>
+                            </label>
+                            <label
+                                class="border rounded-lg p-4 flex items-center cursor-pointer hover:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-500 transition-colors">
+                                <input type="radio" name="metodoPago" value="Transferencia" class="mr-3 text-blue-600">
+                                <span><i class="fas fa-university mr-2"></i> Transferencia</span>
+                            </label>
+                        </div>
+
+                        <!-- Panel de Datos de Tarjeta DYNAMIC VALIDATION (register.html style) -->
+                        <div id="panelTarjeta" class="space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div>
+                                <label for="cardNumber" class="block text-gray-700 font-medium mb-1">Número de
+                                    Tarjeta</label>
+                                <input type="text" id="cardNumber"
+                                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="1234 5678 1234 5678" maxlength="19" required>
+                                <p id="error-cardNumber" class="hidden text-red-500 text-sm mt-1">El número de tarjeta
+                                    debe tener 16 dígitos.</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="cardExpiry" class="block text-gray-700 font-medium mb-1">Vencimiento
+                                        (MM/YY)</label>
+                                    <input type="text" id="cardExpiry"
+                                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="12/25" maxlength="5" required>
+                                    <p id="error-cardExpiry" class="hidden text-red-500 text-sm mt-1">Formato inválido o
+                                        tarjeta vencida.</p>
+                                </div>
+                                <div>
+                                    <label for="cardCvv" class="block text-gray-700 font-medium mb-1">CVV</label>
+                                    <input type="text" id="cardCvv"
+                                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="123" maxlength="4" required>
+                                    <p id="error-cardCvv" class="hidden text-red-500 text-sm mt-1">El CVV debe tener 3 o
+                                        4 dígitos.</p>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="cardName" class="block text-gray-700 font-medium mb-1">Nombre en la
+                                    tarjeta</label>
+                                <input type="text" id="cardName"
+                                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required>
+                                <p id="error-cardName" class="hidden text-red-500 text-sm mt-1">Ingresa el nombre
+                                    completo tal como aparece en la tarjeta.</p>
+                            </div>
+                        </div>
+
+                        <div id="panelMensajeStatic" class="hidden bg-blue-50 text-blue-800 p-4 rounded-lg">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <span id="mensajeEstatico">Serás redirigido para completar el pago.</span>
+                        </div>
+
+                        <div class="pt-6 border-t border-gray-200">
+                            <button type="submit" id="btnProcesarPago"
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition duration-300 disabled:opacity-50">
+                                Procesar Pago
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Resumen de Orden -->
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 sticky top-8">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Resumen del Pedido</h2>
+
+                    <div id="loadingResumen" class="text-center py-8 text-gray-500">
+                        <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                        <p>Cargando orden...</p>
+                    </div>
+
+                    <div id="resumenContent" class="hidden space-y-4">
+                        <div class="flex justify-between items-center text-sm text-gray-600">
+                            <span>Orden #</span>
+                            <span id="ordenIdDisplay" class="font-bold text-gray-800">--</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm text-gray-600">
+                            <span>Estado</span>
+                            <span id="ordenEstadoDisplay"
+                                class="px-2 py-1 rounded text-xs font-bold bg-gray-200 text-gray-800">CREATED</span>
+                        </div>
+
+                        <div class="my-4 border-t border-b py-4">
+                            <!-- Items limitados -->
+                            <ul id="listaResumenItems" class="space-y-3 mb-2 max-h-48 overflow-y-auto pr-2">
+                                <!-- Llenado via JS -->
+                            </ul>
+                            <div id="moreItemsOverlay" class="hidden text-center text-sm text-gray-500 pt-2 border-t">
+                                + otros productos...
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Subtotal</span>
+                                <span id="resumenSubtotal" class="font-medium">$0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Impuestos (16%)</span>
+                                <span id="resumenImpuestos" class="font-medium">$0.00</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center border-t pt-4 mt-4">
+                            <span class="text-lg font-bold text-gray-800">Total</span>
+                            <span id="resumenTotal" class="text-2xl font-bold text-blue-600">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-12 py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2026 E-Commerce. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script type="module" src="js/ui.js"></script>
+    <script type="module" src="js/checkout.js"></script>
+</body>
+
+</html>

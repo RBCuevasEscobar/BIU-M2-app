@@ -7,10 +7,9 @@ let adminTargetUserId = null;
 let adirTelefonos = [];  // teléfonos en el sub-form de dirección
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!Auth.isAuthenticated()) {
-        window.location.href = 'login.html';
-        return;
-    }
+
+    if (!Auth.requireAuth(["ADMIN"])) return;
+
     const user = Auth.getCurrentUser();
     if (user.role !== 'ADMIN') {
         window.location.href = 'productos.html';
