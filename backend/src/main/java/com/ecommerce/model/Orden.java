@@ -46,6 +46,10 @@ public class Orden {
     @JoinColumn(name = "shipment_id", referencedColumnName = "id")
     private Shipment shipment;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "direccion_envio_id")
+    private Direccion direccionEnvio;
+
     @PrePersist
     protected void onCreate() {
         this.fechaCreacion = LocalDateTime.now();

@@ -14,6 +14,7 @@ import com.ecommerce.repository.OrdenRepository;
 import com.ecommerce.repository.PaymentTransactionRepository;
 import com.ecommerce.repository.ShipmentRepository;
 import com.ecommerce.repository.UsuarioRepository;
+import com.ecommerce.repository.DireccionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,9 @@ public class OrdenService {
     private CarritoRepository carritoRepository;
 
     @Autowired
+    private DireccionRepository direccionRepository;
+
+    @Autowired
     private PaymentTransactionRepository paymentTransactionRepository;
 
     @Autowired
@@ -57,9 +61,10 @@ public class OrdenService {
     /**
      * FASE 1: Creación de la Orden (CREATED)
      * Convierte el carrito actual en una nueva orden en estado CREATED.
+     * Selecciona una dirección de envío si direccionId no es nulo.
      */
     @Transactional
-    public OrdenDTO crearOrdenDesdeCarrito() {
+    public OrdenDTO crearOrdenDesdeCarrito(Long direccionId) {
         Usuario usuario = getUsuarioActual();
         Carrito carrito = carritoRepository.findByUsuario(usuario)
                 .orElseThrow(() -> new RuntimeException("Carrito no encontrado"));
@@ -71,6 +76,15 @@ public class OrdenService {
         Orden orden = new Orden();
         orden.setUsuario(usuario);
         orden.setEstado(EstadoOrden.CREATED);
+
+        if (direccionId != null) {
+            Direccion direccion = direccionRepository.findById(direccionId)
+                    .orElseThrow(() -> new RuntimeException("Dirección no encontrada"));
+            if (!direccion.getUsuario().getId().equals(usuario.getId())) {
+                throw new RuntimeException("La dirección no pertenece a este usuario");
+            }
+            orden.setDireccionEnvio(direccion);
+        }
 
         Map<Producto, Long> conteoProductos = carrito.getProductos().stream()
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
@@ -283,6 +297,10 @@ public class OrdenService {
             sDto.setCourier(orden.getShipment().getCourier());
             sDto.setTrackingNumber(orden.getShipment().getTrackingNumber());
             dto.setShipment(sDto);
+        }
+
+        if (orden.getDireccionEnvio() != null) {
+            dto.setDireccionEnvio(com.ecommerce.dto.DireccionDTO.fromEntity(orden.getDireccionEnvio()));
         }
 
         return dto;

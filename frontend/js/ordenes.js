@@ -204,8 +204,24 @@ window.verDetalles = (id) => {
                 <p class="text-gray-500 mb-1">Estado Actual</p>
                 ${getBadgeHTML(orden.estado)}
             </div>
-        </div>
     `;
+
+    if (orden.direccionEnvio) {
+        const dir = orden.direccionEnvio;
+        html += `
+            <div>
+                <p class="text-gray-500 mb-1">Dirección de Envío</p>
+                <div class="bg-gray-50 p-2 rounded text-xs border border-gray-200">
+                    <p class="font-bold">${dir.alias || 'Dirección'}</p>
+                    <p>${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ' Int ' + dir.numeroInterior : ''}</p>
+                    <p>${dir.colonia}</p>
+                    <p>${dir.ciudad}, ${dir.estado} CP ${dir.codigoPostal}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `</div>`;
 
     function getNombreProducto(detalle) {
         return detalle.productoNombre
@@ -285,7 +301,29 @@ const despachoValidation = {
 };
 
 window.abrirModalDespacho = (id) => {
+    const orden = ordenesGlobal.find(o => o.id === id);
     document.getElementById('despachoOrdenId').textContent = id;
+
+    // Si la orden tiene direccion, mostrarla para que el admin sepa a donde enviar
+    const despachoInfo = document.getElementById('despachoDireccionInfo');
+    if (despachoInfo) {
+        if (orden && orden.direccionEnvio) {
+            const dir = orden.direccionEnvio;
+            despachoInfo.innerHTML = `
+                <div class="bg-blue-50 p-3 rounded-lg mb-4 text-sm border border-blue-200">
+                    <h4 class="font-bold text-blue-800 mb-1"><i class="fas fa-map-marker-alt mr-1"></i> Destino del Envío</h4>
+                    <p>${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ' Int ' + dir.numeroInterior : ''}</p>
+                    <p>${dir.colonia}, ${dir.municipio}</p>
+                    <p>${dir.ciudad}, ${dir.estado}. CP: ${dir.codigoPostal}</p>
+                    <p class="text-xs text-blue-600 mt-1">Tel: ${dir.telefonos?.join(', ') || 'N/A'}</p>
+                </div>
+            `;
+            despachoInfo.classList.remove('hidden');
+        } else {
+            despachoInfo.classList.add('hidden');
+        }
+    }
+
     window.ordenDespachoActualId = id;
     cerrarModalDespacho(); // Reset
     document.getElementById('modalDespacho').classList.remove('hidden');

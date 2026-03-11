@@ -20,4 +20,6 @@ public class OrdenDTO {
 
     private PaymentTransactionDTO paymentTransaction;
     private ShipmentDTO shipment;
+
+    private DireccionDTO direccionEnvio;
 }

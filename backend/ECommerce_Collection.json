@@ -24,17 +24,28 @@
             }
           ],
           "request": {
-             "method": "POST",
-             "header": [{ "key": "Content-Type", "value": "application/json" }],
-             "body": {
-                "mode": "raw",
-                "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
-             },
-             "url": {
-                "raw": "{{baseUrl}}/api/auth/login",
-                "host": ["{{baseUrl}}"],
-                "path": ["api", "auth", "login"]
-             }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
           }
         },
         {
@@ -54,15 +65,26 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
-               "mode": "raw",
-               "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"customer123\"\n}"
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"customer123\"\n}"
             },
             "url": {
-               "raw": "{{baseUrl}}/api/auth/login",
-               "host": ["{{baseUrl}}"],
-               "path": ["api", "auth", "login"]
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             }
           }
         }
@@ -77,15 +99,31 @@
             {
               "listen": "test",
               "script": {
-                "exec": ["pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"],
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ],
                 "type": "text/javascript"
               }
             }
           ],
           "request": {
-             "method": "GET",
-             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
-             "url": { "raw": "{{baseUrl}}/api/usuarios", "host": ["{{baseUrl}}"], "path": ["api", "usuarios"] }
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            }
           }
         },
         {
@@ -94,22 +132,40 @@
             {
               "listen": "test",
               "script": {
-                "exec": ["pm.test(\"Status code is 200/201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"],
+                "exec": [
+                  "pm.test(\"Status code is 200/201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                ],
                 "type": "text/javascript"
               }
             }
           ],
           "request": {
-             "method": "POST",
-             "header": [
-                { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-                { "key": "Content-Type", "value": "application/json" }
-             ],
-             "body": {
-                "mode": "raw",
-                "raw": "{\n  \"nombre\": \"Test User\",\n  \"email\": \"test@user.com\",\n  \"password\": \"password\",\n  \"role\": \"CUSTOMER\"\n}"
-             },
-             "url": { "raw": "{{baseUrl}}/api/usuarios", "host": ["{{baseUrl}}"], "path": ["api", "usuarios"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Test User\",\n  \"email\": \"test@user.com\",\n  \"password\": \"password\",\n  \"role\": \"CUSTOMER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/cliente",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "cliente"
+              ]
+            }
           }
         }
       ]
@@ -133,24 +189,119 @@
             }
           ],
           "request": {
-             "method": "GET",
-             "header": [],
-             "url": { "raw": "{{baseUrl}}/api/productos", "host": ["{{baseUrl}}"], "path": ["api", "productos"] }
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            }
           }
         },
         {
           "name": "2. CREATE Producto",
           "request": {
-             "method": "POST",
-             "header": [
-                { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-                { "key": "Content-Type", "value": "application/json" }
-             ],
-             "body": {
-                "mode": "raw",
-                "raw": "{\n  \"type\": \"Fisico\",\n  \"nombre\": \"Nuevo Teclado\",\n  \"descripcion\": \"Teclado\",\n  \"precio\": 500,\n  \"proveedor\": \"Logitech\",\n  \"stock\": 10,\n  \"peso\": 1.2\n}"
-             },
-             "url": { "raw": "{{baseUrl}}/api/productos", "host": ["{{baseUrl}}"], "path": ["api", "productos"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"Fisico\",\n  \"nombre\": \"Nuevo Teclado\",\n  \"descripcion\": \"Teclado\",\n  \"precio\": 500,\n  \"proveedor\": \"Logitech\",\n  \"stock\": 10,\n  \"peso\": 1.2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Direccion CRUD",
+      "item": [
+        {
+          "name": "1. CREATE Direccion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200/201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                  "var data = pm.response.json();",
+                  "pm.environment.set(\"direccion_id\", data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"calle\": \"Av. Universitaria\",\n  \"numeroExterior\": \"452\",\n  \"colonia\": \"Norte\",\n  \"municipio\": \"Zapopan\",\n  \"estado\": \"Jalisco\",\n  \"codigoPostal\": \"45130\",\n  \"telefonos\": [\"3312345678\"],\n  \"preferida\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/direcciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "direcciones"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. GET Mis Direcciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/direcciones/mis-direcciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "direcciones",
+                "mis-direcciones"
+              ]
+            }
           }
         }
       ]
@@ -161,16 +312,25 @@
         {
           "name": "1. ADD Item",
           "request": {
-             "method": "POST",
-             "header": [
-                { "key": "Authorization", "value": "Bearer {{customer_token}}" },
-                { "key": "Content-Type", "value": "application/json" }
-             ],
-             "body": {
-                "mode": "raw",
-                "raw": "{\n  \"productoId\": {{producto_id}}\n}"
-             },
-             "url": { "raw": "{{baseUrl}}/api/carrito/agregar", "host": ["{{baseUrl}}"], "path": ["api", "carrito", "agregar"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrito/productos/{{producto_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrito",
+                "productos",
+                "{{producto_id}}"
+              ]
+            }
           }
         },
         {
@@ -189,47 +349,263 @@
             }
           ],
           "request": {
-             "method": "POST",
-             "header": [{ "key": "Authorization", "value": "Bearer {{customer_token}}" }],
-             "url": { "raw": "{{baseUrl}}/api/ordenes/checkout", "host": ["{{baseUrl}}"], "path": ["api", "ordenes", "checkout"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ordenes/checkout?direccionId={{direccion_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ordenes",
+                "checkout"
+              ],
+              "query": [
+                {
+                  "key": "direccionId",
+                  "value": "{{direccion_id}}"
+                }
+              ]
+            }
           }
         },
         {
           "name": "3. PAY",
           "request": {
-             "method": "POST",
-             "header": [
-                { "key": "Authorization", "value": "Bearer {{customer_token}}" },
-                { "key": "Content-Type", "value": "application/json" }
-             ],
-             "body": {
-                "mode": "raw",
-                "raw": "{\n  \"ordenId\": {{orden_id}},\n  \"metodoPago\": \"Tarjeta\"\n}"
-             },
-             "url": { "raw": "{{baseUrl}}/api/payments/procesar", "host": ["{{baseUrl}}"], "path": ["api", "payments", "procesar"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ordenId\": {{orden_id}},\n  \"metodoPago\": \"Tarjeta\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/procesar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "procesar"
+              ]
+            }
           }
         },
         {
           "name": "4. DISPATCH (Admin)",
           "request": {
-             "method": "POST",
-             "header": [
-                { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-                { "key": "Content-Type", "value": "application/json" }
-             ],
-             "body": {
-                "mode": "raw",
-                "raw": "{\n  \"courier\": \"FedEx\",\n  \"trackingNumber\": \"TRK123\"\n}"
-             },
-             "url": { "raw": "{{baseUrl}}/api/shipments/despachar/{{orden_id}}", "host": ["{{baseUrl}}"], "path": ["api", "shipments", "despachar", "{{orden_id}}"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courier\": \"FedEx\",\n  \"trackingNumber\": \"TRK123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/shipments/despachar/{{orden_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shipments",
+                "despachar",
+                "{{orden_id}}"
+              ]
+            }
           }
         },
         {
           "name": "5. DELIVER (Admin)",
           "request": {
-             "method": "POST",
-             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
-             "url": { "raw": "{{baseUrl}}/api/shipments/entregar/{{orden_id}}", "host": ["{{baseUrl}}"], "path": ["api", "shipments", "entregar", "{{orden_id}}"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shipments/entregar/{{orden_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shipments",
+                "entregar",
+                "{{orden_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Carrito Extra Endpoints",
+      "item": [
+        {
+          "name": "1. GET Carrito",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrito",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrito"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. DELETE Producto",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrito/productos/{{producto_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrito",
+                "productos",
+                "{{producto_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. DELETE Vaciar",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrito",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrito"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ordenes Extra Endpoints",
+      "item": [
+        {
+          "name": "1. GET Mis Ordenes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ordenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ordenes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. GET Todas Las Ordenes (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ordenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ordenes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. POST Cancelar Orden",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ordenes/{{orden_id}}/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ordenes",
+                "{{orden_id}}",
+                "cancelar"
+              ]
+            }
           }
         }
       ]

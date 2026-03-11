@@ -405,7 +405,7 @@ BIU License - Proyecto Académico - Módulo Programming the Internet
 
 ### 11. Documentación del Frontend (Arquitectura Reactiva Vainilla)
 
-El frontend de esta plataforma eCommerce ha sido analizado para detallar su composición técnica y flujos de datos.
+El frontend de esta plataforma eCommerce ha sido construído con adherencia a la siguiente especificación técnica y flujos de datos.
 
 * **Arquitectura del Frontend**: Se sostiene como una **Single Page Application (SPA) Parcial** basada estrictamente en **Vanilla JavaScript (ES6 Modules)** y **Tailwind CSS**. Evita la sobrecarga de frameworks React/Angular, logrando una alta modularidad inyectando dinámicamente nodos en el Document Object Model (DOM).
 

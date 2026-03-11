@@ -20,11 +20,6 @@ const Checkout = {
         const params = new URLSearchParams(window.location.search)
         const id = params.get("ordenId")
 
-        if (!id) {
-            window.location.href = "ordenes.html"
-            return
-        }
-
         await this.loadData(id)
 
         this.bindEvents()
@@ -32,17 +27,23 @@ const Checkout = {
     },
 
     async loadData(id) {
+        this.ordenId = id; // Could be null
 
-        const [orden, direcciones] = await Promise.all([
-            Api.get("/ordenes"),
+        const [direcciones] = await Promise.all([
             Api.get("/direcciones/mis-direcciones")
-        ])
+        ]);
 
-        this.orden = orden.find(o => o.id == id)
+        if (id) {
+            const ordenes = await Api.get("/ordenes");
+            this.orden = ordenes.find(o => o.id == id);
+            this.renderResumenFromOrden();
+        } else {
+            const carrito = await Api.get("/carrito");
+            this.carrito = carrito;
+            this.renderResumenFromCarrito();
+        }
 
-        this.renderResumen()
-        this.renderDirecciones(direcciones)
-
+        this.renderDirecciones(direcciones);
     },
 
     bindEvents() {
@@ -126,9 +127,8 @@ const Checkout = {
 
     },
 
-    renderResumen() {
-
-        const orden = this.orden
+    renderResumenFromOrden() {
+        const orden = this.orden;
 
         document.getElementById("loadingResumen").classList.add("hidden")
         document.getElementById("resumenContent").classList.remove("hidden")
@@ -142,23 +142,18 @@ const Checkout = {
         let subtotal = 0
 
         orden.detalles.forEach(d => {
-
             const nombre = d.productoNombre || (d.producto?.nombre) || "Producto"
             const sub = d.subtotal || (d.precio * d.cantidad)
 
             subtotal += sub
 
             const li = document.createElement("li")
-
             li.className = "flex justify-between text-sm"
-
             li.innerHTML = `
                 <span>${d.cantidad}x ${nombre}</span>
                 <span>${UI.formatCurrency(sub)}</span>
             `
-
             ul.appendChild(li)
-
         })
 
         const tax = subtotal * 0.16
@@ -167,7 +162,49 @@ const Checkout = {
         document.getElementById("resumenSubtotal").textContent = UI.formatCurrency(subtotal)
         document.getElementById("resumenImpuestos").textContent = UI.formatCurrency(tax)
         document.getElementById("resumenTotal").textContent = UI.formatCurrency(total)
+    },
 
+    renderResumenFromCarrito() {
+        if (!this.carrito || !this.carrito.productos || this.carrito.productos.length === 0) {
+            UI.showNotification("Tu carrito está vacío", "warning");
+            setTimeout(() => window.location.href = "carrito.html", 1500);
+            return;
+        }
+
+        document.getElementById("loadingResumen").classList.add("hidden");
+        document.getElementById("resumenContent").classList.remove("hidden");
+        document.getElementById("ordenIdDisplay").textContent = "Nueva";
+        document.getElementById("ordenEstadoDisplay").textContent = "PENDING";
+
+        const ul = document.getElementById("listaResumenItems");
+        ul.innerHTML = "";
+
+        let subtotal = 0;
+        const map = new Map();
+        this.carrito.productos.forEach(p => {
+            if (map.has(p.id)) map.get(p.id).cantidad++;
+            else map.set(p.id, { ...p, cantidad: 1 });
+        });
+
+        map.forEach(p => {
+            const sub = p.precio * p.cantidad;
+            subtotal += sub;
+
+            const li = document.createElement("li");
+            li.className = "flex justify-between text-sm";
+            li.innerHTML = `
+                <span>${p.cantidad}x ${p.nombre}</span>
+                <span>${UI.formatCurrency(sub)}</span>
+            `;
+            ul.appendChild(li);
+        });
+
+        const tax = subtotal * 0.16;
+        const total = subtotal + tax;
+
+        document.getElementById("resumenSubtotal").textContent = UI.formatCurrency(subtotal);
+        document.getElementById("resumenImpuestos").textContent = UI.formatCurrency(tax);
+        document.getElementById("resumenTotal").textContent = UI.formatCurrency(total);
     },
 
     updateMetodoPago() {
@@ -208,20 +245,32 @@ const Checkout = {
         btn.disabled = true
 
         try {
+            let actualOrdenId = this.ordenId;
 
+            // FASE 1: Crear la orden si no existe (viniendo del carrito)
+            if (!actualOrdenId) {
+                const urlCheckout = `/ordenes/checkout?direccionId=${this.direccion}`;
+                const nuevaOrden = await Api.post(urlCheckout);
+                actualOrdenId = nuevaOrden.id;
+                this.ordenId = actualOrdenId; // guardarlo por si falla el pago y quiere reintentar
+            }
+
+            // FASE 2: Enviar pago
             const res = await Api.post("/payments/procesar", {
-                ordenId: this.orden.id,
+                ordenId: actualOrdenId,
                 metodoPago: this.metodoPago
             })
 
-            if (res.estado === "PAID") {
-
-                UI.showNotification("Pago exitoso", "success")
-
+            if (res.estado === "PAID" || res.estado === "PAYMENT_PENDING") {
+                UI.showNotification("Proceso completado", "success")
                 setTimeout(() => {
                     window.location.href = "ordenes.html"
                 }, 1500)
-
+            } else if (res.estado === "OUT_OF_STOCK") {
+                UI.showNotification("Lo sentimos, no hay inventario suficiente.", "error")
+                setTimeout(() => {
+                    window.location.href = "ordenes.html"
+                }, 2000)
             }
 
         } catch (err) {

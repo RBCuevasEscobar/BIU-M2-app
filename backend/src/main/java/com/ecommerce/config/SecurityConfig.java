@@ -40,6 +40,7 @@ public class SecurityConfig {
                         // 🔓 ENDPOINTS PÚBLICOS
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/usuarios/cliente").permitAll()
                         .requestMatchers("/api/usuarios/proveedor").permitAll()
                         .requestMatchers("/api/usuarios/admin").permitAll()

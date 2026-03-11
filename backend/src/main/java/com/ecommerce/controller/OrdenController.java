@@ -17,8 +17,8 @@ public class OrdenController {
 
     @PostMapping("/checkout")
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<OrdenDTO> checkout() {
-        return ResponseEntity.ok(ordenService.crearOrdenDesdeCarrito());
+    public ResponseEntity<OrdenDTO> checkout(@RequestParam(required = false) Long direccionId) {
+        return ResponseEntity.ok(ordenService.crearOrdenDesdeCarrito(direccionId));
     }
 
     @PostMapping("/{id}/cancelar")

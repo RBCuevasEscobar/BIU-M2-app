@@ -879,6 +879,7 @@ erDiagram
     ORDENES {
         bigint id PK
         bigint usuario_id FK
+        bigint direccion_envio_id FK
         bigint payment_transaction_id FK
         bigint shipment_id FK
         double total
@@ -907,6 +908,7 @@ erDiagram
     }
 
     USUARIOS ||--o{ DIRECCION : "tiene multiples"
+    DIRECCION ||--o{ ORDENES : "es entregada en"
     USUARIOS ||--|| CARRITOS : "tiene 1"
     CARRITOS ||--o{ CARRITO_PRODUCTOS : "contiene"
     PRODUCTOS ||--o{ CARRITO_PRODUCTOS : "esta en"
@@ -959,6 +961,9 @@ classDiagram
     class PaymentTransaction {
         <<entity>>
     }
+    class Direccion {
+        <<entity>>
+    }
 
     ControllerLayer ..> DTO : returns
     ControllerLayer ..> OrdenService : dependency
@@ -968,6 +973,7 @@ classDiagram
     OrdenService ..> RepositoryLayer : dependency
     RepositoryLayer ..> Orden : reads/writes
     Orden *-- PaymentTransaction : composition
+    Orden --> Direccion : direccionEnvio
 ```
 
 ### 6. Arquitectura C4 Completa
@@ -1401,4 +1407,39 @@ public Usuario buscarPorId(Long id) {
     return usuarioRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
 }
+```
+
+### 7. Diagrama de Secuencia: Flujo de Checkout con Asignación de Dirección (Fase 4)
+Este esquema detalla cómo el sistema orquesta la creación de una orden y la asocia a una dirección estática sin romper relaciones existentes:
+
+```mermaid
+sequenceDiagram
+    actor C as Cliente
+    participant JS as Frontend (checkout.js)
+    participant CTRL as OrdenController
+    participant SVC as OrdenService
+    participant DB as MySQL DB
+
+    C->>JS: Inicia Checkout
+    JS->>CTRL: GET /api/direcciones/mis-direcciones
+    CTRL-->>JS: Lista de Direcciones [1..N]
+    JS->>JS: Cliente Selecciona Direccion (ID={ID})
+    C->>JS: Click "Pagar"
+    
+    JS->>CTRL: POST /api/ordenes/checkout?direccionId={ID}
+    CTRL->>SVC: crearOrdenDesdeCarrito({ID})
+    
+    SVC->>DB: findCarritoByUsuario()
+    SVC->>DB: findDireccionById({ID})
+    
+    alt Direccion Valida
+        SVC->>SVC: orden.setDireccionEnvio(direccion)
+        SVC->>DB: save(orden)
+        SVC-->>CTRL: HTTP 200 (OrdenDTO completa)
+    else Direccion Nula (Opcional)
+        SVC->>SVC: Continúa sin asociar
+        SVC->>DB: save(orden)
+    end
+    
+    CTRL-->>JS: Retorna OrdenID para Payment Gateway
 ```
