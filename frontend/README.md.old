@@ -401,7 +401,7 @@ BIU License - Proyecto Académico - Módulo Programming the Internet
 
 ---
 
-## 🔍 Deep Analysis (Auditoría Técnica y Documentación Avanzada)
+## 🔍 Descripción detallada actualizada de la implementación de la arquitectura de frontend para la solución eCommerce. 
 
 ### 11. Documentación del Frontend (Arquitectura Reactiva Vainilla)
 
@@ -427,7 +427,7 @@ El frontend de esta plataforma eCommerce ha sido construído con adherencia a la
   - Errores sintácticos HTTP `400 Bad Request` se interceptan extrayendo sus `message` o constraint violations mapeadas por backend y mostradas con `UI.showNotification()`.
   - Errores de acceso `401 Unauthorized` o `403 Forbidden` disparan el vaciado del `localStorage` y forzan un `window.location.href = '/login.html'`, protegiendo al usuario.
 
-### Documentación de Interfaces Gráficas Críticas (GUIs)
+### Documentación de Nuevas Interfaces Gráficas Críticas (GUIs)
 
 #### A. Interfaz de Checkout (Cierre de Compra)
 - **Vista**: `checkout.html` operada por `js/checkout.js`.
@@ -501,7 +501,7 @@ frontend/
 
 #### Vista CUSTOMER (`productoscustomer.html` + `appcust.js`)
 - Renderización real de la imagen por defecto en la tarjeta del producto
-- Descripción truncada con `line-clamp-2`
+- Descripción completa del producto (sin truncamiento)
 - Nombre del proveedor (icono de tienda)
 - Clic en la imagen abre popup/galería con:
   - Navegación Anterior/Siguiente
@@ -511,7 +511,7 @@ frontend/
   - Cierre al hacer clic fuera
 
 #### Landing Page (`index.html` + `app.js`)
-- Muestra imagen real del producto (si tiene) y descripción truncada
+- Muestra imagen real del producto (si tiene) y descripción completa
 - Los botones de carrito **NO aparecen** para usuarios no autenticados
 - En su lugar se muestra un enlace "Iniciar sesión para comprar"
 
@@ -545,3 +545,18 @@ frontend/
 - Microdatos schema.org (`PostalAddress`) en tarjetas y formularios
 - Validación nativa HTML5 (`required`, `pattern`, `maxlength`, `minlength`)
 - `aria-label` en botones de navegación
+
+---
+
+## 🔄 Fase 4 – Integración "Safe Refactor" (Asociación Direcciones a Órdenes)
+
+Con base en la iniciativa "Antigravity Enterprise Safe Refactor Mode", se actualizó la lógica de la UI para garantizar que las órdenes retengan un `snapshot` congelado de la dirección seleccionada al momento del Checkout.
+
+### Flujo de Checkout (`carrito.js` & `checkout.js`)
+- **Desacoplamiento**: `carrito.js` dejó de emitir la llamada `POST` de creación para redirigir fluida y amistosamente el contexto a `checkout.html`.
+- **Carga Dinámica**: `checkout.js` fue re-implementado para soportar dos facetas simultáneas: si la orden _ya existe_ en base de datos (`ordenId` en la url), lee la orden. De lo contrario, lee el subtotal y calculo de impuestos directamente desde la cesta pendiente (`/carrito`).
+- **Inyección Transaccional**: Al procesar el pago (`procesarPago`), `checkout.js` orquesta la construcción y enlazamiento de la orden (pasando el `direccionId` elegido en el Modal) garantizando la inmutabilidad relacional de la orden ante cualquier manipulación futura de la libreta de direcciones por parte del cliente.
+
+### Modelo de Despacho Logístico (`ordenes.js`)
+- **Detalle Dinámico**: Se reescribió la visualización del layout en `modalDetalle` para mostrar, en formato de tarjeta o bloque HTML aislado, los datos granulares de la dirección original inyectada, blindando la orden de cambios posteriores.
+- **Portal de Administrador (`abrirModalDespacho`)**: Como beneficio corporativo clave, los Administradores obtienen despliegue absoluto en GUI sobre "_hacia dónde_" va el paquete en el popup de `Despachar`, listando la dirección completa y teléfono de contacto adjunto. Esto previene aperturas de múltiples pestañas y consolida la experiencia logística en una sola vista.

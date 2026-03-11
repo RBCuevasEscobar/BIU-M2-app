@@ -548,9 +548,9 @@ frontend/
 
 ---
 
-## 🔄 Fase 4 – Integración "Safe Refactor" (Asociación Direcciones a Órdenes)
+## 🔄 Fase 3 – Funcionalidad Asociación Direcciones a Órdenes
 
-Con base en la iniciativa "Antigravity Enterprise Safe Refactor Mode", se actualizó la lógica de la UI para garantizar que las órdenes retengan un `snapshot` congelado de la dirección seleccionada al momento del Checkout.
+Se actualizó la lógica de la UI para garantizar que las órdenes retengan un `snapshot` congelado de la dirección seleccionada al momento del Checkout.
 
 ### Flujo de Checkout (`carrito.js` & `checkout.js`)
 - **Desacoplamiento**: `carrito.js` dejó de emitir la llamada `POST` de creación para redirigir fluida y amistosamente el contexto a `checkout.html`.

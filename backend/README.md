@@ -1409,7 +1409,59 @@ public Usuario buscarPorId(Long id) {
 }
 ```
 
-### 7. Diagrama de Secuencia: Flujo de Checkout con Asignación de Dirección (Fase 4)
+### 7. Modelo Entidad-Relación (ERD) Parcial.
+Destaca la inyección segura de la Foreign Key en ORDENES sin romper tablas previamente acopladas.
+
+```mermaid
+erDiagram
+    USUARIOS ||--o{ DIRECCION : "tiene multiples"
+    DIRECCION ||--o{ ORDENES : "es entregada en"
+    USUARIOS ||--o{ ORDENES : "coloca"
+    ORDENES ||--o{ ORDENES_DETALLE : "contiene items"
+    
+    USUARIOS {
+        bigint id PK
+    }
+    DIRECCION {
+        bigint id PK
+        bigint usuario_id FK
+        varchar calle
+        varchar ciudad
+    }
+    ORDENES {
+        bigint id PK
+        bigint usuario_id FK
+        bigint direccion_envio_id FK
+        varchar estado
+    }
+```
+
+### 8. Diagrama de Clases (Inyección de Dependencia para Direcciones).
+Muestra cómo `OrdenService` opera el nuevo Repositorio dentro del contenedor transaccional.
+
+```mermaid
+classDiagram
+    class Direccion {
+        +Long id
+        +Boolean preferida
+        +String calle
+        +String ciudad
+        +String codigoPostal
+    }
+    class Orden {
+        +Long id
+        +EstadoOrden estado
+        +Double total
+    }
+    class OrdenService {
+        +crearOrdenDesdeCarrito(Long direccionId) OrdenDTO
+    }
+    OrdenService ..> DireccionRepository : inyecta
+    OrdenService ..> OrdenRepository : inyecta
+    Orden "0..*" --> "0..1" Direccion: direccionEnvio
+```
+
+### 9. Diagrama de Secuencia: Flujo de Checkout con Asignación de Dirección.
 Este esquema detalla cómo el sistema orquesta la creación de una orden y la asocia a una dirección estática sin romper relaciones existentes:
 
 ```mermaid
