@@ -5,6 +5,7 @@ import Auth from './auth.js';
 // ── Estado admin address panel ────────────────────────────────────────────────
 let adminTargetUserId = null;
 let adirTelefonos = [];  // teléfonos en el sub-form de dirección
+let usuariosGlobal = []; // Stores all users for filtering
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -31,6 +32,8 @@ function setupEventListeners() {
     document.getElementById('btnCerrarModal').addEventListener('click', cerrarModal);
     document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
     document.getElementById('formUsuario').addEventListener('submit', guardarUsuario);
+    document.getElementById('role').addEventListener('change', window.toggleUserTypeFields);
+    document.getElementById('filtroRol').addEventListener('change', renderizarUsuarios);
     UI.setupModalCloser('modalUsuario');
 
     // Modal direcciones (admin)
@@ -50,18 +53,25 @@ function setupEventListeners() {
 // ── Usuarios ──────────────────────────────────────────────────────────────────
 async function cargarUsuarios() {
     try {
-        const usuarios = await Api.get('/usuarios');
-        renderizarUsuarios(usuarios);
+        usuariosGlobal = await Api.get('/usuarios');
+        renderizarUsuarios();
     } catch (error) {
         UI.showNotification('Error al cargar usuarios: ' + error.message, 'error');
     }
 }
 
-function renderizarUsuarios(usuarios) {
+function renderizarUsuarios() {
+    const filtro = document.getElementById('filtroRol').value;
+    
+    let filtrados = usuariosGlobal;
+    if (filtro && filtro !== 'Todos') {
+        filtrados = usuariosGlobal.filter(u => u.role === filtro);
+    }
+
     const tbody = document.getElementById('listaUsuarios');
     tbody.innerHTML = '';
 
-    if (!usuarios || usuarios.length === 0) {
+    if (!filtrados || filtrados.length === 0) {
         document.getElementById('emptyState').classList.remove('hidden');
         return;
     }
@@ -74,7 +84,7 @@ function renderizarUsuarios(usuarios) {
         CUSTOMER: 'bg-green-100 text-green-800'
     };
 
-    usuarios.forEach(usuario => {
+    filtrados.forEach(usuario => {
         const row = document.createElement('tr');
         row.className = 'border-b border-gray-200 hover:bg-gray-50';
         const roleDisplay = roleNames[usuario.role] || usuario.role;
@@ -114,6 +124,10 @@ function abrirModal(usuario = null) {
     const form = document.getElementById('formUsuario');
     const passwordField = document.getElementById('password');
     form.reset();
+    document.getElementById('error-rfcCurp').classList.add('hidden');
+    document.getElementById('rfcCurpContainer').classList.add('hidden');
+    document.getElementById('empresaContainer').classList.add('hidden');
+    document.getElementById('vigenciaContainer').classList.add('hidden');
 
     if (usuario) {
         document.getElementById('modalTitle').textContent = 'Editar Usuario';
@@ -122,7 +136,11 @@ function abrirModal(usuario = null) {
         document.getElementById('email').value = usuario.email;
         document.getElementById('role').value = usuario.role;
         if (usuario.fechaNacimiento) document.getElementById('fechaNacimiento').value = usuario.fechaNacimiento;
+        if (usuario.rfcCurp) document.getElementById('rfcCurp').value = usuario.rfcCurp;
+        if (usuario.empresa) document.getElementById('empresa').value = usuario.empresa;
+        if (usuario.validUntil) document.getElementById('validUntil').value = usuario.validUntil;
         passwordField.removeAttribute('required');
+        window.toggleUserTypeFields();
     } else {
         document.getElementById('modalTitle').textContent = 'Nuevo Usuario';
         document.getElementById('usuarioId').value = '';
@@ -143,6 +161,24 @@ async function guardarUsuario(e) {
         role: document.getElementById('role').value,
         fechaNacimiento: document.getElementById('fechaNacimiento').value || null
     };
+    // Add role-specific details
+    if (datos.role === 'CUSTOMER') {
+        const rfcCurp = document.getElementById('rfcCurp').value.trim();
+        const regexRfc = /^[A-Za-z]{4}[0-9]{6}[A-Za-z0-9]{3}$/;
+        const regexCurp = /^[A-Za-z]{4}[0-9]{6}[HM][A-Za-z]{5}[0-9]{2}$/;
+        
+        if (!regexRfc.test(rfcCurp) && !regexCurp.test(rfcCurp)) {
+            document.getElementById('error-rfcCurp').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('error-rfcCurp').classList.add('hidden');
+        datos.rfcCurp = rfcCurp;
+    } else if (datos.role === 'SUPPLIER') {
+        datos.empresa = document.getElementById('empresa').value.trim();
+    } else if (datos.role === 'ADMIN') {
+        datos.validUntil = document.getElementById('validUntil').value;
+    }
+
     if (usuarioId && !datos.password) delete datos.password;
 
     try {
@@ -371,5 +407,37 @@ window.eliminarUsuario = async (id) => {
         cargarUsuarios();
     } catch (error) {
         UI.showNotification('Error al eliminar usuario: ' + error.message, 'error');
+    }
+};
+
+window.toggleUserTypeFields = () => {
+    const role = document.getElementById('role').value;
+    
+    const rfcCurpC = document.getElementById('rfcCurpContainer');
+    const empresaC = document.getElementById('empresaContainer');
+    const vigenciaC = document.getElementById('vigenciaContainer');
+    
+    const rfcCurpI = document.getElementById('rfcCurp');
+    const empresaI = document.getElementById('empresa');
+    const validUntilI = document.getElementById('validUntil');
+    
+    // Reset presentation and required attributes
+    rfcCurpC.classList.add('hidden');
+    empresaC.classList.add('hidden');
+    vigenciaC.classList.add('hidden');
+    
+    rfcCurpI.removeAttribute('required');
+    empresaI.removeAttribute('required');
+    validUntilI.removeAttribute('required');
+    
+    if (role === 'CUSTOMER') {
+        rfcCurpC.classList.remove('hidden');
+        rfcCurpI.setAttribute('required', 'required');
+    } else if (role === 'SUPPLIER') {
+        empresaC.classList.remove('hidden');
+        empresaI.setAttribute('required', 'required');
+    } else if (role === 'ADMIN') {
+        vigenciaC.classList.remove('hidden');
+        validUntilI.setAttribute('required', 'required');
     }
 };

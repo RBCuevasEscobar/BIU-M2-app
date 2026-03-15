@@ -12,7 +12,10 @@ public class OrdenDTO {
     private LocalDateTime fechaCreacion;
     private LocalDateTime ultimaModificacion;
 
+    private Long usuarioId;
     private String usuarioEmail;
+    private String usuarioNombre;
+    private String usuarioRfcCurp;
 
     private Double total;
 

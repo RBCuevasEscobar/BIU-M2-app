@@ -116,11 +116,7 @@ function renderizarTabla(productos, filtro) {
 
     const filtrados = filtro === 'todos'
         ? productos
-        : productos.filter(p => {
-            if (filtro === 'Fisico') return p.tipo === 'Fisico' || p.peso !== undefined;
-            if (filtro === 'Digital') return p.tipo === 'Digital' || p.urlDescarga !== undefined;
-            return true;
-        });
+        : productos.filter(p => p.tipo === filtro);
 
     if (filtrados.length === 0) {
         document.getElementById('emptyState').classList.remove('hidden');
@@ -129,7 +125,7 @@ function renderizarTabla(productos, filtro) {
     document.getElementById('emptyState').classList.add('hidden');
 
     filtrados.forEach(p => {
-        const esFisico = p.tipo === 'Fisico' || (p.peso !== undefined && p.urlDescarga === undefined);
+        const esFisico = p.tipo === 'Fisico';
         const tipoBadge = esFisico
             ? '<span class="bg-blue-100 text-blue-800 py-1 px-3 rounded-full text-xs">Físico</span>'
             : '<span class="bg-purple-100 text-purple-800 py-1 px-3 rounded-full text-xs">Digital</span>';
@@ -297,7 +293,7 @@ function abrirModal(producto = null) {
             actualizarContador('proveedor', 'contadorProveedor', 150);
         }
 
-        const esFisico = producto.tipo === 'Fisico' || (producto.peso !== undefined && producto.urlDescarga === undefined);
+        const esFisico = producto.tipo === 'Fisico';
         document.getElementById('tipo').value = esFisico ? 'Fisico' : 'Digital';
         toggleCamposTipo();
 

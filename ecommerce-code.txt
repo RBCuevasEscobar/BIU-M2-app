@@ -1,53 +1,5 @@
 
 
-================ CODE_REVIEW_FINDINGS.md ================
-
-# HALLAZGOS DE AUDITORÍA DE CÓDIGO (CODE REVIEW FINDINGS)
-
-Este documento detalla los resultados del análisis profundo (Deep Analysis) ejecutado sobre el repositorio del sistema eCommerce (Frontend y Backend). Se han identificado hallazgos relacionados con la consistencia entre la API y las pruebas en Postman, riesgos de seguridad, potenciales bugs y deuda técnica.
-
-# TAREA 9 — VALIDACIÓN DE CONSISTENCIA API vs POSTMAN
-
-Tras contrastar los endpoints existentes en la aplicación Spring Boot (*Controllers*) con la colección `ECommerce_Collection.json`, se han detectado las siguientes observaciones:
-
-## 1. Endpoints Faltantes en Postman
-* **Direcciones**: No existen pruebas creadas para el CRUD completo de rutas como `GET /api/direcciones`, `POST /api/direcciones`, ni `GET /api/direcciones/mis-direcciones`.
-* **Cancelación de Órdenes**: El endpoint `POST /api/ordenes/{id}/cancelar` está expuesto en el `OrdenController`, pero la colección actual de pruebas no lo invoca.
-* **Listado de Órdenes de Usuario Específico**: El controlador permite a un ADMIN ver las órdenes de cualquier usuario (`GET /api/ordenes/usuario/{usuarioId}`), sin embargo, no está documentado ni automatizado en el archivo JSON.
-
-## 2. Parámetros Inconsistentes
-* **Productos**: El seeder inicial modela `ProductoDigital` y `ProductoFisico`. La prueba asume siempre un `type: "Fisico"` al mandar el payload JSON, pero no se prueba la variante abstracta `ProductoDigital` para validar que el polimorfismo inserte el objeto correcto.
-* **Errores Negativos**: La colección carece de aserciones para "Unhappy Paths", tales como:
-  * Evidenciar que un stock negativo regresa el estado HTTP `400` y transiciona la orden a `OUT_OF_STOCK`.
-  * Intentar autenticarse con contraseñas incorrectas (`HTTP 401 Unauthorized`).
-
-## 3. Rutas Desactualizadas
-* Las dependencias DTO recién introducidas han cambiado algunas estructuras de respuesta anidando sub-objetos como `paymentTransactionDTO`, pero los tests de Postman actuales se limitan a checar un `HTTP 200` y extraer sólo el `.id` de la respuesta, omitiendo la validación de un "JSON Schema" riguroso.
-
----
-
-# TAREA 15 — AUDITORÍA DE CÓDIGO
-
-## Riesgos de Seguridad 🛡️
-1. **Secretos Hardcodeados**: Es probable que la clave secreta para la firma del JWT (`jwt.secret`), así como las credenciales de la base de datos MySQL (usuario `root`, por ejemplo), residan en plano dentro de `application.properties`. Se sugiere migrar al uso de variables de entorno (`${DB_PASSWORD}`) o Spring Cloud Config / HashiCorp Vault.
-2. **Exposición de Trazas de Excepción**: En ocasiones, el `InvalidDefinitionException` o la ausencia de controladores de exepción `@ControllerAdvice` globales podría filtrar *Stacktraces* de la lógica interna de Java o consultas Hibernate al cliente (frontend).
-3. **CORS y Orígenes Confiables**: La política CORS, si está configurada como `*` (permitir todos), debe ser restringida a los dominios autorizados de la interfaz frontend por motivos de protección contra CSRF o *Cross-Site Scripting*.
-
-## Posibles Bugs (Bugs Potenciales) 🐛
-1. **Lógica de Concurrencia de Inventario**: Al usar `sumar/restar` stock interactuando bajo un volumen enorme y concurrente, el valor escalar de la base de datos en `ProductoFisico` podría sufrir de la condición de carrera (*Race Condition*), a menos que se asegure el uso estricto de bloqueos optimistas JPA (`@Version`) o bloqueos pesimistas (`@Lock(LockModeType.PESSIMISTIC_WRITE)`).
-2. **Borrado de Elementos Relacionados**: Las relaciones `@ManyToMany` u `@OneToMany` sin el atributo `orphanRemoval` apropiado pueden derivar en retención de basura (filas viudas en SQL) al eliminar perfiles o carritos.
-
-## Mejoras de Rendimiento ⚡
-1. **Overhead de Serialización Hibernate**: La resolución principal usando DTOs corrigió un bucle de consultas (El problema N+1 y serialización ByBuddy proxy). Se recomienda continuar usando inyección de dependencias como *MapStruct* para transcodificar DTO-a-Entity automáticamente en tiempo de compilación.
-2. **Caché para Catálogos Estáticos**: Las consultas a `GET /api/productos` acceden a la base de datos MySQL de forma reiterativa. Para un modelo de alta demanda, se sugiere agregar la caché de segundo nivel de Hibernate y memoria distribuida mediante integración con `@EnableCaching` (Redis/Hazelcast).
-
-## Mejoras de Arquitectura y Deuda Técnica 📐
-1. **Arquitectura Hexagonal (Puertos y Adaptadores)**: Si las reglas de negocio, los DTOs y el uso estricto de la máquina de estados continúan creciendo, migrar de un diseño clásico "Controller->Service->Repository" hacia un *Domain-Driven Design (DDD)* completo para desacoplar y prevenir fugas de la dependencia `@Entity` hacia APIs externas.
-2. **Carga en Memoria vs Paginación**: En los endpoints de listado (`listarUsuarios`, `listarTodasDTO`), el arreglo puede crecer enormemente, comprometiendo la RAM de la JVM. Como deuda técnica crítica, todos los controladores GET deben admitir `Pageable` para transitar los datos por lotes (Chunks) al cliente web.
-
-_Estas recomendaciones se limitan estrictamente al ámbito de análisis, de acuerdo al mandato de no alterar la funcionalidad ni operación actual del sistema._
-
-
 ================ .mvn\wrapper\maven-wrapper.properties ================
 
 wrapperVersion=3.3.4
@@ -83,17 +35,28 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
             }
           ],
           "request": {
-             "method": "POST",
-             "header": [{ "key": "Content-Type", "value": "application/json" }],
-             "body": {
-                "mode": "raw",
-                "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
-             },
-             "url": {
-                "raw": "{{baseUrl}}/api/auth/login",
-                "host": ["{{baseUrl}}"],
-                "path": ["api", "auth", "login"]
-             }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
           }
         },
         {
@@ -113,15 +76,26 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
-               "mode": "raw",
-               "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"customer123\"\n}"
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"customer123\"\n}"
             },
             "url": {
-               "raw": "{{baseUrl}}/api/auth/login",
-               "host": ["{{baseUrl}}"],
-               "path": ["api", "auth", "login"]
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             }
           }
         }
@@ -136,15 +110,31 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
             {
               "listen": "test",
               "script": {
-                "exec": ["pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"],
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ],
                 "type": "text/javascript"
               }
             }
           ],
           "request": {
-             "method": "GET",
-             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
-             "url": { "raw": "{{baseUrl}}/api/usuarios", "host": ["{{baseUrl}}"], "path": ["api", "usuarios"] }
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            }
           }
         },
         {
@@ -153,22 +143,40 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
             {
               "listen": "test",
               "script": {
-                "exec": ["pm.test(\"Status code is 200/201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"],
+                "exec": [
+                  "pm.test(\"Status code is 200/201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                ],
                 "type": "text/javascript"
               }
             }
           ],
           "request": {
-             "method": "POST",
-             "header": [
-                { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-                { "key": "Content-Type", "value": "application/json" }
-             ],
-             "body": {
-                "mode": "raw",
-                "raw": "{\n  \"nombre\": \"Test User\",\n  \"email\": \"test@user.com\",\n  \"password\": \"password\",\n  \"role\": \"CUSTOMER\"\n}"
-             },
-             "url": { "raw": "{{baseUrl}}/api/usuarios", "host": ["{{baseUrl}}"], "path": ["api", "usuarios"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Test User\",\n  \"email\": \"test@user.com\",\n  \"password\": \"password\",\n  \"role\": \"CUSTOMER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/cliente",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "cliente"
+              ]
+            }
           }
         }
       ]
@@ -192,24 +200,119 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
             }
           ],
           "request": {
-             "method": "GET",
-             "header": [],
-             "url": { "raw": "{{baseUrl}}/api/productos", "host": ["{{baseUrl}}"], "path": ["api", "productos"] }
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            }
           }
         },
         {
           "name": "2. CREATE Producto",
           "request": {
-             "method": "POST",
-             "header": [
-                { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-                { "key": "Content-Type", "value": "application/json" }
-             ],
-             "body": {
-                "mode": "raw",
-                "raw": "{\n  \"type\": \"Fisico\",\n  \"nombre\": \"Nuevo Teclado\",\n  \"descripcion\": \"Teclado\",\n  \"precio\": 500,\n  \"proveedor\": \"Logitech\",\n  \"stock\": 10,\n  \"peso\": 1.2\n}"
-             },
-             "url": { "raw": "{{baseUrl}}/api/productos", "host": ["{{baseUrl}}"], "path": ["api", "productos"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"Fisico\",\n  \"nombre\": \"Nuevo Teclado\",\n  \"descripcion\": \"Teclado\",\n  \"precio\": 500,\n  \"proveedor\": \"Logitech\",\n  \"stock\": 10,\n  \"peso\": 1.2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Direccion CRUD",
+      "item": [
+        {
+          "name": "1. CREATE Direccion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200/201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                  "var data = pm.response.json();",
+                  "pm.environment.set(\"direccion_id\", data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"calle\": \"Av. Universitaria\",\n  \"numeroExterior\": \"452\",\n  \"colonia\": \"Norte\",\n  \"municipio\": \"Zapopan\",\n  \"estado\": \"Jalisco\",\n  \"codigoPostal\": \"45130\",\n  \"telefonos\": [\"3312345678\"],\n  \"preferida\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/direcciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "direcciones"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. GET Mis Direcciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/direcciones/mis-direcciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "direcciones",
+                "mis-direcciones"
+              ]
+            }
           }
         }
       ]
@@ -220,16 +323,25 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
         {
           "name": "1. ADD Item",
           "request": {
-             "method": "POST",
-             "header": [
-                { "key": "Authorization", "value": "Bearer {{customer_token}}" },
-                { "key": "Content-Type", "value": "application/json" }
-             ],
-             "body": {
-                "mode": "raw",
-                "raw": "{\n  \"productoId\": {{producto_id}}\n}"
-             },
-             "url": { "raw": "{{baseUrl}}/api/carrito/agregar", "host": ["{{baseUrl}}"], "path": ["api", "carrito", "agregar"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrito/productos/{{producto_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrito",
+                "productos",
+                "{{producto_id}}"
+              ]
+            }
           }
         },
         {
@@ -248,47 +360,263 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
             }
           ],
           "request": {
-             "method": "POST",
-             "header": [{ "key": "Authorization", "value": "Bearer {{customer_token}}" }],
-             "url": { "raw": "{{baseUrl}}/api/ordenes/checkout", "host": ["{{baseUrl}}"], "path": ["api", "ordenes", "checkout"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ordenes/checkout?direccionId={{direccion_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ordenes",
+                "checkout"
+              ],
+              "query": [
+                {
+                  "key": "direccionId",
+                  "value": "{{direccion_id}}"
+                }
+              ]
+            }
           }
         },
         {
           "name": "3. PAY",
           "request": {
-             "method": "POST",
-             "header": [
-                { "key": "Authorization", "value": "Bearer {{customer_token}}" },
-                { "key": "Content-Type", "value": "application/json" }
-             ],
-             "body": {
-                "mode": "raw",
-                "raw": "{\n  \"ordenId\": {{orden_id}},\n  \"metodoPago\": \"Tarjeta\"\n}"
-             },
-             "url": { "raw": "{{baseUrl}}/api/payments/procesar", "host": ["{{baseUrl}}"], "path": ["api", "payments", "procesar"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ordenId\": {{orden_id}},\n  \"metodoPago\": \"Tarjeta\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/procesar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "procesar"
+              ]
+            }
           }
         },
         {
           "name": "4. DISPATCH (Admin)",
           "request": {
-             "method": "POST",
-             "header": [
-                { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-                { "key": "Content-Type", "value": "application/json" }
-             ],
-             "body": {
-                "mode": "raw",
-                "raw": "{\n  \"courier\": \"FedEx\",\n  \"trackingNumber\": \"TRK123\"\n}"
-             },
-             "url": { "raw": "{{baseUrl}}/api/shipments/despachar/{{orden_id}}", "host": ["{{baseUrl}}"], "path": ["api", "shipments", "despachar", "{{orden_id}}"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courier\": \"FedEx\",\n  \"trackingNumber\": \"TRK123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/shipments/despachar/{{orden_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shipments",
+                "despachar",
+                "{{orden_id}}"
+              ]
+            }
           }
         },
         {
           "name": "5. DELIVER (Admin)",
           "request": {
-             "method": "POST",
-             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
-             "url": { "raw": "{{baseUrl}}/api/shipments/entregar/{{orden_id}}", "host": ["{{baseUrl}}"], "path": ["api", "shipments", "entregar", "{{orden_id}}"] }
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shipments/entregar/{{orden_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shipments",
+                "entregar",
+                "{{orden_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Carrito Extra Endpoints",
+      "item": [
+        {
+          "name": "1. GET Carrito",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrito",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrito"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. DELETE Producto",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrito/productos/{{producto_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrito",
+                "productos",
+                "{{producto_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. DELETE Vaciar",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrito",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrito"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ordenes Extra Endpoints",
+      "item": [
+        {
+          "name": "1. GET Mis Ordenes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ordenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ordenes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. GET Todas Las Ordenes (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ordenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ordenes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. POST Cancelar Orden",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ordenes/{{orden_id}}/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ordenes",
+                "{{orden_id}}",
+                "cancelar"
+              ]
+            }
           }
         }
       ]
@@ -301,7 +629,6 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
     }
   ]
 }
-
 
 ================ backend\pom.xml ================
 
@@ -382,1413 +709,380 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
 </project>
 
 
-================ backend\README.md ================
-
-# E-Commerce Backend v3.0
-
-## 🎯 Propósito del Backend
-
-Este backend es el núcleo de la solución E-Commerce, proporcionando una **API REST** completa para la gestión de productos, usuarios, carritos de compra y órdenes, con un sistema robusto de autenticación y autorización basado en roles (RBAC).
-
-- Autor: Ramón Bolívar Cuevas Escobar
-
-- Módulo: Object-Oriented Programming (CSE6041)
-
-- Profesor: Dr. José Ignacio Requeno Jarabo
-
-### Rol dentro de la Solución
-- **Capa de Negocio**: Validaciones, lógica de dominio, transacciones
-- **Persistencia**: Gestión de base de datos MySQL con JPA/Hibernate
-- **Seguridad**: Autenticación con tokens y autorización granular
-- **API REST**: Endpoints RESTful para comunicación con frontend
-
----
-
-## 🏛️ Arquitectura Orientada a Objetos
-
-### Tipo de Arquitectura
-**Arquitectura en Capas (Layered Architecture)** con separación de responsabilidades:
-
-```
-┌─────────────────────────────────────┐
-│  CONTROLLER LAYER (API REST)        │  ← Exposición HTTP
-├─────────────────────────────────────┤
-│  SERVICE LAYER (Lógica de Negocio)  │  ← Transacciones
-├─────────────────────────────────────┤
-│  REPOSITORY LAYER (Persistencia)    │  ← JPA/Hibernate
-├─────────────────────────────────────┤
-│  MODEL LAYER (Entidades de Dominio) │  ← OOP Puro
-└─────────────────────────────────────┘
-         ↓
-    MySQL Database
-
-```
-
-### Responsabilidades por Capa
-
-#### 1. **Controller** (Endpoints REST)
-- Recibir peticiones HTTP
-- Validar datos de entrada
-- Delegar lógica al Service
-- Retornar respuestas HTTP (JSON)
-
-```java
-@RestController
-@RequestMapping("/api/usuarios")
-public class UsuarioController {
-    @Autowired
-    private UsuarioService usuarioService;
-    
-    @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public List<Usuario> listarUsuarios() { /* ... */ }
-}
-```
-
-#### 2. **Service** (Lógica de Negocio)
-- Validaciones de negocio
-- Transacciones (`@Transactional`)
-- Encriptación de contraseñas
-- Coordinación entre repositorios
-
-```java
-@Service
-public class UsuarioService {
-    @Transactional
-    public Usuario registrarUsuario(Usuario usuario) {
-        // Validar email único
-        // Encriptar contraseña
-        // Guardar en BD
-    }
-}
-```
-
-#### 3. **Repository** (Acceso a Datos)
-- Extensión de `JpaRepository`
-- Queries personalizadas
-- Abstracción de la BD
-
-```java
-public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
-    Optional<Usuario> findByEmail(String email);
-    boolean existsByEmail(String email);
-}
-```
-
-#### 4. **Model** (Entidades de Dominio)
-- Representación de objetos de negocio
-- Anotaciones JPA (`@Entity`, `@Table`)
-- Relaciones entre entidades
-- Jerarquías de herencia
-
----
-
-## 🔑 Principios OOP Aplicados
-
-### 1. Encapsulamiento
-
-**Definición**: Ocultar el estado interno de un objeto y exponer solo operaciones controladas.
-
-**Implementación**:
-```java
-@Data  // Lombok genera getters, setters, toString, equals, hashCode
-@Entity
-public abstract class Usuario {
-    @Column(nullable = false)
-    private String password;  // ← Encapsulado (private)
-    
-    // Acceso controlado vía getter/setter generado por Lombok
-}
-```
-
-**Service Layer**:
-```java
-public class UsuarioService {
-    @Autowired
-    private PasswordEncoder passwordEncoder;  // ← Dependencia privada
-    
-    public Usuario registrarUsuario(Usuario usuario) {
-        // Control de acceso: solo permite guardar si email es único
-        if (usuarioRepository.existsByEmail(usuario.getEmail())) {
-            throw new RuntimeException("Email ya existe");
-        }
-        // Encripta contraseña antes de exponer a repositorio
-        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
-        return usuarioRepository.save(usuario);
-    }
-}
-```
-
----
-
-### 2. Herencia
-
-**Definición**: Reutilización de código mediante jerarquías de clases.
-
-**Jerarquía de Usuario**:
-```java
-// Clase base abstracta
-@Entity
-@Inheritance(strategy = InheritanceType.JOINED)
-public abstract class Usuario {
-    private Long id;
-    private String nombre;
-    private String email;
-    private String password;
-    private Role role;
-}
-
-// Clases hijas
-@Entity
-public class Administrador extends Usuario {
-    private String departamento;
-}
-
-@Entity
-public class Cliente extends Usuario {
-    private String direccion;
-}
-
-@Entity
-public class Proveedor extends Usuario {
-    private String empresa;
-}
-```
-
-**Jerarquía de Producto**:
-```java
-// Clase base abstracta
-@Entity
-@Inheritance(strategy = InheritanceType.JOINED)
-public abstract class Producto {
-    private Long id;
-    private String nombre;
-    private Double precio;
-    
-    public abstract String mostrarDetalle();  // ← Método abstracto
-}
-
-// Clases hijas
-@Entity
-public class ProductoFisico extends Producto {
-    private Integer stock;
-    private Double peso;
-    
-    @Override
-    public String mostrarDetalle() {
-        return String.format("Físico - Stock: %d, Peso: %.2fkg", stock, peso);
-    }
-}
-
-@Entity
-public class ProductoDigital extends Producto {
-    private String urlDescarga;
-    private Integer diasExpiracion;
-    
-    @Override
-    public String mostrarDetalle() {
-        return String.format("Digital - Descarga: %s", urlDescarga);
-    }
-}
-```
-
-**Beneficios**:
-- ✅ Reutilización de atributos comunes
-- ✅ Tabla única `usuarios` con joins a tablas específicas
-- ✅ Flexibilidad para agregar nuevos tipos (e.g., `UsuarioVIP`)
-
----
-
-### 3. Polimorfismo
-
-**Definición**: Un objeto puede tomar diferentes formas según su tipo concreto.
-
-**Ejemplo 1: Método Abstracto**
-```java
-List<Producto> productos = productoRepository.findAll();
-// Lista puede contener ProductoFisico Y ProductoDigital
-
-for (Producto p : productos) {
-    System.out.println(p.mostrarDetalle());
-    // ↑ Llamada polimórfica: ejecuta el método de la clase concreta
-    // ProductoFisico → "Físico - Stock: 10, Peso: 2.5kg"
-    // ProductoDigital → "Digital - Descarga: http://..."
-}
-```
-
-**Ejemplo 2: Repository Genérico**
-```java
-public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
-    // Puede manejar Administrador, Cliente, Proveedor
-}
-
-// Crear diferentes tipos de usuario
-Administrador admin = new Administrador();
-Cliente cliente = new Cliente();
-
-usuarioRepository.save(admin);    // ← Polimórfico
-usuarioRepository.save(cliente);  // ← Mismo método, objetos distintos
-```
-
-**Ejemplo 3: Endpoints Polimórficos**
-```java
-@PostMapping("/cliente")
-public ResponseEntity<Usuario> registrarCliente(@RequestBody Cliente cliente) {
-    return ResponseEntity.ok(usuarioService.registrarUsuario(cliente));
-    //                                                        ↑ acepta Cliente
-}
-
-@PostMapping("/admin")
-public ResponseEntity<Usuario> registrarAdmin(@RequestBody Administrador admin) {
-    return ResponseEntity.ok(usuarioService.registrarUsuario(admin));
-    //                                                        ↑ acepta Administrador
-}
-```
-
----
-
-### 4. Abstracción
-
-**Definición**: Simplificar la complejidad exponiendo solo lo esencial.
-
-**Clase Abstracta `Usuario`**:
-```java
-public abstract class Usuario {
-    // Plantilla común para todos los usuarios
-    // No se puede instanciar directamente
-}
-```
-
-**Método Abstracto en `Producto`**:
-```java
-public abstract String mostrarDetalle();
-// ↑ Firma sin implementación
-// Obliga a las clases hijas a definir su propio comportamiento
-```
-
-**Service como Abstracción**:
-```java
-// El controller no sabe CÓMO se valida el email ni CÓMO se encripta
-// Solo sabe QUE el service lo hace
-@Service
-public class UsuarioService {
-    public Usuario registrarUsuario(Usuario usuario) {
-        // Abstrae la complejidad de validación + encriptación + guardado
-    }
-}
-```
-
----
-
-### 5. Sobrecarga de Métodos (Method Overloading)
-
-**Definición**: Múltiples métodos con el **mismo nombre** pero **diferente lista de parámetros** dentro de la misma clase. El compilador resuelve cuál usar en **tiempo de compilación** (static binding).
-
-**Reglas de Sobrecarga**:
-- Diferente número de parámetros, O
-- Diferente tipo de parámetros, O
-- Diferente orden de tipos de parámetros
-- El tipo de retorno **no** diferencia sobrecargas
-
-**Implementación en `Carrito` (modelo)**:
-```java
-// SOBRECARGA 1 – Principal (existente)
-public void agregarProducto(Producto producto) {
-    this.productos.add(producto);
-}
-
-// SOBRECARGA 2 – Agrega N veces el mismo producto
-public void agregarProducto(Producto producto, int cantidad) {
-    for (int i = 0; i < cantidad; i++) {
-        agregarProducto(producto); // Delega a SOBRECARGA 1
-    }
-}
-
-// SOBRECARGA 3 – Crea un producto inline por nombre y precio
-public void agregarProducto(String nombre, Double precio) {
-    ProductoFisico temp = new ProductoFisico();
-    temp.setNombre(nombre);
-    temp.setPrecio(precio);
-    agregarProducto(temp); // Delega a SOBRECARGA 1
-}
-```
-
-**Implementación en `CarritoService` (servicio)**:
-```java
-// SOBRECARGA 1 – Principal: busca en BD por ID (usa el controlador REST)
-public Carrito agregarProducto(Long productoId) { /*...*/ }
-
-// SOBRECARGA 2 – Recibe objeto Producto ya cargado en memoria
-public Carrito agregarProducto(Producto producto) {
-    return agregarProducto(producto.getId()); // Delega a SOBRECARGA 1
-}
-
-// SOBRECARGA 3 – Solo nombre y precio (útil para testing/integración)
-public Carrito agregarProducto(String nombre, Double precio) {
-    // Usa la sobrecarga del modelo Carrito directamente
-    carrito.agregarProducto(nombre, precio);
-}
-```
-
-**Beneficios**:
-- ✅ API expresiva: el llamador elige la firma más conveniente
-- ✅ Delegación interna → principio DRY
-- ✅ Compatible hacia atrás: la firma original no se modifica
-- ✅ Resolución en tiempo de compilación → sin overhead en ejecución
-
----
-
-### 6. Sobreescritura de Métodos (Method Overriding)
-
-**Definición**: Una subclase **redefine** un método heredado de su superclase. La decisión de cuál método ejecutar ocurre en **tiempo de ejecución** (dynamic binding / late binding).
-
-**Reglas de Sobreescritura**:
-- Mismo nombre de método
-- Misma lista de parámetros
-- Mismo tipo de retorno (o covariante)
-- Acceso igual o más permisivo (no más restrictivo)
-- Anotación `@Override` recomendada (el compilador valida)
-
-**Contrato en clase abstracta `Producto`**:
-```java
-@Entity
-public abstract class Producto {
-    // Método abstracto → OBLIGA a sobreescritura en subclases
-    public abstract String mostrarDetalle();
-}
-```
-
-**Sobreescritura en `ProductoFisico`**:
-```java
-@Entity
-public class ProductoFisico extends Producto {
-    @Override  // ← Garantiza sobreescritura correcta
-    public String mostrarDetalle() {
-        return String.format(
-            "[Físico] %s | Precio: $%.2f | Stock: %d unidades | Peso: %.2f kg",
-            getNombre(), getPrecio(), stock, peso
-        );
-    }
-}
-// Salida ejemplo: "[Físico] Laptop | Precio: $25000.00 | Stock: 5 unidades | Peso: 2.50 kg"
-```
-
-**Sobreescritura en `ProductoDigital`**:
-```java
-@Entity
-public class ProductoDigital extends Producto {
-    @Override  // ← Misma firma, diferente implementación
-    public String mostrarDetalle() {
-        String expiracion = (diasExpiracion != null)
-            ? diasExpiracion + " días" : "Sin expiración";
-        return String.format(
-            "[Digital] %s | Precio: $%.2f | URL: %s | Vigencia: %s",
-            getNombre(), getPrecio(), urlDescarga, expiracion
-        );
-    }
-}
-// Salida ejemplo: "[Digital] Ebook | Precio: $299.99 | URL: http://... | Vigencia: 30 días"
-```
-
-**Polimorfismo en acción (late binding)**:
-```java
-List<Producto> lista = Arrays.asList(
-    new ProductoFisico("Laptop", 25000.0, 5, 2.5),
-    new ProductoDigital("Ebook", 299.99, "http://...", 30)
-);
-
-// El JVM decide EN TIEMPO DE EJECUCIÓN cuál mostrarDetalle() llamar
-lista.forEach(p -> System.out.println(p.mostrarDetalle()));
-// → [Físico] Laptop | Precio: $25000.00 | Stock: 5 unidades | Peso: 2.50 kg
-// → [Digital] Ebook | Precio: $299.99 | URL: http://... | Vigencia: 30 días
-```
-
-| Característica | Sobrecarga | Sobreescritura |
-|---|---|---|
-| Clase | Misma | Padre → Hijo |
-| Parámetros | Distintos | Iguales |
-| Retorno | Cualquiera | Igual o covariante |
-| Binding | Estático (compilación) | Dinámico (ejecución) |
-| @Override | No aplica | Recomendado |
-
----
-
-## 📦 Clases Clave
-
-### Clase: Usuario
-
-**Propósito**: Representar a todos los tipos de usuarios del sistema.
-
-**Atributos**:
-```java
-private Long id;                 // Identificador único
-private String nombre;           // Nombre completo
-private String email;            // Email (UNIQUE)
-private String password;         // Contraseña encriptada (BCrypt)
-private LocalDate fechaNacimiento; // Fecha de nacimiento
-private Role role;               // ADMIN | SUPPLIER | CUSTOMER
-```
-
-**Métodos Principales**:
-- Lombok genera automáticamente:
-  - `getNombre()`, `setNombre(String nombre)`
-  - `getEmail()`, `setEmail(String email)`
-  - `getPassword()`, `setPassword(String password)`
-  - `toString()`, `equals()`, `hashCode()`
-
-**Constructor**:
-```java
-// Constructor por defecto (Lombok @NoArgsConstructor)
-public Usuario() { }
-
-// Constructor parametrizado
-public Usuario(String nombre, String email, String password, 
-               LocalDate fechaNacimiento, Role role) {
-    this.nombre = nombre;
-    this.email = email;
-    this.password = password;
-    this.fechaNacimiento = fechaNacimiento;
-    this.role = role;
-}
-```
-
-**Inicialización de Objetos**:
-```java
-// Opción 1: Constructor
-Usuario admin = new Administrador(
-    "Admin User", 
-    "admin@example.com", 
-    "hashedPassword123", 
-    LocalDate.of(1990, 1, 1),
-    Role.ADMIN
-);
-
-// Opción 2: Setters (Lombok)
-Cliente cliente = new Cliente();
-cliente.setNombre("Juan Pérez");
-cliente.setEmail("juan@example.com");
-cliente.setPassword("pass123");
-cliente.setRole(Role.CUSTOMER);
-```
-
----
-
-### Clase: Producto
-
-**Propósito**: Representar un producto vendible (físico o digital).
-
-**Atributos**:
-```java
-private Long id;        // Identificador único
-private String nombre;  // Nombre del producto
-private Double precio;  // Precio en MXN
-```
-
-**Métodos Principales**:
-```java
-// Método abstracto (implementado por clases hijas)
-public abstract String mostrarDetalle();
-
-// Getters/Setters generados por Lombok
-public String getNombre() { return nombre; }
-public void setNombre(String nombre) { this.nombre = nombre; }
-public Double getPrecio() { return precio; }
-public void setPrecio(Double precio) { this.precio = precio; }
-```
-
-**Constructor**:
-```java
-// Sin parámetros
-public Producto() { }
-
-// Con parámetros
-public Producto(String nombre, Double precio) {
-    this.nombre = nombre;
-    this.precio = precio;
-}
-```
-
-**Inicialización**:
-```java
-ProductoFisico laptop = new ProductoFisico();
-laptop.setNombre("Laptop Gamer");
-laptop.setPrecio(25000.0);
-laptop.setStock(10);
-laptop.setPeso(2.5);
-
-ProductoDigital ebook = new ProductoDigital(
-    "E-Book Java", 
-    299.99
-);
-ebook.setUrlDescarga("https://example.com/ebook.pdf");
-```
-
----
-
-### Clase: Carrito
-
-**Propósito**: Gestionar los productos que un usuario planea comprar.
-
-**Atributos**:
-```java
-private Long id;
-private Usuario usuario;          // OneToOne - Carrito pertenece a 1 usuario
-private List<Producto> productos; // ManyToMany - Múltiples productos
-```
-
-**Métodos Sobrecargados** (ver sección 5 para detalles OOP):
-```java
-// SOBRECARGA 1 – Por objeto Producto (método principal)
-void agregarProducto(Producto producto)
-
-// SOBRECARGA 2 – Por objeto Producto + cantidad repeticiones
-void agregarProducto(Producto producto, int cantidad)
-
-// SOBRECARGA 3 – Por nombre y precio (crea producto temporal)
-void agregarProducto(String nombre, Double precio)
-
-// Eliminar y calcular total
-void eliminarProducto(Producto producto)
-Double getTotal()
-```
-
-**Constructor**:
-```java
-public Carrito() {
-    this.productos = new ArrayList<>();  // Inicializar lista vacía
-}
-```
-
----
-
-## 🔗 Relación entre Clases
-
-### Diagrama de Relaciones (Mermaid)
-
-```mermaid
-classDiagram
-    class Usuario {
-        <<abstract>>
-        +Long id
-        +String nombre
-        +String email
-        +String password
-        +Role role
-    }
-    
-    class Administrador {
-        +LocalDate validoHasta
-    }
-    
-    class Cliente {
-        +String direccion
-    }
-    
-    class Proveedor {
-        +String empresa
-    }
-    
-    class Producto {
-        <<abstract>>
-        +Long id
-        +String nombre
-        +Double precio
-        +mostrarDetalle()*
-    }
-    
-    class ProductoFisico {
-        +Integer stock
-        +Double peso
-    }
-    
-    class ProductoDigital {
-        +String urlDescarga
-        +Integer diasExpiracion
-    }
-    
-    class Carrito {
-        +Long id
-    }
-    
-    class Orden {
-        +Long id
-        +LocalDateTime fecha
-        +Double total
-    }
-    
-    class OrdenDetalle {
-        +Long id
-        +Integer cantidad
-        +Double precio
-    }
-    
-    Usuario <|-- Administrador : extends
-    Usuario <|-- Cliente : extends
-    Usuario <|-- Proveedor : extends
-    
-    Producto <|-- ProductoFisico : extends
-    Producto <|-- ProductoDigital : extends
-    
-    Usuario "1" -- "1" Carrito : owns
-    Carrito "1" -- "*" Producto : contains
-    
-    Usuario "1" -- "*" Orden : places
-    Orden "1" -- "*" OrdenDetalle : has
-    OrdenDetalle "*" -- "1" Producto : references
-```
-
-### Relaciones Detalladas
-
-**1. Usuario ↔ Carrito** (OneToOne)
-```java
-// Usuario.java (no tiene referencia explícita al carrito)
-
-// Carrito.java
-@OneToOne
-@JoinColumn(name = "usuario_id")
-private Usuario usuario;
-```
-- ✅ 1 Usuario tiene 1 Carrito
-- ✅ 1 Carrito pertenece a 1 Usuario
-
-**2. Carrito ↔ Producto** (ManyToMany)
-```java
-@ManyToMany
-@JoinTable(
-    name = "carrito_productos",
-    joinColumns = @JoinColumn(name = "carrito_id"),
-    inverseJoinColumns = @JoinColumn(name = "producto_id")
-)
-private List<Producto> productos = new ArrayList<>();
-```
-- ✅ 1 Carrito contiene N Productos
-- ✅ 1 Producto puede estar en N Carritos
-
-**3. Usuario ↔ Orden** (OneToMany)
-```java
-@ManyToOne
-@JoinColumn(name = "usuario_id")
-private Usuario usuario;
-```
-- ✅ 1 Usuario puede tener N Órdenes
-- ✅ 1 Orden pertenece a 1 Usuario
-
-**4. Orden ↔ OrdenDetalle** (OneToMany)
-```java
-@OneToMany(mappedBy = "orden", cascade = CascadeType.ALL)
-private List<OrdenDetalle> detalles = new ArrayList<>();
-```
-- ✅ 1 Orden tiene N Detalles
-- ✅ 1 Detalle pertenece a 1 Orden
-
-**5. OrdenDetalle ↔ Producto** (ManyToOne)
-```java
-@ManyToOne
-@JoinColumn(name = "producto_id")
-private Producto producto;
-```
-- ✅ 1 Detalle referencia a 1 Producto
-- ✅ 1 Producto puede estar en N Detalles
-
----
-
-## 🔐 Capa de Seguridad
-
-### Spring Security
-```java
-@Configuration
-@EnableWebSecurity
-@EnableMethodSecurity
-public class SecurityConfig {
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) {
-        // Configuración de endpoints públicos/privados
-        // Integración de TokenAuthenticationFilter
-    }
-}
-```
-
-### Autorización con `@PreAuthorize`
-```java
-@PreAuthorize("hasRole('ADMIN')")
-public ResponseEntity<List<Usuario>> listarUsuarios() { }
-
-@PreAuthorize("hasRole('ADMIN') or @usuarioSecurity.isOwner(#id)")
-public ResponseEntity<Usuario> obtenerUsuario(@PathVariable Long id) { }
-```
-
----
-
-## 🛠️ Tecnologías
-
-### 1. Spring Boot para Java - Arquitectura y Funciones
-Spring Boot es un framework sobre la plataforma Java que facilita la creación de aplicaciones stand-alone y preparadas para producción.
-**Funciones Clave:**
-- **Inversión de Control (IoC):** A través de su contenedor de Inyección de Dependencias, Spring "inyecta" los componentes (Beans) en tiempo de ejecución, por ejemplo el `@Autowired` entre `Controller`, `Service` y `Repository`.
-- **Auto-Configuración:** Deduce automáticamente las configuraciones basándose en las dependencias presentes en el `pom.xml`, sin necesidad de archivos XML engorrosos.
-- **Spring Data JPA:** Abstracción sobre la persistencia que reduce drásticamente el "boilerplate" al escribir queries directas con JDBC, mapeando anotaciones sobre entidades Java (`@Entity`) directamente a modelos relacionales.
-- **Spring Security (Filtros):** Opera con una cadena de filtros (como visto en el log `FilterChainProxy`) validando los JSON Web Tokens (`TokenAuthenticationFilter`) antes de que la petición llegue al Controlador.
-- **Servidor Web Embebido:** Contiene internamente a Tomcat/Undertow, obviando la configuración e instalación de servidores adicionales para el despliegue.
-
-### 2. Integración de Base de Datos (MySQL) y Modelo de Datos
-La aplicación se conecta a una base de datos relacional **MySQL** e implementa **Hibernate** como proveedor JPA para ORM (Object-Relational Mapping). 
-- **Estrategia en `application.properties`:** Generalmente expone `spring.jpa.hibernate.ddl-auto=update` o `create-drop` en fase de desarrollo para recrear el esquema a base de las clases OOP marcadas como `@Entity`.
-- **Relaciones implementadas:**
-  - `OneToMany / ManyToOne`: Relaciona a múltiples `Ordenes` referenciadas a un único `Usuario`.
-  - `ManyToMany`: Resuelto usando tablas pivote intermedias abstractas en SQL y mapeos transparentes en Java (e.g. `Carrito` contiene los `Producto`s).
-  - Paginación e índices para acelerar búsquedas de acuerdo a atributos como `email`.
-
-| Tecnología | Versión | Uso |
-|-----------|---------|-----|
-| Java | 21 | Lenguaje base |
-| Spring Boot | 3.x | Framework |
-| Spring Security | 6.x | Autenticación/Autorización |
-| Spring Data JPA | 3.x | Persistencia |
-| Hibernate | 6.x | ORM |
-| MySQL | 8.x | Base de datos |
-| Lombok | 1.18.x | Reducción de boilerplate |
-
----
-
-## 📦 Gestión de Órdenes y Transición de Estados
-
-El ciclo de vida de la orden está modelado bajo una estricta **Máquina de Estados**, dictada por las operaciones del dominio según el rol del usuario utilizando anotaciones de autorización (`@PreAuthorize("hasRole('...')")`).
-
-### Relación Rol-Operación
-1. **[CUSTOMER]**: 
-   - Puede crear órdenes convirtiendo su Carrito -> `CREATED`. 
-   - Puede elegir pago (procesando a `PAID` o `PAYMENT_PENDING` u `OUT_OF_STOCK`). 
-   - Puede Cancelar su propia orden mientras esté en estado inicial. No tiene permiso ni vista para despachar.
-2. **[ADMIN]**: 
-   - No crea órdenes directas, pero supervisa el catálogo completo de operaciones de los usuarios. 
-   - Único rol con autorización de `POST /api/shipments/despachar/{id}` -> `SHIPPED`. Solo aplicable para transacciones que ya estén garantizadas bajo `PAID`.
-   - Único rol que aprueba el cierre logístico -> `DELIVERED`.
-3. **[SUPPLIER]**: 
-   - No tiene interacciones sobre las órdenes. Se orienta únicamente a inyección de inventario local o modificación del contenido del producto.
-
-### Ciclo de Estados (`EstadoOrden.java`)
-1. **`CREATED`**: Creado desde un carrito. Espera configuración de check-out en GUI.
-2. **`PAYMENT_PENDING`**: Cuando el pago inició en el proveedor externo pero fue rechazado temporalmente.
-3. **`PAID`**: Transacción de pago confirmada exitosa. Solo en este punto el **Stock** del `ProductoFisico` es descontado de la BD real.
-4. **`OUT_OF_STOCK`**: Intentó pagar pero los `GestorInventario` respondieron false en `verificarStock()`. Queda en limbo de falla para recuperar.
-5. **`CANCELLED`**: Anulada desde UI de Cliente/Admin.
-6. **`SHIPPED`**: Entidad `Shipment` creada con empresa mensajera (`courier`) y número de guía de rastreo.
-7. **`DELIVERED`**: Ciclo completado. El artículo fue entregado en la dirección del cliente.
-
----
-
-## 🚀 Ejecución
-
-```bash
-# Compilar y ejecutar
-cd backend
-mvn spring-boot:run
-
-# Acceder a la API
-http://localhost:8080/api
-```
-
----
-
-## 🔍 Descripción detallada actualizada de la implementación de la arquitectura de backend para la solución eCommerce.
-
-A continuación se expone el análisis profundo de la arquitectura, configuración, endpoints y persistencia de este backend eCommerce, modelado para un entorno empresarial.
-
-### 1. Análisis Profundo del Backend (`Spring Boot`)
-
-La arquitectura subyacente de este servidor Java se apoya íntegramente en las bondades de **Spring Boot**, promoviendo un desacoplamiento a través de la inyección de dependencias (`@Autowired` / Inversión de Control).
-
-* **Estructura del Proyecto y Paquetes**: Organizado lógicamente por dominio o característica de negocio ("Feature-folder structure" combinada con de Capas).
-  * `com.ecommerce.config`: Inicialización de beans estáticos, variables globales y datos quemados para testeo (`DataSeeder`).
-  * `com.ecommerce.controller`: Frontera de la API. Exponen rutas `RESTful` empleando anotaciones como `@RestController` y `@RequestMapping`. Controlan el enrutamiento y deserialización JSON HTTP.
-  * `com.ecommerce.service`: Core central del sistema. Aisla la lógica de negocio pura de las transacciones web. Operan con `@Service` y `@Transactional` para rollback en errores.
-  * `com.ecommerce.repository`: Interfaces Spring Data JPA conectadas a MySQL que ahorran manipulación explícita del Driver JDBC.
-  * `com.ecommerce.model` & `com.ecommerce.dto`: Los Modelos (*Entities*) mapean la base de datos. Los Data Transfer Objects (*DTOs*) sanitizan la exposición serializada para Jackson, eludiendo proxies perezosos (Lazy).
-  * `com.ecommerce.security`: Cortafuegos inicial; provee `SecurityFilterChain`, `TokenAuthenticationFilter` para validación estricta de cada JWT cabecera antes del Controller.
-
-* **Manejo de Errores y Validaciones**: Las validaciones se efectúan combinadamente; restricciones primarias a nivel de JPA (`@Column(nullable=false, unique=true)`) y en cascada por los *Services* (arrojando excepciones limpias tipo `RuntimeException` que Spring procesa nativamente, convirtiendo los códigos en `500` o `400`).
-
-### 2. Persistencia de Datos (MySQL y JPA/Hibernate)
-
-La capa transaccional se asienta en la tecnología Relacional **MySQL**, manipulada desde Java vía **Hibernate ORM**.
-
-* **Mapeo ORM**: Objetos Java se proyectan en memoria tabular de MySQL empleando las especificaciones de JPA. Herencia avanzada (tipo `JOINED`) se aplica a los objetos `Usuario` y `Producto`.
-* **Transacciones**: Controladas por `@Transactional`, permitiendo "Puntos de Control" o un Rollback atómico en dado caso que la Máquina de Estados de un *Checkout* se caiga (por ejemplo, al pagar sin red lógica).
-* **Ausencia NoSQL**: Este sistema opera al **100% sobre tecnología relacional**, maximizando consistencia bajo el modelo ACID y evitando esquemas distribuidos ambiguos.
-* **Ciclo de Vida Específico**:
-  * **Usuarios**: Alta única por email. Modificación restringida y borrado en cascada (destruyéndose también su `Carrito` adjunto).
-  * **Productos**: Inserción única por Proveedores/ADMIN. Su mutabilidad fundamental reside en el *Stock* del GestorFísico.
-  * **Órdenes y Envíos**: Una orden muta internamente a través del enum `EstadoOrden`. Su registro final se archiva permanentemente vinculado al despachante (`Shipment`) e identificador logístico.
-
-### 3. Diseño y Configuración MySQL
-
-El motor base garantiza alta escalabilidad mediante patrones estandarizados en `application.properties`:
-
-* **Configuración de Conexión y Datasource**: Mediante las propiedades `spring.datasource.url`, el controlador oficial `com.mysql.cj.jdbc.Driver` entabla puentes TCP/IP al clúster MySQL.
-* **Pool de Conexiones (HikariCP)**: Integrado transparentemente por Spring Boot, el enjambre de conexiones pre-iniciadas y administradas por *HikariCP* asegura un tráfico eficiente frente a ráfagas de concurrentes HTTP sin instanciar sockets repetitivos.
-* **Gestión Integridad y Consistencia**: La atomicidad de bases relacionales, acoplada al nivel de aislamiento nativo `READ_COMMITTED` de MySQL y los perfiles `@Lock` que Hibernate inyecta en background (para colisiones de stock), minimiza condiciones de carrera a nivel macro.
-
-### 4. Diagrama ERD de la Base de Datos
-
-```mermaid
-erDiagram
-    USUARIOS {
-        bigint id PK
-        varchar nombre
-        varchar email UK
-        varchar password
-        date fecha_nacimiento
-        varchar role
-    }
-    DIRECCION {
-        bigint id PK
-        bigint usuario_id FK
-        varchar calle
-        varchar ciudad
-        varchar codigo_postal
-    }
-    PRODUCTOS {
-        bigint id PK
-        varchar nombre
-        double precio
-        varchar descripcion
-        varchar proveedor
-    }
-    CARRITOS {
-        bigint id PK
-        bigint usuario_id FK
-    }
-    CARRITO_PRODUCTOS {
-        bigint carrito_id FK
-        bigint producto_id FK
-    }
-    ORDENES {
-        bigint id PK
-        bigint usuario_id FK
-        bigint payment_transaction_id FK
-        bigint shipment_id FK
-        double total
-        varchar estado
-        timestamp fecha_creacion
-    }
-    ORDENES_DETALLE {
-        bigint id PK
-        bigint orden_id FK
-        bigint producto_id FK
-        double precio
-        int cantidad
-    }
-    PAYMENT_TRANSACTION {
-        bigint id PK
-        varchar payment_method
-        varchar status
-        double amount
-    }
-    SHIPMENT {
-        bigint id PK
-        timestamp date_dispatch
-        timestamp date_delivered
-        varchar courier
-        varchar tracking_number
-    }
-
-    USUARIOS ||--o{ DIRECCION : "tiene multiples"
-    USUARIOS ||--|| CARRITOS : "tiene 1"
-    CARRITOS ||--o{ CARRITO_PRODUCTOS : "contiene"
-    PRODUCTOS ||--o{ CARRITO_PRODUCTOS : "esta en"
-    USUARIOS ||--o{ ORDENES : "coloca"
-    ORDENES ||--o{ ORDENES_DETALLE : "contiene items"
-    PRODUCTOS ||--o{ ORDENES_DETALLE : "hace referencia"
-    ORDENES ||--|| PAYMENT_TRANSACTION : "registra pago"
-    ORDENES ||--|| SHIPMENT : "registra envio"
-```
-
-### 5. Diagrama de Clases Actualizado (Backend y DTOs)
-
-```mermaid
-classDiagram
-    class ControllerLayer {
-        +Auth_Orden_User_ProductControllers
-        +DTO Serialization
-    }
-    
-    class DTO {
-        <<data transfer>>
-        OrdenDTO
-        PaymentTransactionDTO
-        ShipmentDTO
-    }
-
-    class OrdenService {
-        +crearOrden() OrdenDTO
-        +transicionPago() OrdenDTO
-        +despachar() OrdenDTO
-    }
-    
-    class ProcesoPago {
-        <<interface>>
-        +iniciarPago()
-    }
-    class PagoTarjeta
-    class PagoPayPal
-    
-    class RepositoryLayer {
-        <<interfaces JPA>>
-        OrdenRepository
-        UsuarioRepository
-    }
-
-    class Orden {
-        <<entity>>
-        +EstadoOrden estado
-    }
-    class PaymentTransaction {
-        <<entity>>
-    }
-
-    ControllerLayer ..> DTO : returns
-    ControllerLayer ..> OrdenService : dependency
-    OrdenService ..> ProcesoPago : strategy
-    ProcesoPago <|.. PagoTarjeta
-    ProcesoPago <|.. PagoPayPal
-    OrdenService ..> RepositoryLayer : dependency
-    RepositoryLayer ..> Orden : reads/writes
-    Orden *-- PaymentTransaction : composition
-```
-
-### 6. Arquitectura C4 Completa
-
-* **Nivel 1 (Contexto)**:
-```mermaid
-C4Context
-    title Nivel 1 - Contexto del Sistema eCommerce
-
-    %% Usuarios definidos en la parte superior
-    Person(customer, "Cliente", "Comprador de la tienda")
-    Person(admin, "Administrador", "Gestor logístico")
-    Person(supplier, "Proveedor", "Abastece productos")
-
-    %% Salto de línea visual usando un contenedor (opcional pero ayuda al orden)
-    System(ecommerce, "Plataforma de eCommerce", "Permite compras, inventarios, despachos y pagos unificados.")
-
-    %% Relaciones que fuerzan el flujo hacia abajo
-    Rel(customer, ecommerce, "Navega y Compra", "HTTPS")
-    Rel(admin, ecommerce, "Administra todo", "HTTPS")
-    Rel(supplier, ecommerce, "Actualiza su inventario", "HTTPS")
-
-    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
-
-```
-
-* **Nivel 2 (Contenedores)**:
-```mermaid
-C4Container
-    title Nivel 2 - Contenedores
-    Person(customer, "Cliente", "Usuario Web")
-    System_Boundary(c1, "eCommerce System") {
-        Container(spa, "Single Page App", "JavaScript/HTML5", "UI Web Moderna")
-        Container(api, "API REST Backend", "Spring Boot/Java", "Manejo de reglas de negocio y transacciones.")
-        ContainerDb(db, "Base de Datos", "MySQL", "Persistencia Relacional ACID.")
-    }
-    Rel(customer, spa, "Interactúa", "Browser HTTPS")
-    Rel(spa, api, "Llama a API (JSON)", "REST API")
-    Rel(api, db, "Escribe y Lee", "JDBC / TCP 3306")
-```
-
-* **Nivel 3 (Componentes - API Backend)**:
-```mermaid
-C4Component
-    title Nivel 3 - Componentes de la API Backend (Spring Boot)
-    Container_Boundary(api, "API REST Backend") {
-        Component(security, "Security Filter Chain", "Spring Security", "Intercepción JWT/RBAC")
-        Component(controller, "Controllers", "RestControllers", "Enrutador REST")
-        Component(service, "Services", "Lógica", "Máquina de estados, Encripción BCrypt")
-        Component(repo, "Repositories", "Spring Data", "ORM JPA")
-    }
-    Rel(security, controller, "Autoriza acceso a")
-    Rel(controller, service, "Delega")
-    Rel(service, repo, "Usa transacciones")
-```
-* **Nivel 4 (Código)**: *(Revisar sección 5. Modelo de Clases UML detallado arriba para implementaciones locales)*.
-
-### 7. Ciclo de Vida de una Orden (Secuencia Completa)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor CLI as Usuario
-    participant FRONT as Frontend (SPA)
-    participant SEC as Interfaz JWT & Auth
-    participant BACK as Backend API
-    participant BD as MySQL DB
-
-    CLI->>FRONT: 1. Registra cuenta email/password
-    FRONT->>BACK: POST /api/usuarios
-    BACK->>BD: Inserta Usuario
-    CLI->>FRONT: 2. Inicia Sesión (Login)
-    FRONT->>BACK: POST /api/auth/login
-    BACK-->>FRONT: Devuelve JWT
-    CLI->>FRONT: 3. Añade Productos al Carrito
-    FRONT->>BACK: POST /api/carrito/agregar
-    CLI->>FRONT: 4. Click en "Finalizar Compra" (Checkout)
-    FRONT->>SEC: POST /api/ordenes/checkout (+token)
-    SEC->>BACK: Valida Autenticación
-    BACK->>BD: Transforma Carrito en Orden (CREATED)
-    CLI->>FRONT: 5. Elige "Tarjeta de Crédito" y Paga
-    FRONT->>BACK: POST /api/payments/procesar
-    BACK->>BACK: OOP Interfaces: Aplica PagoTarjeta
-    BACK->>BD: Actualiza estado a PAID
-    BD-->>FRONT: Confirmación UI
-    CLI->>FRONT: 6. Espera en Panel de Órdenes.
-    
-    actor ADM as Administrador
-    ADM->>BACK: 7. /api/shipments/despachar/{id}
-    BACK->>BD: Genera Shipment, Tracking. Orden->SHIPPED.
-    ADM->>BACK: 8. /api/shipments/entregar/{id}
-    BACK->>BD: Sella ciclo logístico. Orden->DELIVERED.
-```
-
-### 8. Análisis y Documentación de Postman (Flujos Automatizados)
-
-El ciclo vital de la API se modeló exhaustivamente dentro del archivo generado `backend/ECommerce_Collection.json`.
-* **CREATE / POST**: Probado en la ruta de Usuarios, Inicio de Sesión y Conversión de Carrito a Checkout.
-* **READ / GET**: Validado en la inspección de catálogo universal de Productos y listados de Admin.
-* **UPDATE / PATCH/PUT**: El Mutador principal de estado ocurre durante Posteos iterativos:
-  1. Pago: El endpoint de transacción actualiza el Enum State y resta stock en `ProductoFisico`.
-  2. Envíos: Los endpoints logísticos crean las firmas de mensajería alterando la Orden base preexistente.
-* El archivo de Postman incluye secuencias JavaScript reactivas (*Scripts `Tests`*) capaces de inyectar los tokens de autorización transparentemente entre endpoints.
-
-### 9. Especificación Reconstruida OpenAPI / Swagger
-
-Referencia estática OpenAPI `3.0.0` extraída desde la arquitectura de controladores Spring.
-```yaml
-openapi: 3.0.0
-info:
-  title: E-Commerce API
-  version: 3.0.0
-paths:
-  /api/auth/login:
-    post:
-      summary: Retorna JWT Bearer Token
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email: { type: string }
-                password: { type: string }
-      responses:
-        '200': { description: Login exitoso }
-  /api/usuarios:
-    get:
-      summary: CRUD - Obtiene todos los usuarios (ADMIN Only)
-      security: [{ bearerAuth: [] }]
-      responses: { '200': { description: Lista Usuarios Válida } }
-  /api/ordenes/checkout:
-    post:
-      summary: Convierte los items actuales en el carrito a una nueva Orden en estado CREATED.
-      security: [{ bearerAuth: [] }]
-      responses: { '200': { description: Objeto OrdenDTO anidado con ShipmentDTO vacío. } }
-  /api/payments/procesar:
-    post:
-      summary: Procesamiento transaccional de estados.
-      requestBody:
-        content:
-          application/json:
-            example: {"ordenId": 1, "metodoPago": "Tarjeta"}
-      responses:
-        '200': { description: Orden transitada exitosamente a PAID y stock mermado en MySQL. }
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-```
-
-### 10. Interfaces de Pago
-
-El patrón *Strategy / Factory* se manifiesta bajo el paquete `payment`.
-* `ProcesoPago` es la super-interface central definiendo firmas lógicas: `iniciarPago(Orden)`, `verificarPago(Orden)`, `confirmarPago(Orden)`.
-* Sus extensiones concretas (`PagoTarjeta`, `PagoPayPal`, `PagoTransferencia`) proveen el determinismo algorítmico individualizado y validan polimórficamente el método especificado por la carga útil en frontend (Ej: procesar API bancaria frente a API PayPal remota antes de resolver exitoso el bloque a `PAID`).
-
-**Interface `PaymentTransactionRepository`**
-```java
-package com.ecommerce.repository;
-
-import com.ecommerce.model.PaymentTransaction;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-@Repository
-public interface PaymentTransactionRepository extends JpaRepository<PaymentTransaction, Long> {
-}
-```
-
-**Superinterface `procesoPagoFactory`**
-```java
-/**
- * Factory para obtener la estrategia de pago correcta.
- */
-@Service
-public class ProcesoPagoFactory {
-
-    @Autowired
-    @Qualifier("PagoTarjeta")
-    private ProcesoPago pagoTarjeta;
-
-    @Autowired
-    @Qualifier("PagoPayPal")
-    private ProcesoPago pagoPayPal;
-
-    @Autowired
-    @Qualifier("PagoTransferencia")
-    private ProcesoPago pagoTransferencia;
-
-    public ProcesoPago obtenerMetodo(String method) {
-        if (method == null)
-            return pagoTarjeta;
-        switch (method.toLowerCase()) {
-            case "paypal":
-                return pagoPayPal;
-            case "transferencia":
-                return pagoTransferencia;
-            case "tarjeta":
-            default:
-                return pagoTarjeta;
-        }
-    }
-}
-```
-
-**Proceso de pago completo `procesarPago`**
-```java
-    /**
-     * FASE 2: Procesar Pago y Verificar Stock
-     */
-    @Transactional
-    public OrdenDTO procesarPago(Long ordenId, String metodoPago) {
-        Orden orden = ordenRepository.findById(ordenId)
-                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
-
-        // Validaciones Máquina de Estados
-        if (orden.getEstado() == EstadoOrden.PAID || orden.getEstado() == EstadoOrden.SHIPPED
-                || orden.getEstado() == EstadoOrden.DELIVERED) {
-            throw new RuntimeException("La orden ya fue pagada o procesada.");
-        }
-        if (orden.getEstado() == EstadoOrden.CANCELLED) {
-            throw new RuntimeException("La orden está cancelada.");
-        }
-
-        // 1. Verificar Stock Múltiple (OOP Abstraction)
-        boolean hasStock = true;
-        for (OrdenDetalle detalle : orden.getDetalles()) {
-            GestorInventario gestor = inventarioFactory.obtenerGestor(detalle.getProducto());
-            if (!gestor.verificarStock(detalle.getProducto(), detalle.getCantidad())) {
-                hasStock = false;
-                break;
-            }
-        }
-
-        if (!hasStock) {
-            orden.setEstado(EstadoOrden.OUT_OF_STOCK);
-            return toDTO(ordenRepository.save(orden));
-        }
-
-        // Transición a Payment Pending si hay stock
-        orden.setEstado(EstadoOrden.PAYMENT_PENDING);
-
-        // 2. Procesar Pago (OOP Interface)
-        ProcesoPago procesoPago = pagoFactory.obtenerMetodo(metodoPago);
-        procesoPago.iniciarPago(orden);
-
-        boolean pagoExitoso = procesoPago.verificarPago(orden);
-
-        if (pagoExitoso) {
-            PaymentTransaction trx = procesoPago.confirmarPago(orden, orden.getTotal());
-            if (trx != null) {
-                trx = paymentTransactionRepository.save(trx);
-                orden.setPaymentTransaction(trx);
-            }
-            orden.setEstado(EstadoOrden.PAID);
-
-            // 3. Descontar Stock definitivo porque ya se pagó
-            for (OrdenDetalle detalle : orden.getDetalles()) {
-                GestorInventario gestor = inventarioFactory.obtenerGestor(detalle.getProducto());
-                gestor.actualizarStock(detalle.getProducto(), -detalle.getCantidad());
-            }
-        } else {
-            // Se queda en pending si falla (el prompt indica: "Si un intento de pago falla,
-            // el estado permanece PAYMENT_PENDING")
-            orden.setEstado(EstadoOrden.PAYMENT_PENDING);
-        }
-
-        return toDTO(ordenRepository.save(orden));
-    }
-```
-
-### 11. Seguridad y Manejo de Sesiones Avanzadas
-
-El motor Java subyacente implementa autenticación completamente **Stateless**.
-* **Protección Criptográfica**: Las contraseñas se ofuscan en la base de datos tras una vía de escape unidireccional por `BCryptPasswordEncoder`, blindando frente a exfiltraciones relacionales.
-* **Autorización Granular (RBAC)**: En vez de un filtro global que dependa de URL Pathing pre-configurado en contexto clásico, el servidor utiliza resolución a nivel de método: `@PreAuthorize("hasRole('ADMIN') or @usuarioSecurity.isOwner(#usuarioId)")`. Esto deniega agresivamente la intrusión de escalada horizontal en tiempo real.
-* **Manejo de Sesiones**: En oposición a las interfaces `JSESSIONID` ligadas a memoria física servidor, cada `TokenAuthenticationFilter` intercepta y decodifica el JSON Web Token de la petición REST validando su caducidad, firma HMAC encubierta, e inyectándolo hacia `SecurityContextHolder` temporalmente durante el hilo HTTP particular.
-
----
-
-## 📚 Licencia
-
-BIU License - Proyecto Académico - Módulo Object-Oriented Programming.
-
----
-
-## 🔄 Fase 3 – Nuevas Funcionalidades
-
-### Extensión de la Entidad `Producto`
-
-#### Nuevos Atributos Obligatorios
-```java
-public abstract class Producto {
-    // ... campos existentes ...
-    @Column(length = 250)
-    private String descripcion;      // Máx. 250 caracteres
-
-    @Column(length = 150)
-    private String proveedor;        // Nombre/empresa del proveedor. Solo ADMIN puede asignar.
-
-    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductoImagen> imagenes = new ArrayList<>();
-}
-```
-
-#### Entidad `ProductoImagen`
-```java
-@Entity
-@Table(name = "producto_imagenes")
-public class ProductoImagen {
-    @Id @GeneratedValue
-    private Long id;
-
-    @Column(nullable = false)
-    private String imagenUrl;   // URL de la imagen
-
-    @Column(nullable = false)
-    private Boolean isDefault;  // Una sola imagen por defecto por producto
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "producto_id")
-    private Producto producto;
-}
-```
-
-**Reglas de negocio de imágenes:**
-- Mínimo una imagen por producto
-- Exactamente una imagen marcada como `isDefault = true`
-- Solo ADMIN puede crear productos; ADMIN + SUPPLIER pueden editar
-- SUPPLIER no puede ver ni modificar el campo `proveedor`
-
----
-
-### Nueva Entidad `Direccion`
-
-```java
-@Entity
-@Table(name = "direcciones")
-public class Direccion {
-    private Long id;
-    private Boolean preferida;         // Única dirección preferida por usuario
-    private String alias;              // Etiqueta (Casa, Trabajo…)
-    private String calle;              // Máx. 25 caracteres
-    private String numeroExterior;     // Máx. 10 caracteres
-    private String numeroInterior;     // Máx. 10 caracteres (opcional)
-    private String referencia;         // Máx. 35 caracteres (opcional)
-    private String colonia;            // Máx. 40 caracteres
-    private String municipio;          // Máx. 45 caracteres
-    private String estado;             // Máx. 25 caracteres
-    private String codigoPostal;       // Exactamente 5 dígitos
-
-    @ElementCollection
-    private List<String> telefonos;    // Mín. 1 teléfono, formato: 10 dígitos
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuario_id")
-    private Usuario usuario;
-}
-```
-
-**Reglas de negocio de direcciones:**
-- Mínimo 1 dirección permitida por usuario; máximo 5
-- Solo 1 dirección `preferida` por usuario; al marcar una nueva, la anterior se desmarca automáticamente
-- Cada teléfono debe tener exactamente 10 dígitos numéricos
-- ADMIN puede gestionar direcciones de cualquier usuario
-- CUSTOMER puede crear/editar/eliminar sus propias direcciones
-- SUPPLIER puede crear/editar sus propias direcciones, pero NO eliminar
-
----
-
-###- `GestorInventario`: Interfaz para la gestión de inventario físico vs. digital.
-- `ProcesoPago`: Interfaz para múltiples proveedores de pago (Tarjeta, PayPal, Transferencia).
-- **Comprobación de seguridad**: Implementada mediante Spring Security (`@PreAuthorize`).
-- **Adiciones de la Fase 3**: Gestión del ciclo de vida de pedidos (`EstadoOrden`), Checkout unificado, Transacciones de pago y Envíos.
-
-## Resumen de los Endpoints de la API
-
-| Método | Punto de conexión | Acceso | Descripción |
-| :--- | :--- | :--- | :--- |
-| **POST** | `/api/auth/register` | Público | Registrar nuevo usuario. |
-| **POST** | `/api/auth/login` | Público | Autenticar usuario y obtener token. |
-| **GET** | `/api/productos` | Público | Listar productos disponibles. | 
-| **POST** | `/api/productos` | Administrador | Crear un nuevo producto. |
-| **GET** | `/api/direcciones/mis-direcciones` | Autenticado | Listar direcciones de usuario. |
-| **POST** | `/api/ordenes/checkout` | Cliente | Convertir carrito en pedido (estado CREATED). |
-| **POST** | `/api/payments/procesar` | Cliente | Procesar pago (PAID / OUT_OF_STOCK). |
-| **POST** | `/api/shipments/despachar/{id}`| Administrador | Enviar pedido (SHIPPED). |
-| **POST** | `/api/shipments/entregar/{id}` | Administrador | Marcar entrega (DELIVERED). |
-
-Para obtener una lista completa de los puntos finales, importe la colección de Postman proporcionada (..\backend\ECommerce_Collection.json) o revise los controladores subyacentes.
-
-###- `GestorInventario`: Interface for physical vs digital inventory handling.
-- `ProcesoPago`: Interface for multiple payment providers (Tarjeta, PayPal, Transfer).
-- **Security Check**: Enforced via Spring Security (`@PreAuthorize`).
-- **Phase 3 additions**: Order lifecycle management (`EstadoOrden`), unified Checkout, Payment Transactions, and Shipments.
-
-### Nuevos Endpoints API
-
-#### Direcciones (`/api/direcciones`)
-| Método | Endpoint | Rol Requerido | Descripción |
-|--------|----------|---------------|-------------|
-| `POST` | `/api/direcciones` | ADMIN, CUSTOMER, SUPPLIER | Crear dirección propia |
-| `PUT` | `/api/direcciones/{id}` | ADMIN, CUSTOMER, SUPPLIER | Actualizar dirección |
-| `GET` | `/api/direcciones/mis-direcciones` | ADMIN, CUSTOMER, SUPPLIER | Listar mis direcciones |
-| `GET` | `/api/direcciones/{id}` | ADMIN, CUSTOMER, SUPPLIER | Obtener dirección por ID |
-| `GET` | `/api/direcciones/usuario/{usuarioId}` | ADMIN, CUSTOMER, SUPPLIER | Listar por usuario |
-| `GET` | `/api/direcciones` | ADMIN | Todas las direcciones |
-| `DELETE` | `/api/direcciones/{id}` | ADMIN, CUSTOMER | Eliminar dirección |
-| `POST` | `/api/direcciones/usuario/{usuarioId}` | ADMIN | Crear para otro usuario |
-
-#### Productos (actualizados)
-| Método | Endpoint | Campos Nuevos |
-|--------|----------|---------------|
-| `POST` | `/api/productos` | `descripcion`, `proveedor`, `imagenesUrls[]`, `defaultImageIndex` |
-| `PUT` | `/api/productos/{id}` | `descripcion`, `imagenesUrls[]`, `defaultImageIndex` (proveedor: solo ADMIN) |
-| `GET` | `/api/productos` | Respuesta incluye `imagenes[]`, `descripcion`, `proveedor` |
-
----
-
-### `UsuarioService` – Método Añadido
-
-```java
-/**
- * Busca un usuario por ID; lanza excepción si no existe.
- * Usado por DireccionController para operaciones sobre destinatarios específicos.
- */
-public Usuario buscarPorId(Long id) {
-    return usuarioRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
-}
-```
-
+================ backend\maven\apache-maven-3.9.6\conf\settings.xml ================
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<!--
+ | This is the configuration file for Maven. It can be specified at two levels:
+ |
+ |  1. User Level. This settings.xml file provides configuration for a single user,
+ |                 and is normally provided in ${user.home}/.m2/settings.xml.
+ |
+ |                 NOTE: This location can be overridden with the CLI option:
+ |
+ |                 -s /path/to/user/settings.xml
+ |
+ |  2. Global Level. This settings.xml file provides configuration for all Maven
+ |                 users on a machine (assuming they're all using the same Maven
+ |                 installation). It's normally provided in
+ |                 ${maven.conf}/settings.xml.
+ |
+ |                 NOTE: This location can be overridden with the CLI option:
+ |
+ |                 -gs /path/to/global/settings.xml
+ |
+ | The sections in this sample file are intended to give you a running start at
+ | getting the most out of your Maven installation. Where appropriate, the default
+ | values (values used when the setting is not specified) are provided.
+ |
+ |-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+  <!-- localRepository
+   | The path to the local repository maven will use to store artifacts.
+   |
+   | Default: ${user.home}/.m2/repository
+  <localRepository>/path/to/local/repo</localRepository>
+  -->
+
+  <!-- interactiveMode
+   | This will determine whether maven prompts you when it needs input. If set to false,
+   | maven will use a sensible default value, perhaps based on some other setting, for
+   | the parameter in question.
+   |
+   | Default: true
+  <interactiveMode>true</interactiveMode>
+  -->
+
+  <!-- offline
+   | Determines whether maven should attempt to connect to the network when executing a build.
+   | This will have an effect on artifact downloads, artifact deployment, and others.
+   |
+   | Default: false
+  <offline>false</offline>
+  -->
+
+  <!-- pluginGroups
+   | This is a list of additional group identifiers that will be searched when resolving plugins by their prefix, i.e.
+   | when invoking a command line like "mvn prefix:goal". Maven will automatically add the group identifiers
+   | "org.apache.maven.plugins" and "org.codehaus.mojo" if these are not already contained in the list.
+   |-->
+  <pluginGroups>
+    <!-- pluginGroup
+     | Specifies a further group identifier to use for plugin lookup.
+    <pluginGroup>com.your.plugins</pluginGroup>
+    -->
+  </pluginGroups>
+
+  <!-- TODO Since when can proxies be selected as depicted? -->
+  <!-- proxies
+   | This is a list of proxies which can be used on this machine to connect to the network.
+   | Unless otherwise specified (by system property or command-line switch), the first proxy
+   | specification in this list marked as active will be used.
+   |-->
+  <proxies>
+    <!-- proxy
+     | Specification for one proxy, to be used in connecting to the network.
+     |
+    <proxy>
+      <id>optional</id>
+      <active>true</active>
+      <protocol>http</protocol>
+      <username>proxyuser</username>
+      <password>proxypass</password>
+      <host>proxy.host.net</host>
+      <port>80</port>
+      <nonProxyHosts>local.net|some.host.com</nonProxyHosts>
+    </proxy>
+    -->
+  </proxies>
+
+  <!-- servers
+   | This is a list of authentication profiles, keyed by the server-id used within the system.
+   | Authentication profiles can be used whenever maven must make a connection to a remote server.
+   |-->
+  <servers>
+    <!-- server
+     | Specifies the authentication information to use when connecting to a particular server, identified by
+     | a unique name within the system (referred to by the 'id' attribute below).
+     |
+     | NOTE: You should either specify username/password OR privateKey/passphrase, since these pairings are
+     |       used together.
+     |
+    <server>
+      <id>deploymentRepo</id>
+      <username>repouser</username>
+      <password>repopwd</password>
+    </server>
+    -->
+
+    <!-- Another sample, using keys to authenticate.
+    <server>
+      <id>siteServer</id>
+      <privateKey>/path/to/private/key</privateKey>
+      <passphrase>optional; leave empty if not used.</passphrase>
+    </server>
+    -->
+  </servers>
+
+  <!-- mirrors
+   | This is a list of mirrors to be used in downloading artifacts from remote repositories.
+   |
+   | It works like this: a POM may declare a repository to use in resolving certain artifacts.
+   | However, this repository may have problems with heavy traffic at times, so people have mirrored
+   | it to several places.
+   |
+   | That repository definition will have a unique id, so we can create a mirror reference for that
+   | repository, to be used as an alternate download site. The mirror site will be the preferred
+   | server for that repository.
+   |-->
+  <mirrors>
+    <!-- mirror
+     | Specifies a repository mirror site to use instead of a given repository. The repository that
+     | this mirror serves has an ID that matches the mirrorOf element of this mirror. IDs are used
+     | for inheritance and direct lookup purposes, and must be unique across the set of mirrors.
+     |
+    <mirror>
+      <id>mirrorId</id>
+      <mirrorOf>repositoryId</mirrorOf>
+      <name>Human Readable Name for this Mirror.</name>
+      <url>http://my.repository.com/repo/path</url>
+    </mirror>
+     -->
+    <mirror>
+      <id>maven-default-http-blocker</id>
+      <mirrorOf>external:http:*</mirrorOf>
+      <name>Pseudo repository to mirror external repositories initially using HTTP.</name>
+      <url>http://0.0.0.0/</url>
+      <blocked>true</blocked>
+    </mirror>
+  </mirrors>
+
+  <!-- profiles
+   | This is a list of profiles which can be activated in a variety of ways, and which can modify
+   | the build process. Profiles provided in the settings.xml are intended to provide local machine-
+   | specific paths and repository locations which allow the build to work in the local environment.
+   |
+   | For example, if you have an integration testing plugin - like cactus - that needs to know where
+   | your Tomcat instance is installed, you can provide a variable here such that the variable is
+   | dereferenced during the build process to configure the cactus plugin.
+   |
+   | As noted above, profiles can be activated in a variety of ways. One way - the activeProfiles
+   | section of this document (settings.xml) - will be discussed later. Another way essentially
+   | relies on the detection of a property, either matching a particular value for the property,
+   | or merely testing its existence. Profiles can also be activated by JDK version prefix, where a
+   | value of '1.4' might activate a profile when the build is executed on a JDK version of '1.4.2_07'.
+   | Finally, the list of active profiles can be specified directly from the command line.
+   |
+   | NOTE: For profiles defined in the settings.xml, you are restricted to specifying only artifact
+   |       repositories, plugin repositories, and free-form properties to be used as configuration
+   |       variables for plugins in the POM.
+   |
+   |-->
+  <profiles>
+    <!-- profile
+     | Specifies a set of introductions to the build process, to be activated using one or more of the
+     | mechanisms described above. For inheritance purposes, and to activate profiles via <activatedProfiles/>
+     | or the command line, profiles have to have an ID that is unique.
+     |
+     | An encouraged best practice for profile identification is to use a consistent naming convention
+     | for profiles, such as 'env-dev', 'env-test', 'env-production', 'user-jdcasey', 'user-brett', etc.
+     | This will make it more intuitive to understand what the set of introduced profiles is attempting
+     | to accomplish, particularly when you only have a list of profile id's for debug.
+     |
+     | This profile example uses the JDK version to trigger activation, and provides a JDK-specific repo.
+    <profile>
+      <id>jdk-1.4</id>
+
+      <activation>
+        <jdk>1.4</jdk>
+      </activation>
+
+      <repositories>
+        <repository>
+          <id>jdk14</id>
+          <name>Repository for JDK 1.4 builds</name>
+          <url>http://www.myhost.com/maven/jdk14</url>
+          <layout>default</layout>
+          <snapshotPolicy>always</snapshotPolicy>
+        </repository>
+      </repositories>
+    </profile>
+    -->
+
+    <!--
+     | Here is another profile, activated by the property 'target-env' with a value of 'dev', which
+     | provides a specific path to the Tomcat instance. To use this, your plugin configuration might
+     | hypothetically look like:
+     |
+     | ...
+     | <plugin>
+     |   <groupId>org.myco.myplugins</groupId>
+     |   <artifactId>myplugin</artifactId>
+     |
+     |   <configuration>
+     |     <tomcatLocation>${tomcatPath}</tomcatLocation>
+     |   </configuration>
+     | </plugin>
+     | ...
+     |
+     | NOTE: If you just wanted to inject this configuration whenever someone set 'target-env' to
+     |       anything, you could just leave off the <value/> inside the activation-property.
+     |
+    <profile>
+      <id>env-dev</id>
+
+      <activation>
+        <property>
+          <name>target-env</name>
+          <value>dev</value>
+        </property>
+      </activation>
+
+      <properties>
+        <tomcatPath>/path/to/tomcat/instance</tomcatPath>
+      </properties>
+    </profile>
+    -->
+  </profiles>
+
+  <!-- activeProfiles
+   | List of profiles that are active for all builds.
+   |
+  <activeProfiles>
+    <activeProfile>alwaysActiveProfile</activeProfile>
+    <activeProfile>anotherAlwaysActiveProfile</activeProfile>
+  </activeProfiles>
+  -->
+</settings>
+
+
+================ backend\maven\apache-maven-3.9.6\conf\toolchains.xml ================
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<!--
+ | This is the toolchains file for Maven. It can be specified at two levels:
+ |
+ |  1. User Level. This toolchains.xml file provides configuration for a single user,
+ |                 and is normally provided in ${user.home}/.m2/toolchains.xml.
+ |
+ |                 NOTE: This location can be overridden with the CLI option:
+ |
+ |                 -t /path/to/user/toolchains.xml
+ |
+ |  2. Global Level. This toolchains.xml file provides configuration for all Maven
+ |                 users on a machine (assuming they're all using the same Maven
+ |                 installation). It's normally provided in
+ |                 ${maven.conf}/toolchains.xml.
+ |
+ |                 NOTE: This location can be overridden with the CLI option:
+ |
+ |                 -gt /path/to/global/toolchains.xml
+ |
+ | The sections in this sample file are intended to give you a running start at
+ | getting the most out of your Maven installation.
+ |-->
+<toolchains xmlns="http://maven.apache.org/TOOLCHAINS/1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/TOOLCHAINS/1.1.0 http://maven.apache.org/xsd/toolchains-1.1.0.xsd">
+
+  <!-- 
+   | With toolchains you can refer to installations on your system. This 
+   | way you don't have to hardcode paths in your pom.xml. 
+   | 
+   | Every toolchain consist of 3 elements: 
+   | * type: the type of tool. An often used value is 'jdk'. Toolchains-aware 
+   |   plugins should document which type you must use. 
+   | 
+   | * provides: A list of key/value-pairs. 
+   |   Based on the toolchain-configuration in the pom.xml Maven will search for 
+   |   matching <provides/> configuration. You can decide for yourself which key-value 
+   |   pairs to use. Often used keys are 'version', 'vendor' and 'arch'. By default 
+   |   the version has a special meaning. If you configured in the pom.xml '1.5' 
+   |   Maven will search for 1.5 and above.
+   |   
+   | * configuration: Additional configuration for this tool.
+   |   Look for documentation of the toolchains-aware plugin which configuration elements
+   |   can be used.   
+   |
+   | See also https://maven.apache.org/guides/mini/guide-using-toolchains.html
+   |
+   | General example
+
+  <toolchain>
+    <type/>
+    <provides> 
+      <version>1.0</version> 
+    </provides> 
+    <configuration/>
+  </toolchain>
+   
+   | JDK examples
+
+  <toolchain>
+    <type>jdk</type>
+    <provides>
+      <version>1.5</version>
+      <vendor>sun</vendor>
+    </provides>
+    <configuration>
+      <jdkHome>/path/to/jdk/1.5</jdkHome>
+    </configuration>
+  </toolchain>
+  <toolchain>
+    <type>jdk</type>
+    <provides>
+      <version>1.6</version>
+      <vendor>sun</vendor>
+    </provides>
+    <configuration>
+      <jdkHome>/path/to/jdk/1.6</jdkHome>
+    </configuration>
+  </toolchain>
+   
+  -->
+
+</toolchains>
 
 ================ backend\src\main\java\com\ecommerce\BackendApplication.java ================
 
@@ -1815,6 +1109,7 @@ import com.ecommerce.model.*;
 import com.ecommerce.repository.UsuarioRepository;
 import com.ecommerce.repository.ProductoRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -1823,20 +1118,24 @@ import java.time.LocalDate;
 @Component
 public class DataSeeder implements CommandLineRunner {
 
-    private final UsuarioRepository usuarioRepository;
-    private final ProductoRepository productoRepository;
-    private final PasswordEncoder passwordEncoder;
+        private final UsuarioRepository usuarioRepository;
+        private final ProductoRepository productoRepository;
+        private final PasswordEncoder passwordEncoder;
+    private final JdbcTemplate jdbcTemplate;
 
-    public DataSeeder(UsuarioRepository usuarioRepository,
-            ProductoRepository productoRepository,
-            PasswordEncoder passwordEncoder) {
-        this.usuarioRepository = usuarioRepository;
-        this.productoRepository = productoRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+        public DataSeeder(UsuarioRepository usuarioRepository,
+                        ProductoRepository productoRepository,
+                        PasswordEncoder passwordEncoder,
+            JdbcTemplate jdbcTemplate) {
+                this.usuarioRepository = usuarioRepository;
+                this.productoRepository = productoRepository;
+                this.passwordEncoder = passwordEncoder;
+        this.jdbcTemplate = jdbcTemplate;
+        }
 
-    @Override
+        @Override
     public void run(String... args) throws Exception {
+        limpiarUsuariosHuerfanos();
         if (usuarioRepository.count() == 0) {
             crearUsuarios();
         }
@@ -1845,114 +1144,136 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
+    private void limpiarUsuariosHuerfanos() {
+        try {
+            var orphans = jdbcTemplate.queryForList("SELECT id FROM usuarios WHERE id NOT IN (SELECT id FROM administradores) AND id NOT IN (SELECT id FROM proveedores) AND id NOT IN (SELECT id FROM clientes)");
+            for (var o : orphans) {
+                Object orphanId = o.get("id");
+                
+                // Limpiar hijos foraneos posibles de "usuarios" huerfanos para no romper constraint referencial
+                jdbcTemplate.update("DELETE FROM ordenes WHERE usuario_id = ?", orphanId);
+                jdbcTemplate.update("DELETE FROM carrito_productos WHERE carrito_id IN (SELECT id FROM carritos WHERE usuario_id = ?)", orphanId);
+                jdbcTemplate.update("DELETE FROM carritos WHERE usuario_id = ?", orphanId);
+                jdbcTemplate.update("DELETE FROM direcciones WHERE usuario_id = ?", orphanId);
+                
+                // Borrar finalmente el usuario
+                jdbcTemplate.update("DELETE FROM usuarios WHERE id = ?", orphanId);
+                System.out.println("Limpiado usuario huérfano ID: " + orphanId);
+            }
+        } catch (Exception e) {
+            System.err.println("No se pudo limpiar usuarios huérfanos: " + e.getMessage());
+        }
+    }
+
     private void crearUsuarios() {
-        // Admin
-        Administrador admin = new Administrador();
-        admin.setNombre("Admin User");
-        admin.setEmail("admin@example.com");
-        admin.setPassword(passwordEncoder.encode("admin123"));
-        admin.setFechaNacimiento(LocalDate.of(1980, 1, 1));
-        admin.setRole(Role.ADMIN);
-        admin.setValidUntil(LocalDate.now().plusYears(1));
-        usuarioRepository.save(admin);
+                // Admin
+                Administrador admin = new Administrador();
+                admin.setNombre("Admin User");
+                admin.setEmail("admin@example.com");
+                admin.setPassword(passwordEncoder.encode("admin123"));
+                admin.setFechaNacimiento(LocalDate.of(1980, 1, 1));
+                admin.setRole(Role.ADMIN);
+                admin.setValidUntil(LocalDate.now().plusYears(1));
+                usuarioRepository.save(admin);
 
-        // Supplier
-        Proveedor supplier = new Proveedor();
-        supplier.setNombre("Supplier User");
-        supplier.setEmail("supplier@example.com");
-        supplier.setPassword(passwordEncoder.encode("supplier123"));
-        supplier.setFechaNacimiento(LocalDate.of(1985, 5, 5));
-        supplier.setRole(Role.SUPPLIER);
-        supplier.setEmpresa("Supplier Company");
-        usuarioRepository.save(supplier);
+                // Supplier
+                Proveedor supplier = new Proveedor();
+                supplier.setNombre("Supplier User");
+                supplier.setEmail("supplier@example.com");
+                supplier.setPassword(passwordEncoder.encode("supplier123"));
+                supplier.setFechaNacimiento(LocalDate.of(1985, 5, 5));
+                supplier.setRole(Role.SUPPLIER);
+                supplier.setEmpresa("Supplier Company");
+                usuarioRepository.save(supplier);
 
-        // Customer
-        Cliente customer = new Cliente();
-        customer.setNombre("Customer User");
-        customer.setEmail("customer@example.com");
-        customer.setPassword(passwordEncoder.encode("customer123"));
-        customer.setFechaNacimiento(LocalDate.of(1990, 10, 10));
-        customer.setRole(Role.CUSTOMER);
-        usuarioRepository.save(customer);
+                // Customer
+                Cliente customer = new Cliente();
+                customer.setNombre("Customer User");
+                customer.setEmail("customer@example.com");
+                customer.setPassword(passwordEncoder.encode("customer123"));
+                customer.setFechaNacimiento(LocalDate.of(1990, 10, 10));
+                customer.setRfcCurp("CUVE900101ABC");
+                customer.setRole(Role.CUSTOMER);
+                usuarioRepository.save(customer);
 
-        System.out.println("Usuarios de prueba creados.");
-    }
+                System.out.println("Usuarios de prueba creados.");
+        }
 
-    private void crearProductos() {
-        // ── Producto Físico 1: Laptop Gamer ─────────────────────────────
-        ProductoFisico p1 = new ProductoFisico();
-        p1.setNombre("Laptop Gamer Pro");
-        p1.setPrecio(1500.0);
-        p1.setPeso(2.5);
-        p1.setStock(10);
-        p1.setDescripcion(
-                "Laptop gamer de alto rendimiento con procesador Intel Core i9, 32GB RAM, SSD 1TB y GPU RTX 4070.");
-        p1.setProveedor("Supplier Company");
-        // Imágenes asociadas
-        p1.getImagenes().add(new ProductoImagen(
-                "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=600", true, p1));
-        p1.getImagenes().add(new ProductoImagen(
-                "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600", false, p1));
-        p1.getImagenes().add(new ProductoImagen(
-                "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=600", false, p1));
-        productoRepository.save(p1);
+        private void crearProductos() {
+                // ── Producto Físico 1: Laptop Gamer ─────────────────────────────
+                ProductoFisico p1 = new ProductoFisico();
+                p1.setNombre("Laptop Gamer Pro");
+                p1.setPrecio(1500.0);
+                p1.setPeso(2.5);
+                p1.setStock(10);
+                p1.setDescripcion(
+                                "Laptop gamer de alto rendimiento con procesador Intel Core i9, 32GB RAM, SSD 1TB y GPU RTX 4070.");
+                p1.setProveedor("Supplier Company");
+                // Imágenes asociadas
+                p1.getImagenes().add(new ProductoImagen(
+                                "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=600", true, p1));
+                p1.getImagenes().add(new ProductoImagen(
+                                "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600", false, p1));
+                p1.getImagenes().add(new ProductoImagen(
+                                "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=600", false, p1));
+                productoRepository.save(p1);
 
-        // ── Producto Físico 2: Mouse RGB ─────────────────────────────────
-        ProductoFisico p2 = new ProductoFisico();
-        p2.setNombre("Mouse RGB Ergonómico");
-        p2.setPrecio(89.99);
-        p2.setPeso(0.15);
-        p2.setStock(50);
-        p2.setDescripcion(
-                "Mouse inalámbrico ergonómico con iluminación RGB, 6 botones programables y batería de larga duración.");
-        p2.setProveedor("Supplier Company");
-        p2.getImagenes().add(new ProductoImagen(
-                "https://images.unsplash.com/photo-1527814050087-3793815479db?w=600", true, p2));
-        p2.getImagenes().add(new ProductoImagen(
-                "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=600", false, p2));
-        productoRepository.save(p2);
+                // ── Producto Físico 2: Mouse RGB ─────────────────────────────────
+                ProductoFisico p2 = new ProductoFisico();
+                p2.setNombre("Mouse RGB Ergonómico");
+                p2.setPrecio(89.99);
+                p2.setPeso(0.15);
+                p2.setStock(50);
+                p2.setDescripcion(
+                                "Mouse inalámbrico ergonómico con iluminación RGB, 6 botones programables y batería de larga duración.");
+                p2.setProveedor("Supplier Company");
+                p2.getImagenes().add(new ProductoImagen(
+                                "https://images.unsplash.com/photo-1527814050087-3793815479db?w=600", true, p2));
+                p2.getImagenes().add(new ProductoImagen(
+                                "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=600", false, p2));
+                productoRepository.save(p2);
 
-        // ── Producto Físico 3: Teclado Mecánico ──────────────────────────
-        ProductoFisico p3 = new ProductoFisico();
-        p3.setNombre("Teclado Mecánico TKL");
-        p3.setPrecio(149.99);
-        p3.setPeso(0.9);
-        p3.setStock(25);
-        p3.setDescripcion(
-                "Teclado mecánico tenkeyless con switches Cherry MX Red, retroiluminación RGB por tecla y marco de aluminio.");
-        p3.setProveedor("Supplier Company");
-        p3.getImagenes().add(new ProductoImagen(
-                "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=600", true, p3));
-        productoRepository.save(p3);
+                // ── Producto Físico 3: Teclado Mecánico ──────────────────────────
+                ProductoFisico p3 = new ProductoFisico();
+                p3.setNombre("Teclado Mecánico TKL");
+                p3.setPrecio(149.99);
+                p3.setPeso(0.9);
+                p3.setStock(25);
+                p3.setDescripcion(
+                                "Teclado mecánico tenkeyless con switches Cherry MX Red, retroiluminación RGB por tecla y marco de aluminio.");
+                p3.setProveedor("Supplier Company");
+                p3.getImagenes().add(new ProductoImagen(
+                                "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=600", true, p3));
+                productoRepository.save(p3);
 
-        // ── Producto Digital 1: E-Book Java ──────────────────────────────
-        ProductoDigital p4 = new ProductoDigital();
-        p4.setNombre("E-Book: Java Avanzado");
-        p4.setPrecio(29.99);
-        p4.setUrlDescarga("https://example.com/downloads/java-avanzado.pdf");
-        p4.setDescripcion(
-                "Guía completa de Java avanzado: patrones de diseño, programación funcional, concurrencia y Spring Boot.");
-        p4.setProveedor("Supplier Company");
-        p4.getImagenes().add(new ProductoImagen(
-                "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=600", true, p4));
-        p4.getImagenes().add(new ProductoImagen(
-                "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600", false, p4));
-        productoRepository.save(p4);
+                // ── Producto Digital 1: E-Book Java ──────────────────────────────
+                ProductoDigital p4 = new ProductoDigital();
+                p4.setNombre("E-Book: Java Avanzado");
+                p4.setPrecio(29.99);
+                p4.setUrlDescarga("https://example.com/downloads/java-avanzado.pdf");
+                p4.setDescripcion(
+                                "Guía completa de Java avanzado: patrones de diseño, programación funcional, concurrencia y Spring Boot.");
+                p4.setProveedor("Supplier Company");
+                p4.getImagenes().add(new ProductoImagen(
+                                "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=600", true, p4));
+                p4.getImagenes().add(new ProductoImagen(
+                                "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600", false, p4));
+                productoRepository.save(p4);
 
-        // ── Producto Digital 2: Curso Spring Boot ────────────────────────
-        ProductoDigital p5 = new ProductoDigital();
-        p5.setNombre("Curso: Spring Boot REST API");
-        p5.setPrecio(59.99);
-        p5.setUrlDescarga("https://example.com/downloads/spring-boot-rest.zip");
-        p5.setDescripcion(
-                "Curso completo en video sobre desarrollo de APIs RESTful con Spring Boot, seguridad JWT y despliegue en AWS.");
-        p5.setProveedor("Supplier Company");
-        p5.getImagenes().add(new ProductoImagen(
-                "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600", true, p5));
-        productoRepository.save(p5);
+                // ── Producto Digital 2: Curso Spring Boot ────────────────────────
+                ProductoDigital p5 = new ProductoDigital();
+                p5.setNombre("Curso: Spring Boot REST API");
+                p5.setPrecio(59.99);
+                p5.setUrlDescarga("https://example.com/downloads/spring-boot-rest.zip");
+                p5.setDescripcion(
+                                "Curso completo en video sobre desarrollo de APIs RESTful con Spring Boot, seguridad JWT y despliegue en AWS.");
+                p5.setProveedor("Supplier Company");
+                p5.getImagenes().add(new ProductoImagen(
+                                "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600", true, p5));
+                productoRepository.save(p5);
 
-        System.out.println("Productos de prueba con imágenes y descripciones creados.");
-    }
+                System.out.println("Productos de prueba con imágenes y descripciones creados.");
+        }
 }
 
 
@@ -2000,6 +1321,7 @@ public class SecurityConfig {
                         // 🔓 ENDPOINTS PÚBLICOS
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/usuarios/cliente").permitAll()
                         .requestMatchers("/api/usuarios/proveedor").permitAll()
                         .requestMatchers("/api/usuarios/admin").permitAll()
@@ -2248,8 +1570,8 @@ public class OrdenController {
 
     @PostMapping("/checkout")
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<OrdenDTO> checkout() {
-        return ResponseEntity.ok(ordenService.crearOrdenDesdeCarrito());
+    public ResponseEntity<OrdenDTO> checkout(@RequestParam(required = false) Long direccionId) {
+        return ResponseEntity.ok(ordenService.crearOrdenDesdeCarrito(direccionId));
     }
 
     @PostMapping("/{id}/cancelar")
@@ -2654,6 +1976,8 @@ public class OrdenDTO {
     private LocalDateTime ultimaModificacion;
 
     private String usuarioEmail;
+    private String usuarioNombre;
+    private String usuarioRfcCurp;
 
     private Double total;
 
@@ -2661,6 +1985,8 @@ public class OrdenDTO {
 
     private PaymentTransactionDTO paymentTransaction;
     private ShipmentDTO shipment;
+
+    private DireccionDTO direccionEnvio;
 }
 
 ================ backend\src\main\java\com\ecommerce\dto\PaymentTransactionDTO.java ================
@@ -2844,7 +2170,10 @@ public record UsuarioUpdateRequest(
         String email,
         String password,
         LocalDate fechaNacimiento,
-        Role role) {
+        Role role,
+        String rfcCurp,
+        String empresa,
+        LocalDate validUntil) {
 }
 
 ================ backend\src\main\java\com\ecommerce\inventory\GestorInventario.java ================
@@ -2988,18 +2317,16 @@ package com.ecommerce.model;
 import java.time.LocalDate;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @NoArgsConstructor
 @Entity
-@DiscriminatorValue("ADMIN")
 @Table(name = "administradores")
 public class Administrador extends Usuario {
 
@@ -3120,23 +2447,31 @@ import java.time.LocalDate;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "clientes")
 public class Cliente extends Usuario {
 
-    @Column(name = "direccion_envio")
-    private String direccionEnvio;
+    @Column(name = "rfc_curp", length = 18, nullable = false)
+    private String rfcCurp;
 
-    public Cliente(String nombre, String email, String password, LocalDate fechaNacimiento, String direccionEnvio) {
+    public String getRfcCurp() {
+        return rfcCurp;
+    }
+
+    public void setRfcCurp(String rfcCurp) {
+        this.rfcCurp = rfcCurp;
+    }
+
+    public Cliente(String nombre, String email, String password, LocalDate fechaNacimiento, String rfcCurp) {
         super(nombre, email, password, fechaNacimiento, Role.CUSTOMER);
-        this.direccionEnvio = direccionEnvio;
+        this.rfcCurp = rfcCurp;
     }
 }
 
@@ -3276,6 +2611,10 @@ public class Orden {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "shipment_id", referencedColumnName = "id")
     private Shipment shipment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "direccion_envio_id")
+    private Direccion direccionEnvio;
 
     @PrePersist
     protected void onCreate() {
@@ -3676,12 +3015,12 @@ import java.time.LocalDate;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "proveedores")
@@ -3758,16 +3097,20 @@ public class Shipment {
 package com.ecommerce.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "usuarios")
 public abstract class Usuario {
 
+    @EqualsAndHashCode.Include
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -4514,6 +3857,7 @@ import com.ecommerce.repository.OrdenRepository;
 import com.ecommerce.repository.PaymentTransactionRepository;
 import com.ecommerce.repository.ShipmentRepository;
 import com.ecommerce.repository.UsuarioRepository;
+import com.ecommerce.repository.DireccionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -4537,6 +3881,9 @@ public class OrdenService {
     private CarritoRepository carritoRepository;
 
     @Autowired
+    private DireccionRepository direccionRepository;
+
+    @Autowired
     private PaymentTransactionRepository paymentTransactionRepository;
 
     @Autowired
@@ -4557,9 +3904,10 @@ public class OrdenService {
     /**
      * FASE 1: Creación de la Orden (CREATED)
      * Convierte el carrito actual en una nueva orden en estado CREATED.
+     * Selecciona una dirección de envío si direccionId no es nulo.
      */
     @Transactional
-    public OrdenDTO crearOrdenDesdeCarrito() {
+    public OrdenDTO crearOrdenDesdeCarrito(Long direccionId) {
         Usuario usuario = getUsuarioActual();
         Carrito carrito = carritoRepository.findByUsuario(usuario)
                 .orElseThrow(() -> new RuntimeException("Carrito no encontrado"));
@@ -4571,6 +3919,15 @@ public class OrdenService {
         Orden orden = new Orden();
         orden.setUsuario(usuario);
         orden.setEstado(EstadoOrden.CREATED);
+
+        if (direccionId != null) {
+            Direccion direccion = direccionRepository.findById(direccionId)
+                    .orElseThrow(() -> new RuntimeException("Dirección no encontrada"));
+            if (!direccion.getUsuario().getId().equals(usuario.getId())) {
+                throw new RuntimeException("La dirección no pertenece a este usuario");
+            }
+            orden.setDireccionEnvio(direccion);
+        }
 
         Map<Producto, Long> conteoProductos = carrito.getProductos().stream()
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
@@ -4748,6 +4105,10 @@ public class OrdenService {
         dto.setUltimaModificacion(orden.getUltimaModificacion());
 
         dto.setUsuarioEmail(orden.getUsuario().getEmail());
+        dto.setUsuarioNombre(orden.getUsuario().getNombre());
+        if (orden.getUsuario() instanceof com.ecommerce.model.Cliente cliente) {
+            dto.setUsuarioRfcCurp(cliente.getRfcCurp());
+        }
 
         dto.setTotal(
                 orden.getDetalles()
@@ -4783,6 +4144,10 @@ public class OrdenService {
             sDto.setCourier(orden.getShipment().getCourier());
             sDto.setTrackingNumber(orden.getShipment().getTrackingNumber());
             dto.setShipment(sDto);
+        }
+
+        if (orden.getDireccionEnvio() != null) {
+            dto.setDireccionEnvio(com.ecommerce.dto.DireccionDTO.fromEntity(orden.getDireccionEnvio()));
         }
 
         return dto;
@@ -4985,14 +4350,17 @@ public class ProductoService {
 package com.ecommerce.service;
 
 import com.ecommerce.dto.UsuarioUpdateRequest;
+import com.ecommerce.model.Cliente;
 import com.ecommerce.model.Usuario;
 import com.ecommerce.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 public class UsuarioService {
@@ -5008,6 +4376,11 @@ public class UsuarioService {
         if (usuarioRepository.existsByEmail(usuario.getEmail())) {
             throw new RuntimeException("El email ya está registrado");
         }
+
+        if (usuario instanceof Cliente cliente) {
+            validarRfcCurp(cliente);
+        }
+
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         return usuarioRepository.save(usuario);
     }
@@ -5028,7 +4401,8 @@ public class UsuarioService {
 
     /**
      * Busca un usuario por ID; lanza excepción si no existe.
-     * Usado por DireccionController para operaciones sobre destinatarios específicos.
+     * Usado por DireccionController para operaciones sobre destinatarios
+     * específicos.
      */
     @SuppressWarnings("null")
     public Usuario buscarPorId(Long id) {
@@ -5090,6 +4464,27 @@ public class UsuarioService {
             usuario.setFechaNacimiento(datosActualizados.fechaNacimiento());
         }
 
+        // Update rfcCurp if applies to Cliente
+        if (usuario instanceof com.ecommerce.model.Cliente cliente) {
+            if (datosActualizados.rfcCurp() != null && !datosActualizados.rfcCurp().trim().isEmpty()) {
+                cliente.setRfcCurp(datosActualizados.rfcCurp().trim());
+            }
+        }
+
+        // Update empresa if applies to Proveedor
+        if (usuario instanceof com.ecommerce.model.Proveedor proveedor) {
+            if (datosActualizados.empresa() != null && !datosActualizados.empresa().trim().isEmpty()) {
+                proveedor.setEmpresa(datosActualizados.empresa().trim());
+            }
+        }
+
+        // Update validUntil if applies to Administrador
+        if (usuario instanceof com.ecommerce.model.Administrador admin) {
+            if (datosActualizados.validUntil() != null) {
+                admin.setValidUntil(datosActualizados.validUntil());
+            }
+        }
+
         return usuarioRepository.save(usuario);
     }
 
@@ -5098,6 +4493,30 @@ public class UsuarioService {
         usuarioRepository.deleteById(id);
     }
 
+    private static final Pattern RFC_PATTERN = Pattern.compile("^[A-Za-z]{4}[0-9]{6}[A-Za-z0-9]{3}$");
+
+    private static final Pattern CURP_PATTERN = Pattern.compile("^[A-Za-z]{4}[0-9]{6}[HM][A-Za-z]{5}[0-9]{2}$");
+
+    private void validarRfcCurp(Cliente cliente) {
+
+        String value = cliente.getRfcCurp();
+
+        if (value == null || value.isBlank())
+            throw new RuntimeException("RFC/CURP es obligatorio");
+
+        if (!(RFC_PATTERN.matcher(value).matches() ||
+                CURP_PATTERN.matcher(value).matches()))
+            throw new RuntimeException("RFC/CURP inválido");
+
+        String fechaNacimiento = cliente.getFechaNacimiento()
+                .format(DateTimeFormatter.ofPattern("yyMMdd"));
+
+        String fechaDocumento = value.substring(4, 10);
+
+        if (!fechaNacimiento.equals(fechaDocumento))
+            throw new RuntimeException(
+                    "La fecha en RFC/CURP no coincide con la fecha de nacimiento");
+    }
 }
 
 
@@ -5141,6 +4560,13 @@ spring.jpa.show-sql=true
 
 # Error Handling
 server.error.include-message=always
+
+
+================ backend\target\maven-archiver\pom.properties ================
+
+artifactId=backend
+groupId=com.ecommerce
+version=0.0.1-SNAPSHOT
 
 
 ================ backend\target\maven-status\maven-compiler-plugin\compile\default-compile\createdFiles.lst ================
@@ -5516,6 +4942,10 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                     </div>
 
                     <div id="resumenContent" class="hidden space-y-4">
+                        <div id="rfcContainer"
+                            class="hidden bg-gray-50 border border-gray-200 rounded p-2 mb-2 text-sm text-gray-700">
+                            <strong>RFC/CURP:</strong> <span id="checkoutRfcDisplay" class="font-mono ml-1"></span>
+                        </div>
                         <div class="flex justify-between items-center text-sm text-gray-600">
                             <span>Orden #</span>
                             <span id="ordenIdDisplay" class="font-bold text-gray-800">--</span>
@@ -5937,6 +5367,21 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
     <main class="flex-grow container mx-auto px-6 py-8">
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800">Órdenes</h1>
+            <div class="flex gap-4">
+                <select id="filtroEstado" class="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm">
+                    <option value="Todos">Todos los Estados</option>
+                    <option value="CREATED">Creada</option>
+                    <option value="PAYMENT_PENDING">Pago Pendiente</option>
+                    <option value="PAID">Pagada</option>
+                    <option value="OUT_OF_STOCK">Sin Stock</option>
+                    <option value="CANCELLED">Cancelada</option>
+                    <option value="SHIPPED">Enviada</option>
+                    <option value="DELIVERED">Entregada</option>
+                </select>
+                <select id="filtroUsuario" class="hidden border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm">
+                    <option value="Todos">Todos los Usuarios</option>
+                </select>
+            </div>
         </header>
 
         <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -5945,6 +5390,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
                     <thead class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
                         <tr>
                             <th class="py-3 px-6 text-left">Orden</th>
+                            <th id="thUsuario" class="py-3 px-6 text-left hidden">Usuario</th>
                             <th class="py-3 px-6 text-left">Estado</th>
                             <th class="py-3 px-6 text-left">Fecha</th>
                             <th class="py-3 px-6 text-right">Total</th>
@@ -5969,6 +5415,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
         <div class="relative w-full max-w-md bg-white rounded-lg shadow-xl p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Despachar Orden #<span
                     id="despachoOrdenId"></span></h3>
+            <div id="despachoDireccionInfo" class="mb-4"></div>
             <form id="formDespacho" novalidate>
                 <div class="mb-4">
                     <label for="courier" class="block text-gray-700 text-sm font-bold mb-2">Empresa de Mensajería
@@ -7453,7 +6900,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 
         <!-- ══════════════ MODAL FORM ══════════════ -->
         <div id="modalProducto" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 overflow-hidden transform transition-all">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 overflow-hidden transform transition-all">
                 <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
                     <h3 id="modalTitle" class="text-lg font-semibold text-gray-800">Nuevo Producto</h3>
                     <button id="btnCerrarModal" class="text-gray-400 hover:text-gray-600">
@@ -7618,557 +7065,6 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 
 </html>
 
-================ frontend\README.md ================
-
-# E-Commerce Frontend v3.0
-
-## 🎯 Propósito del Proyecto
-
-Este frontend forma parte de una solución completa de **E-Commerce** que permite gestionar productos, carrito de compras, órdenes y usuarios con control de acceso basado en roles (RBAC).
-
-- Autor: Ramón Bolívar Cuevas Escobar
-
-- Módulo: Programming the Internet (CSE6042)
-
-- Profesor: Dr. Alexander Guevara
-
-### Problema que Resuelve
-- **Gestión de inventario** para administradores y proveedores
-- **Experiencia de compra** fluida para clientes
-- **Control de acceso** granular según el tipo de usuario
-- **Administración centralizada** de usuarios, productos, órdenes y envíos
-
-### Características de la Fase 3
-
-### Proceso de compra y pagos
-- **`checkout.html`**: Secuencia de pago completa con selección de dirección.
-- **Validación dinámica**: Validación de formulario en tiempo real aplicada a la entrada de datos de tarjeta de crédito (datos simulados).
-- **Procesamiento de pagos**: Sustituye el proceso directo del carrito al pedido por una confirmación paso a paso.
-
-### Gestión de órdenes (Cliente y administrador)
-- **`ordenes.html`**: Nueva página para listar las órdenes y su estado actual.
-- **Indicadores de estado**: Indicadores visuales para `CREATED`, `PAYMENT_PENDING`, `PAID`, `OUT_OF_STOCK`, `CANCELLED`, `SHIPPED`, `DELIVERED`.
-- **Modalidad de detalles de la orden**: Vista detallada de los productos, las transacciones de pago y la información de envío que contiene un pedido. 
-- **Modalidad de Despacho de Administrador**: Formularios con validación dinámica para registrar la empresa de mensajería y el número de la guía para seguimiento.
-
-### Visibilidad de Inventario
-- **`productos.html`**: La cuadrícula de productos ahora muestra opcionalmente el `Stock` en tiempo real para los roles de Administrador/Proveedor.
-
----
-
-## Detalles Técnicos
-- ✅ Autenticación y gestión de sesiones
-- ✅ CRUD de productos (físicos y digitales)
-- ✅ Carrito de compras personalizado
-- ✅ Historial de órdenes
-- ✅ Gestión de usuarios (ADMIN únicamente)
-- ✅ Menú dinámico según rol del usuario
-
-### Tipos de Usuarios
-|       Rol     | Permisos                                                                  |
-|---------------|---------------------------------------------------------------------------|
-| **ADMIN**     | Gestión completa: productos, usuarios, órdenes, envíos                            |
-| **SUPPLIER**  | Edición de productos, visualización de órdenes                            |
-| **CUSTOMER**  | Compra de productos, gestión de carrito, proceso de pago, cancelación de órdenes, visualización de propias órdenes |
-
----
-
-## 🏗️ Arquitectura del Frontend
-
-### Modelo SPA (Single Page Application)
-El frontend está construido como una **SPA parcial** usando HTML5, CSS3, y JavaScript ES6+ modular:
-
-- **Páginas independientes**: Cada vista es un archivo HTML separado
-- **Módulos JavaScript**: Lógica organizada en módulos ES6 (`import`/`export`)
-- **Estado compartido**: `localStorage` almacena sesión del usuario
-- **Navegación dinámica**: Menú se adapta según rol del usuario autenticado
-
-### Comunicación con API REST
-```javascript
-// api.js - Cliente HTTP centralizado
-const Api = {
-    async get(endpoint) { /* ... */ },
-    async post(endpoint, data) { /* ... */ },
-    async put(endpoint, data) { /* ... */ },
-    async delete(endpoint) { /* ... */ }
-};
-```
-
-**Headers automáticos:**
-- `Content-Type: application/json`
-- `Authorization: Bearer {token}` (si el usuario está autenticado)
-
-**Manejo de errores:**
-- Redirección automática a `/login.html` en errores 401/403
-- Notificaciones visuales en operaciones CRUD
-
-### Control de Estado
-**Autenticación (localStorage):**
-```json
-{
-  "user": {
-    "id": 1,
-    "nombre": "Admin User",
-    "email": "admin@example.com",
-    "role": "ADMIN"
-  },
-  "token": "mock-jwt-token-1"
-}
-```
-
-### Manejo de Autenticación
-```javascript
-// auth.js
-const Auth = {
-    login(user, token) { /* Guardar en localStorage */ },
-    logout() { /* Limpiar localStorage */ },
-    isAuthenticated() { /* Verificar token */ },
-    getCurrentUser() { /* Obtener usuario actual */ }
-};
-```
-
-**Flujo de autenticación:**
-1. Usuario envía credenciales a `/auth/login`
-2. Backend valida y retorna `{id, nombre, role, token}`
-3. Frontend almacena en `localStorage`
-4. Todas las peticiones incluyen `Authorization: Bearer {token}`
-5. TokenAuthenticationFilter valida en backend
-6. Si token inválido → 401 → Redirect a login
-
----
-
-## 🎨 Diseño de Interfaces
-
-### HTML5 Semántico
-Uso de etiquetas semánticas para mejor accesibilidad y SEO:
-```html
-<nav>   <!-- Navegación principal -->
-<main>  <!-- Contenido principal -->
-<header><!-- Encabezados de sección -->
-<form>  <!-- Formularios interactivos -->
-<table> <!-- Tablas de datos -->
-```
-
-### CSS3 + Tailwind CSS
-**Framework**: Tailwind CSS v3 (utility-first)
-**Compilación**: `npx tailwindcss -i ./css/styles.css -o ./css/output.css --watch`
-
-**Clases comunes:**
-- Layout: `flex`, `grid`, `container`, `mx-auto`
-- Spacing: `px-6`, `py-4`, `gap-4`
-- Colors: `bg-blue-600`, `text-gray-700`, `hover:bg-blue-700`
-- Shadow: `shadow-md`, `shadow-xl`
-- Transitions: `transition`, `duration-300`
-
-### Responsividad
-Diseño Mobile-First con breakpoints de Tailwind:
-```css
-sm:  /* 640px  - Tablets           */
-md:  /* 768px  - Tablets landscape */
-lg:  /* 1024px - Desktop           */
-xl:  /* 1280px - Desktop grande    */
-```
-
-Ejemplo:
-```html
-<div class="flex flex-col md:flex-row gap-4">
-    <!-- En móvil: columna | En desktop: fila -->
-</div>
-```
-
-### Interactividad
-**Modales dinámicos:**
-```javascript
-UI.toggleModal('modalProducto', true);  // Abrir
-UI.toggleModal('modalProducto', false); // Cerrar
-```
-
-**Notificaciones:**
-```javascript
-UI.showNotification('Guardado exitosamente', 'success');
-UI.showNotification('Error al guardar', 'error');
-```
-
----
-
-## 📋 Validador de Formularios Dinámico
-
-### Caso de Uso: Registro de Nuevo Usuario
-
-**Archivo**: `usuarios.html` + `usuarios.js`
-
-#### Campos Validados
-|       Campo       |    Tipo   |             Validación            |  Requerido  |
-|-------------------|-----------|-----------------------------------|-------------|
-| Nombre            | text      | No vacío                          | Sí          |
-| Email             | email     | Formato email válido              | Sí          |
-| Contraseña        | password  | No vacío (solo en creación)       | Condicional |
-| Rol               | select    | Uno de: ADMIN, SUPPLIER, CUSTOMER | Sí          |
-| Fecha Nacimiento  | date      | Formato ISO (YYYY-MM-DD)          | No          |
-
-#### Validaciones por Campo
-
-**1. Nombre**
-```javascript
-<input type="text" id="nombre" required>
-```
-- ✅ HTML5 `required` attribute
-- ❌ Vacío → "Por favor, rellene este campo"
-
-**2. Email**
-```javascript
-<input type="email" id="email" required>
-```
-- ✅ HTML5 email validation
-- ❌ Formato inválido → "Incluya un '@' en la dirección"
-- ❌ Vacío → "Por favor, rellene este campo"
-
-**3. Contraseña**
-```javascript
-// En creación:
-passwordField.setAttribute('required', 'required');
-
-// En edición:
-passwordField.removeAttribute('required');
-if (!password.value) {
-    delete datosUsuario.password; // No enviar si está vacío
-}
-```
-- ✅ Requerida solo al crear
-- ✅ Opcional al editar (mantiene la existente si vacío)
-
-**4. Rol**
-```javascript
-<select id="role" required>
-    <option value="">Seleccionar rol...</option>
-    <option value="ADMIN">Administrador</option>
-    <option value="SUPPLIER">Proveedor</option>
-    <option value="CUSTOMER">Cliente</option>
-</select>
-```
-- ✅ Debe seleccionar un valor
-- ❌ Valor vacío → "Seleccione un elemento de la lista"
-
-**5. Fecha de Nacimiento** (Opcional)
-```javascript
-<input type="date" id="fechaNacimiento">
-const fecha = document.getElementById('fechaNacimiento').value || null;
-```
-- ✅ Formato ISO automático
-- ✅ Envía `null` si no se proporciona
-
-#### Validación en Submit
-```javascript
-formUsuario.addEventListener('submit', async (e) => {
-    e.preventDefault(); // Evitar recarga de página
-    
-    // HTML5 validations se ejecutan automáticamente antes de este punto
-    
-    const datosUsuario = {
-        nombre: document.getElementById('nombre').value,
-        email: document.getElementById('email').value,
-        password: document.getElementById('password').value,
-        role: document.getElementById('role').value,
-        fechaNacimiento: document.getElementById('fechaNacimiento').value || null
-    };
-    
-    // Validación adicional: eliminar contraseña vacía en edición
-    if (usuarioId && !datosUsuario.password) {
-        delete datosUsuario.password;
-    }
-    
-    try {
-        if (usuarioId) {
-            await Api.put(`/usuarios/${usuarioId}`, datosUsuario);
-        } else {
-            await Api.post('/usuarios/admin', datosUsuario);
-        }
-        UI.showNotification('Usuario guardado', 'success');
-    } catch (error) {
-        UI.showNotification('Error: ' + error.message, 'error');
-    }
-});
-```
-
-#### Mensajes de Error (UX)
-**Validaciones HTML5 (nativas del navegador):**
-- "Por favor, rellene este campo"
-- "Incluya un '@' en la dirección de correo electrónico"
-- "Seleccione un elemento de la lista"
-
-**Validaciones del servidor (desde backend):**
-- ❌ "El email ya está registrado" (409 Conflict)
-- ❌ "Usuario no encontrado" (404 Not Found)
-- ❌ "Credenciales inválidas" (401 Unauthorized)
-
-**Notificación visual:**
-```javascript
-// Éxito
-UI.showNotification('Usuario creado exitosamente', 'success');
-
-// Error
-UI.showNotification('Error al guardar usuario: ' + error.message, 'error');
-```
-
----
-
-## 🛠️ Tecnologías Usadas
-
-|   Tecnología   | Versión |           Uso           |
-|----------------|---------|-------------------------|
-| HTML5          | -       | Estructura semántica    |
-| CSS3           | -       | Estilos base            |
-| Tailwind CSS   | 3.x     | Framework utility-first |
-| JavaScript     | ES6+    | Lógica de aplicación    |
-| FontAwesome    | 6.4.0   | Iconografía             |
-| Fetch API      | -       | Gestión de peticiones HTTP hacia el backend (Métodos GET, POST) mediante el uso de Fetch         |
-
----
-
-## 🚀 Instalación / Ejecución
-
-### Requisitos
-- Node.js >= 16.x (para Tailwind CLI)
-- Backend ejecutándose en `http://localhost:8080`
-
-### Pasos
-
-1. **Instalar dependencias**:
-```bash
-npm install
-```
-
-2. **Compilar Tailwind CSS**:
-```bash
-# Modo desarrollo (watch)
-npm run dev
-
-# Producción (minificado)
-npm run build
-```
-
-3. **Servir el frontend**:
-```bash
-# Con Live Server (VS Code extension)
-# O con Python:
-python -m http.server 5500
-
-# O con Node.js:
-npx serve .
-```
-
-4. **Acceder**:
-```
-http://localhost:5500
-```
-
-### Uso del Validador
-
-1. **Login como ADMIN**:
-   - Email: `admin@example.com`
-   - Password: `admin123`
-
-2. **Ir a "Usuarios"** en el menú
-
-3. **Click en "Nuevo Usuario"**
-
-4. **Probar validaciones**:
-   - Dejar campos vacíos → Ver mensajes de error
-   - Email sin @ → Error de formato
-   - Crear usuario sin contraseña → Error
-   - Editar usuario sin contraseña → Mantiene la actual
-
----
-
-## 📁 Estructura de Archivos
-
-```
-frontend/
-├── css/
-│   ├── styles.css     # Tailwind @directives
-│   └── output.css     # CSS compilado
-├── js/
-│   ├── api.js         # Cliente HTTP
-│   ├── auth.js        # Autenticación
-│   ├── ui.js          # Utilidades UI
-│   ├── productos.js   # Lógica de productos
-│   ├── carrito.js     # Lógica de carrito
-│   ├── ordenes.js     # Lógica de órdenes
-│   └── usuarios.js    # Lógica de usuarios (ADMIN)
-├── index.html         # Landing page
-├── login.html         # Login
-├── register.html      # Registro
-├── productos.html     # Gestión productos
-├── carrito.html       # Carrito de compras
-├── ordenes.html       # Historial de órdenes
-├── usuarios.html      # Gestión usuarios (ADMIN)
-└── package.json       # Dependencias
-```
-
----
-
-## 🔐 Seguridad
-
-- ✅ Protección de rutas por rol (JavaScript)
-- ✅ Validación de token en cada request
-- ✅ Redirección automática en errores 401/403
-- ✅ Contraseñas nunca expuestas en localStorage
-- ⚠️ Token mock (migrar a JWT real en producción)
-
----
-
-## 📝 Licencia
-
-BIU License - Proyecto Académico - Módulo Programming the Internet
-
----
-
-## 🔍 Descripción detallada actualizada de la implementación de la arquitectura de frontend para la solución eCommerce. 
-
-### 11. Documentación del Frontend (Arquitectura Reactiva Vainilla)
-
-El frontend de esta plataforma eCommerce ha sido construído con adherencia a la siguiente especificación técnica y flujos de datos.
-
-* **Arquitectura del Frontend**: Se sostiene como una **Single Page Application (SPA) Parcial** basada estrictamente en **Vanilla JavaScript (ES6 Modules)** y **Tailwind CSS**. Evita la sobrecarga de frameworks React/Angular, logrando una alta modularidad inyectando dinámicamente nodos en el Document Object Model (DOM).
-
-* **Sistema de Componentes Puros**:
-  * `ui.js`: Motor de renderizado transversal. Expone funciones abstractas para renderizar alertas (`showNotification`), modales (`toggleModal`) y adaptar los Navbars dinámicos de acuerdo a los roles (RBAC en cliente).
-  * `auth.js`: Gestor del estado global del usuario alojado persistentemente en `localStorage`. Controla el ciclo de vida de la sesión (login/logout).
-  * `api.js`: Wrapper centralizado diseñado bajo el Patrón Adapter para la Fetch API nativa. Intercepta y envuelve todas las llamadas salientes y respuestas JSON.
-
-* **Consumo de APIs**:
-  Se opera asíncronamente mediante promesas `async / await`. El módulo `api.js` provee los cuatro verbos REST (`get`, `post`, `put`, `delete`). Destaca la inyección silenciosa de la cabecera `Authorization: Bearer <token>` extraída desde el Session Storage para validar contextos con el Servidor Spring Boot.
-
-* **Validaciones (Validación Dinámica)**:
-  La interfaz estipula un modelo dual defensivo:
-  1. *Nativo*: Atributos de HTML5 (`required`, `minlength`, `maxlength`, `pattern`) frenan intrusiones tempranas.
-  2. *Dinámico Constante*: Funciones atadas a *Event Listeners* (`input`, `blur`) rastrean el tipeo del usuario. Modifican en tiempo real los contornos DOM (`border-red-500` vs `border-green-500`) usando clases de Tailwind.
-
-* **Manejo de Errores**:
-  Toda la tubería de peticiones pasa por bloques `try-catch`. 
-  - Errores sintácticos HTTP `400 Bad Request` se interceptan extrayendo sus `message` o constraint violations mapeadas por backend y mostradas con `UI.showNotification()`.
-  - Errores de acceso `401 Unauthorized` o `403 Forbidden` disparan el vaciado del `localStorage` y forzan un `window.location.href = '/login.html'`, protegiendo al usuario.
-
-### Documentación de Nuevas Interfaces Gráficas Críticas (GUIs)
-
-#### A. Interfaz de Checkout (Cierre de Compra)
-- **Vista**: `checkout.html` operada por `js/checkout.js`.
-- **Propósito**: Consolidar visualmente el carrito y transitar la base de datos hacia una Orden `CREATED`.
-- **Flujo**:
-  1. Renderiza un esqueleto (resumen) de los ítems tabulados a comprar con el cálculo total matemático instantáneo.
-  2. Exige selección en un *Dropdown* de la Dirección de Entrega (consumida asíncronamente desde el catálogo de rutas guardadas por el Cliente).
-  3. Desencadena la reserva logística llamando a `POST /api/ordenes/checkout`.
-
-#### B. Interfaz de Pago (Transacción)
-- **Vista**: Expansión dinámica operada tras concluir Checkout o desde el Panel de Órdenes (`ordenes.html`).
-- **Propósito**: Fondear económicamente la orden escalándola hacia `PAID` o fallando por inexistencia a `OUT_OF_STOCK`.
-- **Flujo**:
-  1. Provee un selector de pasarelas abstractas (Tarjeta, Paypal, Transferencia).
-  2. Activa un widget validado para introducir credenciales (EJ: `pattern="[0-9]{16}"` para TDC).
-  3. Ejecuta el bloqueo del DOM UI simulando latencia (loader intermitente) enviando los parámetros a `/api/payments/procesar`. 
-  4. Finaliza pintando la pastilla o *Badge* del estado transformado de gris (`CREATED`) a verde vibrante (`PAID`).
-
-#### C. Interfaz de Despacho Logístico (Envíos)
-- **Vista**: Modal oculto invocado dentro de `ordenes.html`, exclusivamente persistente para el rol `ADMIN`.
-- **Propósito**: Efectuar la transición de estados `PAID` → `SHIPPED` → `DELIVERED`.
-- **Flujo**:
-  1. El Administrador ubica una fila calificada como *PAID* e invoca el sub-botón `Despachar`.
-  2. Emerge sobre la ventana un Pop-Up (Modal HTML `<dialog>` interceptado) demandando Empresa de Mensajería (Courier) e Identificador de Rastreo.
-  3. La validación en vivo impide submit dobles.
-  4. Tras éxito de `POST /api/shipments/despachar/{id}`, la vista desactiva permanentemente el botón para prevenir redespachos y actualiza la estampa temporal en la GUI indicando que el paquete está en ruta.
-
----
-
-## 🔄 Fase 3 – Nuevas Funcionalidades
-
-### Alcance Ampliado
-| Rol | Acceso Nuevo |
-|-----|--------------|
-| **ADMIN** | Ver/editar `descripcion`, `proveedor` e imágenes de productos; gestionar direcciones de cualquier usuario desde el panel de usuarios (icono ⚙️) |
-| **SUPPLIER** | Ver/editar `descripcion` e imágenes (sin acceso a `proveedor`); gestionar sus propias direcciones |
-| **CUSTOMER** | Ver imágenes reales de productos, descripción y proveedor; popup de galería de imágenes; gestionar sus propias direcciones |
-
----
-
-### Nuevas Páginas
-
-| Archivo | Pública a | Descripción |
-|---------|-----------|-------------|
-| `direcciones.html` | CUSTOMER, SUPPLIER | Gestión de mis direcciones propias |
-
-```
-frontend/
-├── direcciones.html       ← NUEVO: Mis Direcciones (CUSTOMER + SUPPLIER)
-└── js/
-    └── direcciones.js     ← NUEVO: Lógica de gestión de direcciones
-```
-
----
-
-### Navegación Actualizada
-
-**CUSTOMER**: Carrito | Mis Órdenes | **Mis Direcciones** (nuevo)
-**SUPPLIER**: Mis Productos | **Mis Direcciones** (nuevo)
-**ADMIN**: sin cambios en nav; gestión de direcciones accesible desde icono ⚙️ en tabla de usuarios
-
----
-
-### Gestión de Imágenes de Producto
-
-#### Vista ADMIN/SUPPLIER (`productos.html`)
-- Campo `descripcion`: textarea con contador de caracteres (máx. 250)
-- Campo `proveedor`: input con contador de caracteres (máx. 150) — **solo visible para ADMIN**
-- Sección de imágenes: agregar URLs, marcar predeterminada (⭐), eliminar imágenes
-- La tabla incluye miniatura de la imagen por defecto del producto
-
-#### Vista CUSTOMER (`productoscustomer.html` + `appcust.js`)
-- Renderización real de la imagen por defecto en la tarjeta del producto
-- Descripción truncada con `line-clamp-2`
-- Nombre del proveedor (icono de tienda)
-- Clic en la imagen abre popup/galería con:
-  - Navegación Anterior/Siguiente
-  - Contador `1 / N`
-  - Miniaturas clicables
-  - Soporte de teclado (flechas, Escape)
-  - Cierre al hacer clic fuera
-
-#### Landing Page (`index.html` + `app.js`)
-- Muestra imagen real del producto (si tiene) y descripción truncada
-- Los botones de carrito **NO aparecen** para usuarios no autenticados
-- En su lugar se muestra un enlace "Iniciar sesión para comprar"
-
----
-
-### Gestión de Direcciones
-
-#### Formulario de Dirección (11 campos)
-| Campo | Validación |
-|-------|------------|
-| `alias` | Máx. 20 caracteres (opcional) |
-| `calle` | Obligatorio, máx. 25 |
-| `numeroExterior` | Obligatorio, máx. 10 |
-| `numeroInterior` | Máx. 10, opcional |
-| `referencia` | Máx. 35, opcional |
-| `colonia` | Obligatorio, máx. 40 |
-| `municipio` | Obligatorio, máx. 45 |
-| `estado` | Obligatorio, máx. 25 |
-| `codigoPostal` | Exactamente 5 dígitos |
-| `telefonos` | Mín. 1, exactamente 10 dígitos cada uno |
-| `preferida` | Bool; la anterior se desmarca automáticamente |
-
-#### ADMIN: Botón ⚙️ en Tabla de Usuarios
-- Cada fila de usuario tiene un botón de engrane que abre el panel de gestiona de direcciones
-- El panel muestra las direcciones del usuario seleccionado
-- ADMIN puede crear, editar y eliminar direcciones de cualquier usuario
-- El sub-formulario aparece inline dentro del modal sin recargar la página
-
-#### Accesibilidad
-- HTML5 semántico: `<address>`, `<fieldset>`, `<legend>`, `<article>`, `<section>`
-- Microdatos schema.org (`PostalAddress`) en tarjetas y formularios
-- Validación nativa HTML5 (`required`, `pattern`, `maxlength`, `minlength`)
-- `aria-label` en botones de navegación
-
-
 ================ frontend\register.html ================
 
 <!DOCTYPE html>
@@ -8271,7 +7167,8 @@ frontend/
 
             <!-- Fecha Nacimiento -->
             <div>
-                <label for="fechaNacimiento" class="block text-gray-700 font-medium mb-1">Fecha de Nacimiento</label>
+                <label for="fechaNacimiento" class="block text-gray-700 font-medium mb-1">Fecha de
+                    Nacimiento/Creación</label>
                 <input type="date" id="fechaNacimiento"
                     class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required>
@@ -8397,10 +7294,19 @@ module.exports = {
 
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800">Gestión de Usuarios</h1>
-            <button id="btnNuevoUsuario"
-                class="hidden bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow transition flex items-center gap-2">
-                <i class="fas fa-user-plus"></i> Nuevo Usuario
-            </button>
+            <div class="flex gap-4">
+                <select id="filtroRol"
+                    class="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="Todos">Todos</option>
+                    <option value="CUSTOMER">Clientes</option>
+                    <option value="SUPPLIER">Proveedores</option>
+                    <option value="ADMIN">Administradores</option>
+                </select>
+                <button id="btnNuevoUsuario"
+                    class="hidden bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow transition flex items-center gap-2">
+                    <i class="fas fa-user-plus"></i> Nuevo Usuario
+                </button>
+            </div>
         </header>
 
         <!-- User Table -->
@@ -8425,15 +7331,26 @@ module.exports = {
 
         <!-- ══════════════ MODAL USUARIO ══════════════ -->
         <div id="modalUsuario" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 overflow-hidden">
                 <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
                     <h3 id="modalTitle" class="text-lg font-semibold text-gray-800">Nuevo Usuario</h3>
                     <button id="btnCerrarModal" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                <form id="formUsuario" class="p-6 space-y-4">
+                <form id="formUsuario" class="p-6 space-y-4" novalidate>
                     <input type="hidden" id="usuarioId">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="role">Rol</label>
+                        <select id="role"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                            <option value="">Seleccionar rol...</option>
+                            <option value="ADMIN">Administrador</option>
+                            <option value="SUPPLIER">Proveedor</option>
+                            <option value="CUSTOMER">Cliente</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-bold mb-1" for="nombre">Nombre</label>
                         <input type="text" id="nombre"
@@ -8453,27 +7370,40 @@ module.exports = {
                             placeholder="Dejar vacío para mantener la actual">
                         <p class="text-xs text-gray-500 mt-1">Solo requerida al crear nuevo usuario</p>
                     </div>
-                    <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-1" for="role">Rol</label>
-                        <select id="role"
-                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                            required>
-                            <option value="">Seleccionar rol...</option>
-                            <option value="ADMIN">Administrador</option>
-                            <option value="SUPPLIER">Proveedor</option>
-                            <option value="CUSTOMER">Cliente</option>
-                        </select>
-                    </div>
+
                     <div>
                         <label class="block text-gray-700 text-sm font-bold mb-1" for="fechaNacimiento">Fecha de
-                            Nacimiento</label>
+                            Nacimiento/Creación</label>
                         <input type="date" id="fechaNacimiento"
                             class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
+
+                    <!-- Dynamic fields -->
+                    <div id="rfcCurpContainer" class="hidden">
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="rfcCurp">RFC / CURP</label>
+                        <input type="text" id="rfcCurp" maxlength="18"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Ingrese RFC (13) o CURP (18)">
+                        <p id="error-rfcCurp" class="text-xs text-red-500 mt-1 hidden">Formato inválido. Debe ser RFC o
+                            CURP.</p>
+                    </div>
+                    <div id="empresaContainer" class="hidden">
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="empresa">Empresa</label>
+                        <input type="text" id="empresa"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Nombre de la empresa">
+                    </div>
+                    <div id="vigenciaContainer" class="hidden">
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="validUntil">Vigencia
+                            (Hasta)</label>
+                        <input type="date" id="validUntil"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
                     <div class="pt-4 flex justify-end gap-3">
                         <button type="button" id="btnCancelar"
                             class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Cancelar</button>
-                        <button type="submit"
+                        <button type="submit" id="submitBtnUsuario"
                             class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition shadow">Guardar</button>
                     </div>
                 </form>
@@ -8609,6 +7539,7 @@ module.exports = {
 
     </main>
 
+    <script src="js/validation.js"></script>
     <script type="module" src="js/usuarios.js"></script>
 </body>
 
@@ -9564,11 +8495,6 @@ const Checkout = {
         const params = new URLSearchParams(window.location.search)
         const id = params.get("ordenId")
 
-        if (!id) {
-            window.location.href = "ordenes.html"
-            return
-        }
-
         await this.loadData(id)
 
         this.bindEvents()
@@ -9576,17 +8502,26 @@ const Checkout = {
     },
 
     async loadData(id) {
+        this.ordenId = id; // Could be null
 
-        const [orden, direcciones] = await Promise.all([
-            Api.get("/ordenes"),
-            Api.get("/direcciones/mis-direcciones")
-        ])
+        const [direcciones, usuarioData] = await Promise.all([
+            Api.get("/direcciones/mis-direcciones"),
+            Api.get(`/usuarios/${Auth.getCurrentUser().id}`)
+        ]);
 
-        this.orden = orden.find(o => o.id == id)
+        this.usuarioRfc = usuarioData.rfcCurp;
 
-        this.renderResumen()
-        this.renderDirecciones(direcciones)
+        if (id) {
+            const ordenes = await Api.get("/ordenes");
+            this.orden = ordenes.find(o => o.id == id);
+            this.renderResumenFromOrden();
+        } else {
+            const carrito = await Api.get("/carrito");
+            this.carrito = carrito;
+            this.renderResumenFromCarrito();
+        }
 
+        this.renderDirecciones(direcciones);
     },
 
     bindEvents() {
@@ -9670,12 +8605,19 @@ const Checkout = {
 
     },
 
-    renderResumen() {
-
-        const orden = this.orden
+    renderResumenFromOrden() {
+        const orden = this.orden;
 
         document.getElementById("loadingResumen").classList.add("hidden")
         document.getElementById("resumenContent").classList.remove("hidden")
+
+        if (this.usuarioRfc) {
+            const container = document.getElementById("rfcContainer");
+            if (container) {
+                container.classList.remove("hidden");
+                document.getElementById("checkoutRfcDisplay").textContent = this.usuarioRfc;
+            }
+        }
 
         document.getElementById("ordenIdDisplay").textContent = orden.id
         document.getElementById("ordenEstadoDisplay").textContent = orden.estado
@@ -9686,23 +8628,18 @@ const Checkout = {
         let subtotal = 0
 
         orden.detalles.forEach(d => {
-
             const nombre = d.productoNombre || (d.producto?.nombre) || "Producto"
             const sub = d.subtotal || (d.precio * d.cantidad)
 
             subtotal += sub
 
             const li = document.createElement("li")
-
             li.className = "flex justify-between text-sm"
-
             li.innerHTML = `
                 <span>${d.cantidad}x ${nombre}</span>
                 <span>${UI.formatCurrency(sub)}</span>
             `
-
             ul.appendChild(li)
-
         })
 
         const tax = subtotal * 0.16
@@ -9711,7 +8648,58 @@ const Checkout = {
         document.getElementById("resumenSubtotal").textContent = UI.formatCurrency(subtotal)
         document.getElementById("resumenImpuestos").textContent = UI.formatCurrency(tax)
         document.getElementById("resumenTotal").textContent = UI.formatCurrency(total)
+    },
 
+    renderResumenFromCarrito() {
+        if (!this.carrito || !this.carrito.productos || this.carrito.productos.length === 0) {
+            UI.showNotification("Tu carrito está vacío", "warning");
+            setTimeout(() => window.location.href = "carrito.html", 1500);
+            return;
+        }
+
+        document.getElementById("loadingResumen").classList.add("hidden");
+        document.getElementById("resumenContent").classList.remove("hidden");
+        
+        if (this.usuarioRfc) {
+            const container = document.getElementById("rfcContainer");
+            if (container) {
+                container.classList.remove("hidden");
+                document.getElementById("checkoutRfcDisplay").textContent = this.usuarioRfc;
+            }
+        }
+        
+        document.getElementById("ordenIdDisplay").textContent = "Nueva";
+        document.getElementById("ordenEstadoDisplay").textContent = "PENDING";
+
+        const ul = document.getElementById("listaResumenItems");
+        ul.innerHTML = "";
+
+        let subtotal = 0;
+        const map = new Map();
+        this.carrito.productos.forEach(p => {
+            if (map.has(p.id)) map.get(p.id).cantidad++;
+            else map.set(p.id, { ...p, cantidad: 1 });
+        });
+
+        map.forEach(p => {
+            const sub = p.precio * p.cantidad;
+            subtotal += sub;
+
+            const li = document.createElement("li");
+            li.className = "flex justify-between text-sm";
+            li.innerHTML = `
+                <span>${p.cantidad}x ${p.nombre}</span>
+                <span>${UI.formatCurrency(sub)}</span>
+            `;
+            ul.appendChild(li);
+        });
+
+        const tax = subtotal * 0.16;
+        const total = subtotal + tax;
+
+        document.getElementById("resumenSubtotal").textContent = UI.formatCurrency(subtotal);
+        document.getElementById("resumenImpuestos").textContent = UI.formatCurrency(tax);
+        document.getElementById("resumenTotal").textContent = UI.formatCurrency(total);
     },
 
     updateMetodoPago() {
@@ -9752,20 +8740,32 @@ const Checkout = {
         btn.disabled = true
 
         try {
+            let actualOrdenId = this.ordenId;
 
+            // FASE 1: Crear la orden si no existe (viniendo del carrito)
+            if (!actualOrdenId) {
+                const urlCheckout = `/ordenes/checkout?direccionId=${this.direccion}`;
+                const nuevaOrden = await Api.post(urlCheckout);
+                actualOrdenId = nuevaOrden.id;
+                this.ordenId = actualOrdenId; // guardarlo por si falla el pago y quiere reintentar
+            }
+
+            // FASE 2: Enviar pago
             const res = await Api.post("/payments/procesar", {
-                ordenId: this.orden.id,
+                ordenId: actualOrdenId,
                 metodoPago: this.metodoPago
             })
 
-            if (res.estado === "PAID") {
-
-                UI.showNotification("Pago exitoso", "success")
-
+            if (res.estado === "PAID" || res.estado === "PAYMENT_PENDING") {
+                UI.showNotification("Proceso completado", "success")
                 setTimeout(() => {
                     window.location.href = "ordenes.html"
                 }, 1500)
-
+            } else if (res.estado === "OUT_OF_STOCK") {
+                UI.showNotification("Lo sentimos, no hay inventario suficiente.", "error")
+                setTimeout(() => {
+                    window.location.href = "ordenes.html"
+                }, 2000)
             }
 
         } catch (err) {
@@ -10124,6 +9124,7 @@ import { UI } from './ui.js';
 import Auth from './auth.js';
 
 let ordenesGlobal = [];
+let usuariosGlobal = [];
 let roleActual = '';
 let userActual = {};
 
@@ -10139,11 +9140,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         context: 'orders'
     });
 
+    if (roleActual === 'ADMIN') {
+        document.getElementById('thUsuario').classList.remove('hidden');
+        document.getElementById('filtroUsuario').classList.remove('hidden');
+        cargarFiltroUsuarios();
+    }
+
     setupEventListeners();
     await cargarOrdenes();
 });
 
+async function cargarFiltroUsuarios() {
+    try {
+        usuariosGlobal = await Api.get('/usuarios');
+        const select = document.getElementById('filtroUsuario');
+        usuariosGlobal.filter(u => u.role === 'CUSTOMER').forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u.id; // Warning: ordenDTO currently lacks usuarioId, but backend filter maps it? Let's check backend. Wait, filtering is in JS! We need `orden.id` or we can filter by exact string if backend didn't provide it? Let's just put u.nombre and match o.usuarioNombre 
+            opt.textContent = u.nombre;
+            select.appendChild(opt);
+        });
+    } catch (e) {
+        console.error('Error cargando usuarios para el filtro', e);
+    }
+}
+
 function setupEventListeners() {
+    document.getElementById('filtroEstado').addEventListener('change', renderizarOrdenes);
+    document.getElementById('filtroUsuario').addEventListener('change', renderizarOrdenes);
+
     // Modal de Despacho
     window.cerrarModalDespacho = () => {
         document.getElementById('modalDespacho').classList.add('hidden');
@@ -10186,10 +9211,23 @@ async function cargarOrdenes() {
 }
 
 function renderizarOrdenes() {
+    const estadoFil = document.getElementById('filtroEstado').value;
+    const userNameFil = document.getElementById('filtroUsuario').options[document.getElementById('filtroUsuario').selectedIndex].text;
+    const isUserFilterActive = document.getElementById('filtroUsuario').value !== 'Todos';
+
+    let filtradas = ordenesGlobal;
+
+    if (estadoFil !== 'Todos') {
+        filtradas = filtradas.filter(o => o.estado === estadoFil);
+    }
+    if (isUserFilterActive) {
+        filtradas = filtradas.filter(o => o.usuarioNombre === userNameFil);
+    }
+
     const tbody = document.getElementById('listaOrdenes');
     tbody.innerHTML = '';
 
-    if (!ordenesGlobal || ordenesGlobal.length === 0) {
+    if (!filtradas || filtradas.length === 0) {
         document.getElementById('emptyState').classList.remove('hidden');
         document.querySelector('table').classList.add('hidden');
         return;
@@ -10198,7 +9236,7 @@ function renderizarOrdenes() {
     document.getElementById('emptyState').classList.add('hidden');
     document.querySelector('table').classList.remove('hidden');
 
-    ordenesGlobal.forEach(orden => {
+    filtradas.forEach(orden => {
         const row = document.createElement('tr');
         row.className = 'border-b border-gray-200 hover:bg-gray-50';
 
@@ -10209,9 +9247,11 @@ function renderizarOrdenes() {
 
         const badgeHtml = getBadgeHTML(orden.estado);
         const actionHtml = getActionHTML(orden);
+        const userHtml = roleActual === 'ADMIN' ? `<td class="py-3 px-6 text-left font-medium text-gray-700">${orden.usuarioNombre || 'Desconocido'}</td>` : '';
 
         row.innerHTML = `
             <td class="py-3 px-6 text-left whitespace-nowrap font-medium text-gray-800">#${orden.id}</td>
+            ${userHtml}
             <td class="py-3 px-6 text-left">${badgeHtml}</td>
             <td class="py-3 px-6 text-left text-xs">${fecha}</td>
             <td class="py-3 px-6 text-right font-bold text-gray-700">${UI.formatCurrency(orden.total)}</td>
@@ -10325,8 +9365,33 @@ window.verDetalles = (id) => {
                 <p class="text-gray-500 mb-1">Estado Actual</p>
                 ${getBadgeHTML(orden.estado)}
             </div>
-        </div>
     `;
+
+    if (orden.direccionEnvio) {
+        const dir = orden.direccionEnvio;
+        html += `
+            <div>
+                <p class="text-gray-500 mb-1">Dirección de Envío</p>
+                <div class="bg-gray-50 p-2 rounded text-xs border border-gray-200">
+                    <p class="font-bold">${dir.alias || 'Dirección'}</p>
+                    <p>${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ' Int ' + dir.numeroInterior : ''}</p>
+                    <p>${dir.colonia}</p>
+                    <p>${dir.ciudad}, ${dir.estado} CP ${dir.codigoPostal}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `</div>`;
+
+    if (orden.usuarioRfcCurp) {
+        html += `
+            <div class="bg-blue-50 p-3 rounded-lg mb-4 text-sm border border-blue-200">
+                <h4 class="font-bold text-blue-800 mb-1"><i class="fas fa-id-card mr-1"></i> RFC/CURP: </h4>
+                <p class="font-mono text-gray-700 font-semibold">${orden.usuarioRfcCurp}</p>
+            </div>
+        `;
+    }
 
     function getNombreProducto(detalle) {
         return detalle.productoNombre
@@ -10406,7 +9471,29 @@ const despachoValidation = {
 };
 
 window.abrirModalDespacho = (id) => {
+    const orden = ordenesGlobal.find(o => o.id === id);
     document.getElementById('despachoOrdenId').textContent = id;
+
+    // Si la orden tiene direccion, mostrarla para que el admin sepa a donde enviar
+    const despachoInfo = document.getElementById('despachoDireccionInfo');
+    if (despachoInfo) {
+        if (orden && orden.direccionEnvio) {
+            const dir = orden.direccionEnvio;
+            despachoInfo.innerHTML = `
+                <div class="bg-blue-50 p-3 rounded-lg mb-4 text-sm border border-blue-200">
+                    <h4 class="font-bold text-blue-800 mb-1"><i class="fas fa-map-marker-alt mr-1"></i> Destino del Envío</h4>
+                    <p>${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ' Int ' + dir.numeroInterior : ''}</p>
+                    <p>${dir.colonia}, ${dir.municipio}</p>
+                    <p>${dir.ciudad}, ${dir.estado}. CP: ${dir.codigoPostal}</p>
+                    <p class="text-xs text-blue-600 mt-1">Tel: ${dir.telefonos?.join(', ') || 'N/A'}</p>
+                </div>
+            `;
+            despachoInfo.classList.remove('hidden');
+        } else {
+            despachoInfo.classList.add('hidden');
+        }
+    }
+
     window.ordenDespachoActualId = id;
     cerrarModalDespacho(); // Reset
     document.getElementById('modalDespacho').classList.remove('hidden');
@@ -10600,11 +9687,7 @@ function renderizarTabla(productos, filtro) {
 
     const filtrados = filtro === 'todos'
         ? productos
-        : productos.filter(p => {
-            if (filtro === 'Fisico') return p.tipo === 'Fisico' || p.peso !== undefined;
-            if (filtro === 'Digital') return p.tipo === 'Digital' || p.urlDescarga !== undefined;
-            return true;
-        });
+        : productos.filter(p => p.tipo === filtro);
 
     if (filtrados.length === 0) {
         document.getElementById('emptyState').classList.remove('hidden');
@@ -10613,7 +9696,7 @@ function renderizarTabla(productos, filtro) {
     document.getElementById('emptyState').classList.add('hidden');
 
     filtrados.forEach(p => {
-        const esFisico = p.tipo === 'Fisico' || (p.peso !== undefined && p.urlDescarga === undefined);
+        const esFisico = p.tipo === 'Fisico';
         const tipoBadge = esFisico
             ? '<span class="bg-blue-100 text-blue-800 py-1 px-3 rounded-full text-xs">Físico</span>'
             : '<span class="bg-purple-100 text-purple-800 py-1 px-3 rounded-full text-xs">Digital</span>';
@@ -10781,7 +9864,7 @@ function abrirModal(producto = null) {
             actualizarContador('proveedor', 'contadorProveedor', 150);
         }
 
-        const esFisico = producto.tipo === 'Fisico' || (producto.peso !== undefined && producto.urlDescarga === undefined);
+        const esFisico = producto.tipo === 'Fisico';
         document.getElementById('tipo').value = esFisico ? 'Fisico' : 'Digital';
         toggleCamposTipo();
 
@@ -11063,6 +10146,7 @@ import Auth from './auth.js';
 // ── Estado admin address panel ────────────────────────────────────────────────
 let adminTargetUserId = null;
 let adirTelefonos = [];  // teléfonos en el sub-form de dirección
+let usuariosGlobal = []; // Stores all users for filtering
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -11089,6 +10173,8 @@ function setupEventListeners() {
     document.getElementById('btnCerrarModal').addEventListener('click', cerrarModal);
     document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
     document.getElementById('formUsuario').addEventListener('submit', guardarUsuario);
+    document.getElementById('role').addEventListener('change', window.toggleUserTypeFields);
+    document.getElementById('filtroRol').addEventListener('change', renderizarUsuarios);
     UI.setupModalCloser('modalUsuario');
 
     // Modal direcciones (admin)
@@ -11108,18 +10194,25 @@ function setupEventListeners() {
 // ── Usuarios ──────────────────────────────────────────────────────────────────
 async function cargarUsuarios() {
     try {
-        const usuarios = await Api.get('/usuarios');
-        renderizarUsuarios(usuarios);
+        usuariosGlobal = await Api.get('/usuarios');
+        renderizarUsuarios();
     } catch (error) {
         UI.showNotification('Error al cargar usuarios: ' + error.message, 'error');
     }
 }
 
-function renderizarUsuarios(usuarios) {
+function renderizarUsuarios() {
+    const filtro = document.getElementById('filtroRol').value;
+    
+    let filtrados = usuariosGlobal;
+    if (filtro && filtro !== 'Todos') {
+        filtrados = usuariosGlobal.filter(u => u.role === filtro);
+    }
+
     const tbody = document.getElementById('listaUsuarios');
     tbody.innerHTML = '';
 
-    if (!usuarios || usuarios.length === 0) {
+    if (!filtrados || filtrados.length === 0) {
         document.getElementById('emptyState').classList.remove('hidden');
         return;
     }
@@ -11132,7 +10225,7 @@ function renderizarUsuarios(usuarios) {
         CUSTOMER: 'bg-green-100 text-green-800'
     };
 
-    usuarios.forEach(usuario => {
+    filtrados.forEach(usuario => {
         const row = document.createElement('tr');
         row.className = 'border-b border-gray-200 hover:bg-gray-50';
         const roleDisplay = roleNames[usuario.role] || usuario.role;
@@ -11172,6 +10265,10 @@ function abrirModal(usuario = null) {
     const form = document.getElementById('formUsuario');
     const passwordField = document.getElementById('password');
     form.reset();
+    document.getElementById('error-rfcCurp').classList.add('hidden');
+    document.getElementById('rfcCurpContainer').classList.add('hidden');
+    document.getElementById('empresaContainer').classList.add('hidden');
+    document.getElementById('vigenciaContainer').classList.add('hidden');
 
     if (usuario) {
         document.getElementById('modalTitle').textContent = 'Editar Usuario';
@@ -11180,7 +10277,11 @@ function abrirModal(usuario = null) {
         document.getElementById('email').value = usuario.email;
         document.getElementById('role').value = usuario.role;
         if (usuario.fechaNacimiento) document.getElementById('fechaNacimiento').value = usuario.fechaNacimiento;
+        if (usuario.rfcCurp) document.getElementById('rfcCurp').value = usuario.rfcCurp;
+        if (usuario.empresa) document.getElementById('empresa').value = usuario.empresa;
+        if (usuario.validUntil) document.getElementById('validUntil').value = usuario.validUntil;
         passwordField.removeAttribute('required');
+        window.toggleUserTypeFields();
     } else {
         document.getElementById('modalTitle').textContent = 'Nuevo Usuario';
         document.getElementById('usuarioId').value = '';
@@ -11201,6 +10302,24 @@ async function guardarUsuario(e) {
         role: document.getElementById('role').value,
         fechaNacimiento: document.getElementById('fechaNacimiento').value || null
     };
+    // Add role-specific details
+    if (datos.role === 'CUSTOMER') {
+        const rfcCurp = document.getElementById('rfcCurp').value.trim();
+        const regexRfc = /^[A-Za-z]{4}[0-9]{6}[A-Za-z0-9]{3}$/;
+        const regexCurp = /^[A-Za-z]{4}[0-9]{6}[HM][A-Za-z]{5}[0-9]{2}$/;
+        
+        if (!regexRfc.test(rfcCurp) && !regexCurp.test(rfcCurp)) {
+            document.getElementById('error-rfcCurp').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('error-rfcCurp').classList.add('hidden');
+        datos.rfcCurp = rfcCurp;
+    } else if (datos.role === 'SUPPLIER') {
+        datos.empresa = document.getElementById('empresa').value.trim();
+    } else if (datos.role === 'ADMIN') {
+        datos.validUntil = document.getElementById('validUntil').value;
+    }
+
     if (usuarioId && !datos.password) delete datos.password;
 
     try {
@@ -11432,176 +10551,299 @@ window.eliminarUsuario = async (id) => {
     }
 };
 
+window.toggleUserTypeFields = () => {
+    const role = document.getElementById('role').value;
+    
+    const rfcCurpC = document.getElementById('rfcCurpContainer');
+    const empresaC = document.getElementById('empresaContainer');
+    const vigenciaC = document.getElementById('vigenciaContainer');
+    
+    const rfcCurpI = document.getElementById('rfcCurp');
+    const empresaI = document.getElementById('empresa');
+    const validUntilI = document.getElementById('validUntil');
+    
+    // Reset presentation and required attributes
+    rfcCurpC.classList.add('hidden');
+    empresaC.classList.add('hidden');
+    vigenciaC.classList.add('hidden');
+    
+    rfcCurpI.removeAttribute('required');
+    empresaI.removeAttribute('required');
+    validUntilI.removeAttribute('required');
+    
+    if (role === 'CUSTOMER') {
+        rfcCurpC.classList.remove('hidden');
+        rfcCurpI.setAttribute('required', 'required');
+    } else if (role === 'SUPPLIER') {
+        empresaC.classList.remove('hidden');
+        empresaI.setAttribute('required', 'required');
+    } else if (role === 'ADMIN') {
+        vigenciaC.classList.remove('hidden');
+        validUntilI.setAttribute('required', 'required');
+    }
+};
+
 
 ================ frontend\js\validation.js ================
 
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('registerForm');
-    const inputs = form.querySelectorAll('input');
-    const userTypeSelect = document.getElementById('userType');
-    const extraFieldsContainer = document.getElementById('extraFields');
-    const submitBtn = document.getElementById('submitBtn');
-    const message = document.getElementById('form-message');
+document.addEventListener("DOMContentLoaded", () => {
+    // Both forms
+    const registerForm = document.getElementById("registerForm");
+    const adminForm = document.getElementById("formUsuario");
 
-    // Estado de validación
-    const validationState = {
-        nombre: false,
-        email: false,
-        password: false,
-        confirmPassword: false,
-        fechaNacimiento: false
+    const state = {};
+
+    const REGEX = {
+        email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        password: /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/,
+        rfc: /^[A-Za-z]{4}[0-9]{6}[A-Za-z0-9]{3}$/,
+        curp: /^[A-Za-z]{4}[0-9]{6}[HM][A-Za-z]{5}[0-9]{2}$/
     };
 
-    // Regex
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/; // Min 8, 1 Mayus, 1 Num
-
-    // Campos extra dinámicos
-    userTypeSelect.addEventListener('change', () => {
-        const type = userTypeSelect.value;
-        extraFieldsContainer.innerHTML = '';
-        if (type === 'cliente') {
-            extraFieldsContainer.innerHTML = `
-                <div>
-                    <label class="block text-gray-700 font-medium mb-1">Dirección de Envío</label>
-                    <input type="text" id="direccionEnvio" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-            `;
-        } else if (type === 'proveedor') {
-            extraFieldsContainer.innerHTML = `
-                <div>
-                    <label class="block text-gray-700 font-medium mb-1">Nombre de la Empresa</label>
-                    <input type="text" id="empresa" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-            `;
+    const RULES = {
+        common: {
+            nombre: ["required", "minLength:3"],
+            email: ["required", "email"]
+        },
+        cliente: {
+            fechaNacimiento: ["required", "adult"],
+            rfcCurp: ["required", "rfcOrCurp"],
+        },
+        CUSTOMER: {
+            fechaNacimiento: ["required", "adult"],
+            rfcCurp: ["required", "rfcOrCurp"],
+        },
+        proveedor: {
+            empresa: ["required", "minLength:3"],
+        },
+        SUPPLIER: {
+            empresa: ["required", "minLength:3"],
+        },
+        ADMIN: {
+            validUntil: ["required"]
         }
-    });
-    // Trigger inicial
-    userTypeSelect.dispatchEvent(new Event('change'));
+    };
 
-    // Validar Inputs
-    inputs.forEach(input => {
-        input.addEventListener('input', () => validateInput(input));
-        input.addEventListener('blur', () => validateInput(input));
-    });
+    const validators = {
+        required(value) { return value.trim().length > 0; },
+        email(value) { return REGEX.email.test(value); },
+        minLength(value, length) { return value.length >= parseInt(length); },
+        passwordStrength(value) {
+            updatePasswordStrength(value);
+            return REGEX.password.test(value);
+        },
+        passwordMatch(value) {
+            const p = document.getElementById("password");
+            if(!p) return true;
+            return value === p.value;
+        },
+        adult(value) {
+            if(!value) return false;
+            const birth = new Date(value);
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+            return age >= 18;
+        },
+        rfcOrCurp(value) {
+            const fnInput = document.getElementById("fechaNacimiento");
+            if(!fnInput) return false;
+            const fechaNacimiento = fnInput.value;
+            if (!fechaNacimiento) return false;
+            const rfc = REGEX.rfc.test(value);
+            const curp = REGEX.curp.test(value);
+            if (!rfc && !curp) return false;
+            const fechaDoc = value.substring(4, 10);
+            const fecha = fechaNacimiento.replaceAll("-", "").substring(2);
+            return fechaDoc === fecha;
+        }
+    };
 
-    function validateInput(input) {
-        const id = input.id;
-        const value = input.value.trim();
-        let isValid = false;
-        const errorMsg = document.getElementById(`error-${id}`);
+    function getActiveRules(formEl) {
+        let type = "";
+        let baseRules = { ...RULES.common };
 
-        if (!errorMsg) return; // Si es un campo dinámico sin error msg explícito (por ahora)
-
-        switch (id) {
-            case 'nombre':
-                isValid = value.length > 2;
-                break;
-            case 'email':
-                isValid = emailRegex.test(value);
-                break;
-            case 'password':
-                isValid = passwordRegex.test(value);
-                updatePasswordStrength(value);
-                // Revalidar confirmación si cambia password
-                const confirmInput = document.getElementById('confirmPassword');
-                if (confirmInput.value) validateInput(confirmInput);
-                break;
-            case 'confirmPassword':
-                const pass = document.getElementById('password').value;
-                isValid = value === pass && value.length > 0;
-                break;
-            case 'fechaNacimiento':
-                const date = new Date(value);
-                const age = new Date().getFullYear() - date.getFullYear();
-                isValid = age >= 18;
-                break;
-            default:
-                isValid = true;
+        if (formEl.id === "registerForm") {
+            const ut = document.getElementById("userType");
+            if(ut) type = ut.value;
+            baseRules.password = ["required", "passwordStrength"];
+            baseRules.confirmPassword = ["required", "passwordMatch"];
+        } else if (formEl.id === "formUsuario") {
+            const rl = document.getElementById("role");
+            if(rl) type = rl.value;
+            
+            const pInput = document.getElementById("password");
+            if (pInput && pInput.hasAttribute("required")) {
+                baseRules.password = ["required", "passwordStrength"];
+            } else if (pInput && pInput.value) {
+                baseRules.password = ["passwordStrength"];
+            }
         }
 
-        if (id in validationState) {
-            validationState[id] = isValid;
+        return {
+            ...baseRules,
+            ...(RULES[type] || {})
+        };
+    }
+
+    function validateField(field, formEl) {
+        const rules = getActiveRules(formEl);
+        const name = field.id;
+        if (!rules[name]) return true;
+
+        const value = field.value.trim();
+        const ruleSet = rules[name];
+
+        for (const rule of ruleSet) {
+            const [validator, param] = rule.split(":");
+            const valid = validators[validator](value, param);
+            if (!valid) {
+                updateUI(field, false);
+                state[name] = false;
+                evaluateForm(formEl);
+                return false;
+            }
         }
 
-        if (isValid) {
-            input.classList.remove('invalid');
-            input.classList.add('valid');
-            errorMsg.style.display = 'none';
+        updateUI(field, true);
+        state[name] = true;
+        evaluateForm(formEl);
+        return true;
+    }
+
+    function updateUI(field, valid) {
+        const error = document.getElementById(`error-${field.id}`);
+        if (valid) {
+            field.classList.remove("invalid");
+            field.classList.add("valid");
+            if (error) error.style.display = "none";
         } else {
-            input.classList.remove('valid');
-            input.classList.add('invalid');
-            errorMsg.style.display = 'block';
+            field.classList.remove("valid");
+            field.classList.add("invalid");
+            if (error) error.style.display = "block";
         }
-
-        checkFormValidity();
     }
 
     function updatePasswordStrength(password) {
-        const bar = document.getElementById('password-strength-bar');
+        const passwordBar = document.getElementById("password-strength-bar");
+        if(!passwordBar) return;
         if (!password) {
-            bar.style.width = '0%';
+            passwordBar.style.width = "0%";
             return;
         }
-        let strength = 0;
-        if (password.length >= 8) strength++;
-        if (/[A-Z]/.test(password)) strength++;
-        if (/[0-9]/.test(password)) strength++;
-        if (/[^A-Za-z0-9]/.test(password)) strength++;
+        let score = 0;
+        if (password.length >= 8) score++;
+        if (/[A-Z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
 
-        const percent = (strength / 4) * 100;
-        bar.style.width = `${percent}%`;
-
-        if (strength <= 1) bar.className = 'h-1 rounded transition-all duration-300 bg-red-500';
-        else if (strength === 2) bar.className = 'h-1 rounded transition-all duration-300 bg-yellow-500';
-        else if (strength >= 3) bar.className = 'h-1 rounded transition-all duration-300 bg-green-500';
+        const percent = (score / 4) * 100;
+        passwordBar.style.width = percent + "%";
+        if (score <= 1) passwordBar.className = "h-1 bg-red-500";
+        else if (score === 2) passwordBar.className = "h-1 bg-yellow-500";
+        else passwordBar.className = "h-1 bg-green-500";
     }
 
-    function checkFormValidity() {
-        const allValid = Object.values(validationState).every(v => v);
-        submitBtn.disabled = !allValid;
+    function evaluateForm(formEl) {
+        const rules = getActiveRules(formEl);
+        const fields = Object.keys(rules);
+        const valid = fields.every(f => state[f] === true);
+
+        let btn = null;
+        if(formEl.id === "registerForm") btn = document.getElementById("submitBtn");
+        if(formEl.id === "formUsuario") btn = document.getElementById("submitBtnUsuario");
+        
+        if (btn) btn.disabled = !valid;
     }
 
-    // Submit
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    // Attach to Register
+    if (registerForm) {
+        const userTypeSelect = document.getElementById("userType");
+        const extraFieldsContainer = document.getElementById("extraFields");
+        const message = document.getElementById("form-message");
 
-        const type = userTypeSelect.value;
-        const data = {
-            nombre: document.getElementById('nombre').value,
-            email: document.getElementById('email').value,
-            password: document.getElementById('password').value,
-            fechaNacimiento: document.getElementById('fechaNacimiento').value
-        };
-
-        if (type === 'cliente') {
-            data.direccionEnvio = document.getElementById('direccionEnvio').value;
-        } else if (type === 'proveedor') {
-            data.empresa = document.getElementById('empresa').value;
-        }
-
-        try {
-            const response = await fetch(`http://localhost:8080/api/usuarios/${type}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-
-            if (response.ok) {
-                message.textContent = 'Registro exitoso!';
-                message.className = 'text-center mt-4 font-medium text-green-600';
-                form.reset();
-                setTimeout(() => window.location.href = 'index.html', 2000);
-            } else {
-                message.textContent = 'Error en el registro.';
-                message.className = 'text-center mt-4 font-medium text-red-600';
+        function renderExtraFields(type) {
+            extraFieldsContainer.innerHTML = "";
+            if (type === "cliente") {
+                extraFieldsContainer.innerHTML = `
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">RFC / CURP</label>
+                        <input id="rfcCurp" type="text" maxlength="18" class="w-full px-4 py-2 border rounded-lg">
+                        <p id="error-rfcCurp" class="error-msg">RFC/CURP inválido</p>
+                    </div>`;
             }
-        } catch (error) {
-            console.error(error);
-            message.textContent = 'Error de conexión.';
-            message.className = 'text-center mt-4 font-medium text-red-600';
+            if (type === "proveedor") {
+                extraFieldsContainer.innerHTML = `
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">Empresa</label>
+                        <input id="empresa" type="text" class="w-full px-4 py-2 border rounded-lg">
+                        <p id="error-empresa" class="error-msg">Empresa obligatoria</p>
+                    </div>`;
+            }
         }
-    });
+
+        userTypeSelect.addEventListener("change", () => {
+            renderExtraFields(userTypeSelect.value);
+            evaluateForm(registerForm);
+        });
+        userTypeSelect.dispatchEvent(new Event("change"));
+
+        registerForm.addEventListener("input", e => {
+            if (e.target.matches("input")) validateField(e.target, registerForm);
+        });
+        registerForm.addEventListener("blur", e => {
+            if (e.target.matches("input")) validateField(e.target, registerForm);
+        }, true);
+
+        registerForm.addEventListener("submit", async e => {
+            e.preventDefault();
+            const type = userTypeSelect.value;
+            const payload = {
+                nombre: document.getElementById("nombre").value,
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value,
+                fechaNacimiento: document.getElementById("fechaNacimiento").value
+            };
+            if (type === "cliente") payload.rfcCurp = document.getElementById("rfcCurp").value;
+            if (type === "proveedor") payload.empresa = document.getElementById("empresa").value;
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/usuarios/${type}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    message.textContent = "Registro exitoso";
+                    message.className = "text-green-600 text-center mt-4";
+                    registerForm.reset();
+                    setTimeout(() => { window.location.href = "login.html"; }, 2000);
+                } else {
+                    message.textContent = "Error en registro";
+                    message.className = "text-red-600 text-center mt-4";
+                }
+            } catch (err) {
+                console.error(err);
+                message.textContent = "Error de conexión";
+                message.className = "text-red-600 text-center mt-4";
+            }
+        });
+    }
+
+    // Attach to Admin Form
+    if (adminForm) {
+        adminForm.addEventListener("input", e => {
+            if (e.target.matches("input, select")) validateField(e.target, adminForm);
+        });
+        adminForm.addEventListener("blur", e => {
+            if (e.target.matches("input, select")) validateField(e.target, adminForm);
+        }, true);
+        const roleSel = document.getElementById("role");
+        if(roleSel) {
+            roleSel.addEventListener("change", () => {
+                evaluateForm(adminForm);
+            });
+        }
+    }
 });

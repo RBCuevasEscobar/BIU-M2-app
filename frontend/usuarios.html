@@ -82,10 +82,19 @@
 
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800">Gestión de Usuarios</h1>
-            <button id="btnNuevoUsuario"
-                class="hidden bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow transition flex items-center gap-2">
-                <i class="fas fa-user-plus"></i> Nuevo Usuario
-            </button>
+            <div class="flex gap-4">
+                <select id="filtroRol"
+                    class="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="Todos">Todos</option>
+                    <option value="CUSTOMER">Clientes</option>
+                    <option value="SUPPLIER">Proveedores</option>
+                    <option value="ADMIN">Administradores</option>
+                </select>
+                <button id="btnNuevoUsuario"
+                    class="hidden bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow transition flex items-center gap-2">
+                    <i class="fas fa-user-plus"></i> Nuevo Usuario
+                </button>
+            </div>
         </header>
 
         <!-- User Table -->
@@ -110,15 +119,26 @@
 
         <!-- ══════════════ MODAL USUARIO ══════════════ -->
         <div id="modalUsuario" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 overflow-hidden">
                 <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
                     <h3 id="modalTitle" class="text-lg font-semibold text-gray-800">Nuevo Usuario</h3>
                     <button id="btnCerrarModal" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                <form id="formUsuario" class="p-6 space-y-4">
+                <form id="formUsuario" class="p-6 space-y-4" novalidate>
                     <input type="hidden" id="usuarioId">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="role">Rol</label>
+                        <select id="role"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                            <option value="">Seleccionar rol...</option>
+                            <option value="ADMIN">Administrador</option>
+                            <option value="SUPPLIER">Proveedor</option>
+                            <option value="CUSTOMER">Cliente</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-bold mb-1" for="nombre">Nombre</label>
                         <input type="text" id="nombre"
@@ -138,27 +158,40 @@
                             placeholder="Dejar vacío para mantener la actual">
                         <p class="text-xs text-gray-500 mt-1">Solo requerida al crear nuevo usuario</p>
                     </div>
-                    <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-1" for="role">Rol</label>
-                        <select id="role"
-                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                            required>
-                            <option value="">Seleccionar rol...</option>
-                            <option value="ADMIN">Administrador</option>
-                            <option value="SUPPLIER">Proveedor</option>
-                            <option value="CUSTOMER">Cliente</option>
-                        </select>
-                    </div>
+
                     <div>
                         <label class="block text-gray-700 text-sm font-bold mb-1" for="fechaNacimiento">Fecha de
-                            Nacimiento</label>
+                            Nacimiento/Creación</label>
                         <input type="date" id="fechaNacimiento"
                             class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
+
+                    <!-- Dynamic fields -->
+                    <div id="rfcCurpContainer" class="hidden">
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="rfcCurp">RFC / CURP</label>
+                        <input type="text" id="rfcCurp" maxlength="18"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Ingrese RFC (13) o CURP (18)">
+                        <p id="error-rfcCurp" class="text-xs text-red-500 mt-1 hidden">Formato inválido. Debe ser RFC o
+                            CURP.</p>
+                    </div>
+                    <div id="empresaContainer" class="hidden">
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="empresa">Empresa</label>
+                        <input type="text" id="empresa"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Nombre de la empresa">
+                    </div>
+                    <div id="vigenciaContainer" class="hidden">
+                        <label class="block text-gray-700 text-sm font-bold mb-1" for="validUntil">Vigencia
+                            (Hasta)</label>
+                        <input type="date" id="validUntil"
+                            class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
                     <div class="pt-4 flex justify-end gap-3">
                         <button type="button" id="btnCancelar"
                             class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Cancelar</button>
-                        <button type="submit"
+                        <button type="submit" id="submitBtnUsuario"
                             class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition shadow">Guardar</button>
                     </div>
                 </form>
@@ -294,6 +327,7 @@
 
     </main>
 
+    <script src="js/validation.js"></script>
     <script type="module" src="js/usuarios.js"></script>
 </body>
 

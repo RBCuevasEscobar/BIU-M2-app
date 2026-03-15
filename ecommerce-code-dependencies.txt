@@ -24,9 +24,9 @@ Edges: 22
 
 Nodes:
 - .mvn\wrapper\maven-wrapper.properties
-- CODE_REVIEW_FINDINGS.md
 - backend\ECommerce_Collection.json
-- backend\README.md
+- backend\maven\apache-maven-3.9.6\conf\settings.xml
+- backend\maven\apache-maven-3.9.6\conf\toolchains.xml
 - backend\pom.xml
 - backend\src\main\java\com\ecommerce\BackendApplication.java
 - backend\src\main\java\com\ecommerce\config\DataSeeder.java
@@ -95,9 +95,9 @@ Nodes:
 - backend\src\main\java\com\ecommerce\service\UsuarioService.java
 - backend\src\main\resources\application.properties
 - backend\target\classes\application.properties
+- backend\target\maven-archiver\pom.properties
 - backend\target\maven-status\maven-compiler-plugin\compile\default-compile\createdFiles.lst
 - backend\target\maven-status\maven-compiler-plugin\compile\default-compile\inputFiles.lst
-- frontend\README.md
 - frontend\carrito.html
 - frontend\checkout.html
 - frontend\css\output.css

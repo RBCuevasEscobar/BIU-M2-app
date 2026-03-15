@@ -170,7 +170,18 @@ window.eliminarDelCarrito = async (productoId) => {
 };
 
 async function realizarOrder() {
-    window.location.href = 'checkout.html';
+    if (!confirm('¿Confirmar pedido?')) return;
+
+    try {
+        await Api.post('/ordenes/checkout');
+        // Redirect or show success
+        UI.showNotification('¡Pedido realizado con éxito!', 'success');
+        setTimeout(() => {
+            window.location.href = 'ordenes.html';
+        }, 1500);
+    } catch (error) {
+        UI.showNotification('Error en la generacion del pedido: ' + error.message, 'error');
+    }
 }
 
 async function vaciarCarrito() {

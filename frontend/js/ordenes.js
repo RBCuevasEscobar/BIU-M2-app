@@ -3,6 +3,7 @@ import { UI } from './ui.js';
 import Auth from './auth.js';
 
 let ordenesGlobal = [];
+let usuariosGlobal = [];
 let roleActual = '';
 let userActual = {};
 
@@ -18,11 +19,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         context: 'orders'
     });
 
+    if (roleActual === 'ADMIN') {
+        document.getElementById('thUsuario').classList.remove('hidden');
+        document.getElementById('filtroUsuario').classList.remove('hidden');
+        cargarFiltroUsuarios();
+    }
+
     setupEventListeners();
     await cargarOrdenes();
 });
 
+async function cargarFiltroUsuarios() {
+    try {
+        usuariosGlobal = await Api.get('/usuarios');
+        const select = document.getElementById('filtroUsuario');
+        usuariosGlobal.filter(u => u.role === 'CUSTOMER').forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u.id; // Warning: ordenDTO currently lacks usuarioId, but backend filter maps it? Let's check backend. Wait, filtering is in JS! We need `orden.id` or we can filter by exact string if backend didn't provide it? Let's just put u.nombre and match o.usuarioNombre 
+            opt.textContent = u.nombre;
+            select.appendChild(opt);
+        });
+    } catch (e) {
+        console.error('Error cargando usuarios para el filtro', e);
+    }
+}
+
 function setupEventListeners() {
+    document.getElementById('filtroEstado').addEventListener('change', renderizarOrdenes);
+    document.getElementById('filtroUsuario').addEventListener('change', renderizarOrdenes);
+
     // Modal de Despacho
     window.cerrarModalDespacho = () => {
         document.getElementById('modalDespacho').classList.add('hidden');
@@ -65,10 +90,23 @@ async function cargarOrdenes() {
 }
 
 function renderizarOrdenes() {
+    const estadoFil = document.getElementById('filtroEstado').value;
+    const userNameFil = document.getElementById('filtroUsuario').options[document.getElementById('filtroUsuario').selectedIndex].text;
+    const isUserFilterActive = document.getElementById('filtroUsuario').value !== 'Todos';
+
+    let filtradas = ordenesGlobal;
+
+    if (estadoFil !== 'Todos') {
+        filtradas = filtradas.filter(o => o.estado === estadoFil);
+    }
+    if (isUserFilterActive) {
+        filtradas = filtradas.filter(o => o.usuarioNombre === userNameFil);
+    }
+
     const tbody = document.getElementById('listaOrdenes');
     tbody.innerHTML = '';
 
-    if (!ordenesGlobal || ordenesGlobal.length === 0) {
+    if (!filtradas || filtradas.length === 0) {
         document.getElementById('emptyState').classList.remove('hidden');
         document.querySelector('table').classList.add('hidden');
         return;
@@ -77,7 +115,7 @@ function renderizarOrdenes() {
     document.getElementById('emptyState').classList.add('hidden');
     document.querySelector('table').classList.remove('hidden');
 
-    ordenesGlobal.forEach(orden => {
+    filtradas.forEach(orden => {
         const row = document.createElement('tr');
         row.className = 'border-b border-gray-200 hover:bg-gray-50';
 
@@ -88,9 +126,11 @@ function renderizarOrdenes() {
 
         const badgeHtml = getBadgeHTML(orden.estado);
         const actionHtml = getActionHTML(orden);
+        const userHtml = roleActual === 'ADMIN' ? `<td class="py-3 px-6 text-left font-medium text-gray-700">${orden.usuarioNombre || 'Desconocido'}</td>` : '';
 
         row.innerHTML = `
             <td class="py-3 px-6 text-left whitespace-nowrap font-medium text-gray-800">#${orden.id}</td>
+            ${userHtml}
             <td class="py-3 px-6 text-left">${badgeHtml}</td>
             <td class="py-3 px-6 text-left text-xs">${fecha}</td>
             <td class="py-3 px-6 text-right font-bold text-gray-700">${UI.formatCurrency(orden.total)}</td>
@@ -128,7 +168,7 @@ function getActionHTML(orden) {
     if (roleActual === 'CUSTOMER') {
         const puedePagar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
         if (puedePagar) {
-            html += `<button onclick="window.location.href='checkout.html?ordenId=${orden.id}'" class="text-green-500 hover:text-green-700 p-1" title="Pagar">
+            html += `<button onclick="window.iniciarPago(${orden.id})" class="text-green-500 hover:text-green-700 p-1" title="Pagar">
                         <i class="fas fa-credit-card"></i> Pagar
                      </button>`;
         }
@@ -142,7 +182,7 @@ function getActionHTML(orden) {
     } else if (roleActual === 'ADMIN') {
         const puedePagar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
         if (puedePagar) {
-            html += `<button onclick="window.location.href='checkout.html?ordenId=${orden.id}'" class="text-green-500 hover:text-green-700 p-1" title="Pagar">
+            html += `<button onclick="window.iniciarPago(${orden.id})" class="text-green-500 hover:text-green-700 p-1" title="Pagar">
                         <i class="fas fa-credit-card"></i> Pagar
                      </button>`;
         }
@@ -168,6 +208,15 @@ function getActionHTML(orden) {
 }
 
 // ---------------- ACCIONES ----------------
+
+window.iniciarPago = async (id) => {
+    try {
+        await Api.post(`/ordenes/${id}/pending`);
+        window.location.href = `checkout.html?ordenId=${id}`;
+    } catch (e) {
+        UI.showNotification('Error al iniciar el pago: ' + e.message, 'error');
+    }
+};
 
 window.cancelarOrden = async (id) => {
     if (!confirm('¿Estás seguro que deseas cancelar esta orden?')) return;
@@ -222,6 +271,15 @@ window.verDetalles = (id) => {
     }
 
     html += `</div>`;
+
+    if (orden.usuarioRfcCurp) {
+        html += `
+            <div class="bg-blue-50 p-3 rounded-lg mb-4 text-sm border border-blue-200">
+                <h4 class="font-bold text-blue-800 mb-1"><i class="fas fa-id-card mr-1"></i> RFC/CURP: </h4>
+                <p class="font-mono text-gray-700 font-semibold">${orden.usuarioRfcCurp}</p>
+            </div>
+        `;
+    }
 
     function getNombreProducto(detalle) {
         return detalle.productoNombre

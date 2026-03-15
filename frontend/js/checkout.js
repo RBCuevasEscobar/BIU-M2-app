@@ -28,18 +28,32 @@ const Checkout = {
 
     async loadData(id) {
         this.ordenId = id; // Could be null
-
-        const [direcciones] = await Promise.all([
-            Api.get("/direcciones/mis-direcciones")
-        ]);
+        let userIdToFetch = Auth.getCurrentUser().id;
 
         if (id) {
             const ordenes = await Api.get("/ordenes");
             this.orden = ordenes.find(o => o.id == id);
+            if (this.orden && this.orden.usuarioId) {
+                userIdToFetch = this.orden.usuarioId;
+            }
             this.renderResumenFromOrden();
         } else {
             const carrito = await Api.get("/carrito");
             this.carrito = carrito;
+            this.renderResumenFromCarrito();
+        }
+
+        const [direcciones, usuarioData] = await Promise.all([
+            Api.get(`/direcciones/usuario/${userIdToFetch}`),
+            Api.get(`/usuarios/${userIdToFetch}`)
+        ]);
+
+        this.usuarioRfc = usuarioData.rfcCurp;
+
+        // Force re-render after capturing RFC
+        if (id) {
+            this.renderResumenFromOrden();
+        } else {
             this.renderResumenFromCarrito();
         }
 
@@ -133,6 +147,14 @@ const Checkout = {
         document.getElementById("loadingResumen").classList.add("hidden")
         document.getElementById("resumenContent").classList.remove("hidden")
 
+        if (this.usuarioRfc) {
+            const container = document.getElementById("rfcContainer");
+            if (container) {
+                container.classList.remove("hidden");
+                document.getElementById("checkoutRfcDisplay").textContent = this.usuarioRfc;
+            }
+        }
+
         document.getElementById("ordenIdDisplay").textContent = orden.id
         document.getElementById("ordenEstadoDisplay").textContent = orden.estado
 
@@ -173,6 +195,15 @@ const Checkout = {
 
         document.getElementById("loadingResumen").classList.add("hidden");
         document.getElementById("resumenContent").classList.remove("hidden");
+        
+        if (this.usuarioRfc) {
+            const container = document.getElementById("rfcContainer");
+            if (container) {
+                container.classList.remove("hidden");
+                document.getElementById("checkoutRfcDisplay").textContent = this.usuarioRfc;
+            }
+        }
+        
         document.getElementById("ordenIdDisplay").textContent = "Nueva";
         document.getElementById("ordenEstadoDisplay").textContent = "PENDING";
 
@@ -258,7 +289,8 @@ const Checkout = {
             // FASE 2: Enviar pago
             const res = await Api.post("/payments/procesar", {
                 ordenId: actualOrdenId,
-                metodoPago: this.metodoPago
+                metodoPago: this.metodoPago,
+                direccionId: this.direccion
             })
 
             if (res.estado === "PAID" || res.estado === "PAYMENT_PENDING") {

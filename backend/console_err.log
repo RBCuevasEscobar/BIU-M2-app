@@ -1,0 +1,14 @@
+20:41:05,766 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - There is no conversion class registered for composite conversion word [clr]
+20:41:05,767 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - Failed to create converter for [%clr] keyword
+20:41:05,767 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - There is no conversion class registered for composite conversion word [clr]
+20:41:05,767 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - Failed to create converter for [%clr] keyword
+20:41:05,767 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - There is no conversion class registered for composite conversion word [clr]
+20:41:05,767 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - Failed to create converter for [%clr] keyword
+20:41:05,769 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - There is no conversion class registered for composite conversion word [clr]
+20:41:05,769 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - Failed to create converter for [%clr] keyword
+20:41:05,769 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - There is no conversion class registered for composite conversion word [clr]
+20:41:05,769 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - Failed to create converter for [%clr] keyword
+20:41:05,770 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - There is no conversion class registered for composite conversion word [clr]
+20:41:05,770 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - Failed to create converter for [%clr] keyword
+20:41:05,771 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - There is no conversion class registered for conversion word [wEx]
+20:41:05,772 |-ERROR in ch.qos.logback.core.pattern.parser.Compiler@791d1f8b - [wEx] is not a valid conversion word

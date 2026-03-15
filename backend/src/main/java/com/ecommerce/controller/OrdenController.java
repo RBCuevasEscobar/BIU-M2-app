@@ -21,6 +21,12 @@ public class OrdenController {
         return ResponseEntity.ok(ordenService.crearOrdenDesdeCarrito(direccionId));
     }
 
+    @PostMapping("/{id}/pending")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+    public ResponseEntity<OrdenDTO> marcarComoPendiente(@PathVariable Long id) {
+        return ResponseEntity.ok(ordenService.marcarComoPendiente(id));
+    }
+
     @PostMapping("/{id}/cancelar")
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     public ResponseEntity<OrdenDTO> cancelarOrden(@PathVariable Long id) {

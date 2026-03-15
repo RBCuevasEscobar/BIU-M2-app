@@ -113,9 +113,18 @@ public class OrdenService {
      * FASE 2: Procesar Pago y Verificar Stock
      */
     @Transactional
-    public OrdenDTO procesarPago(Long ordenId, String metodoPago) {
+    public OrdenDTO procesarPago(Long ordenId, String metodoPago, Long direccionId) {
         Orden orden = ordenRepository.findById(ordenId)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+        if (direccionId != null) {
+            Direccion direccion = direccionRepository.findById(direccionId)
+                    .orElseThrow(() -> new RuntimeException("Dirección no encontrada"));
+            if (!direccion.getUsuario().getId().equals(orden.getUsuario().getId())) {
+                throw new RuntimeException("La dirección no pertenece al propietario de la orden");
+            }
+            orden.setDireccionEnvio(direccion);
+        }
 
         // Validaciones Máquina de Estados
         if (orden.getEstado() == EstadoOrden.PAID || orden.getEstado() == EstadoOrden.SHIPPED
@@ -167,6 +176,25 @@ public class OrdenService {
             // Se queda en pending si falla (el prompt indica: "Si un intento de pago falla,
             // el estado permanece PAYMENT_PENDING")
             orden.setEstado(EstadoOrden.PAYMENT_PENDING);
+        }
+
+        return toDTO(ordenRepository.save(orden));
+    }
+
+    /**
+     * Marcar Orden como Pendiente de Pago (Transición Checkout)
+     */
+    @Transactional
+    public OrdenDTO marcarComoPendiente(Long ordenId) {
+        Orden orden = ordenRepository.findById(ordenId)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+        validarPropietarioOAdmin(orden);
+
+        if (orden.getEstado() == EstadoOrden.CREATED) {
+            orden.setEstado(EstadoOrden.PAYMENT_PENDING);
+        } else if (orden.getEstado() != EstadoOrden.PAYMENT_PENDING) {
+            throw new RuntimeException("La orden debe estar en estado CREATED para iniciar el pago.");
         }
 
         return toDTO(ordenRepository.save(orden));
@@ -261,7 +289,12 @@ public class OrdenService {
         dto.setFechaCreacion(orden.getFechaCreacion());
         dto.setUltimaModificacion(orden.getUltimaModificacion());
 
+        dto.setUsuarioId(orden.getUsuario().getId());
         dto.setUsuarioEmail(orden.getUsuario().getEmail());
+        dto.setUsuarioNombre(orden.getUsuario().getNombre());
+        if (orden.getUsuario() instanceof com.ecommerce.model.Cliente cliente) {
+            dto.setUsuarioRfcCurp(cliente.getRfcCurp());
+        }
 
         dto.setTotal(
                 orden.getDetalles()

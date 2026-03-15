@@ -1,0 +1,45 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.11)
+
+%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 1692 (C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\target\backend-0.0.1-SNAPSHOT.jar started by DELL in C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend)
+%PARSER_ERROR[wEx]%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] No active profile set, falling back to 1 default profile: "default"
+%PARSER_ERROR[wEx]%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+%PARSER_ERROR[wEx]%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] Finished Spring Data repository scanning in 71 ms. Found 7 JPA repository interfaces.
+%PARSER_ERROR[wEx]%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] Tomcat initialized with port 8080 (http)
+%PARSER_ERROR[wEx]%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] Starting service [Tomcat]
+%PARSER_ERROR[wEx]%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] Starting Servlet engine: [Apache Tomcat/10.1.49]
+%PARSER_ERROR[wEx]%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] Initializing Spring embedded WebApplicationContext
+%PARSER_ERROR[wEx]%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] Root WebApplicationContext: initialization completed in 1756 ms
+%PARSER_ERROR[wEx]%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] Error starting Tomcat context. Exception: org.springframework.beans.factory.UnsatisfiedDependencyException. Message: Error creating bean with name 'tokenAuthenticationFilter' defined in URL [jar:nested:/C:/Users/DELL/.gemini/antigravity/playground/spectral-oort/backend/target/backend-0.0.1-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ecommerce/security/TokenAuthenticationFilter.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'usuarioRepository' defined in com.ecommerce.repository.UsuarioRepository defined in @EnableJpaRepositories declared on JpaRepositoriesRegistrar.EnableJpaRepositoriesConfiguration: Cannot resolve reference to bean 'jpaSharedEM_entityManagerFactory' while setting bean property 'entityManager'
+%PARSER_ERROR[wEx]%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] Stopping service [Tomcat]
+%PARSER_ERROR[wEx]%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Unable to start web server
+%PARSER_ERROR[wEx]%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+%PARSER_ERROR[wEx]%PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr] %PARSER_ERROR[clr]%PARSER_ERROR[clr] %PARSER_ERROR[clr] 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Failed to configure a DataSource: 'url' attribute is not specified and no embedded datasource could be configured.
+
+Reason: Failed to determine a suitable driver class
+
+
+Action:
+
+Consider the following:
+	If you want an embedded database (H2, HSQL or Derby), please put it on the classpath.
+	If you have database settings to be loaded from a particular profile you may need to activate it (no profiles are currently active).
+
+%PARSER_ERROR[wEx]

@@ -1,16 +1,20 @@
 package com.ecommerce.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "usuarios")
 public abstract class Usuario {
 
+    @EqualsAndHashCode.Include
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

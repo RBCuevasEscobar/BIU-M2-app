@@ -1,14 +1,17 @@
 package com.ecommerce.service;
 
 import com.ecommerce.dto.UsuarioUpdateRequest;
+import com.ecommerce.model.Cliente;
 import com.ecommerce.model.Usuario;
 import com.ecommerce.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 public class UsuarioService {
@@ -24,6 +27,11 @@ public class UsuarioService {
         if (usuarioRepository.existsByEmail(usuario.getEmail())) {
             throw new RuntimeException("El email ya está registrado");
         }
+
+        if (usuario instanceof Cliente cliente) {
+            validarRfcCurp(cliente);
+        }
+
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         return usuarioRepository.save(usuario);
     }
@@ -44,7 +52,8 @@ public class UsuarioService {
 
     /**
      * Busca un usuario por ID; lanza excepción si no existe.
-     * Usado por DireccionController para operaciones sobre destinatarios específicos.
+     * Usado por DireccionController para operaciones sobre destinatarios
+     * específicos.
      */
     @SuppressWarnings("null")
     public Usuario buscarPorId(Long id) {
@@ -106,6 +115,27 @@ public class UsuarioService {
             usuario.setFechaNacimiento(datosActualizados.fechaNacimiento());
         }
 
+        // Update rfcCurp if applies to Cliente
+        if (usuario instanceof com.ecommerce.model.Cliente cliente) {
+            if (datosActualizados.rfcCurp() != null && !datosActualizados.rfcCurp().trim().isEmpty()) {
+                cliente.setRfcCurp(datosActualizados.rfcCurp().trim());
+            }
+        }
+
+        // Update empresa if applies to Proveedor
+        if (usuario instanceof com.ecommerce.model.Proveedor proveedor) {
+            if (datosActualizados.empresa() != null && !datosActualizados.empresa().trim().isEmpty()) {
+                proveedor.setEmpresa(datosActualizados.empresa().trim());
+            }
+        }
+
+        // Update validUntil if applies to Administrador
+        if (usuario instanceof com.ecommerce.model.Administrador admin) {
+            if (datosActualizados.validUntil() != null) {
+                admin.setValidUntil(datosActualizados.validUntil());
+            }
+        }
+
         return usuarioRepository.save(usuario);
     }
 
@@ -114,4 +144,28 @@ public class UsuarioService {
         usuarioRepository.deleteById(id);
     }
 
+    private static final Pattern RFC_PATTERN = Pattern.compile("^[A-Za-z]{4}[0-9]{6}[A-Za-z0-9]{3}$");
+
+    private static final Pattern CURP_PATTERN = Pattern.compile("^[A-Za-z]{4}[0-9]{6}[HM][A-Za-z]{5}[0-9]{2}$");
+
+    private void validarRfcCurp(Cliente cliente) {
+
+        String value = cliente.getRfcCurp();
+
+        if (value == null || value.isBlank())
+            throw new RuntimeException("RFC/CURP es obligatorio");
+
+        if (!(RFC_PATTERN.matcher(value).matches() ||
+                CURP_PATTERN.matcher(value).matches()))
+            throw new RuntimeException("RFC/CURP inválido");
+
+        String fechaNacimiento = cliente.getFechaNacimiento()
+                .format(DateTimeFormatter.ofPattern("yyMMdd"));
+
+        String fechaDocumento = value.substring(4, 10);
+
+        if (!fechaNacimiento.equals(fechaDocumento))
+            throw new RuntimeException(
+                    "La fecha en RFC/CURP no coincide con la fecha de nacimiento");
+    }
 }

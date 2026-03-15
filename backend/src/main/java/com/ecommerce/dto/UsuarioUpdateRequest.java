@@ -10,5 +10,8 @@ public record UsuarioUpdateRequest(
         String email,
         String password,
         LocalDate fechaNacimiento,
-        Role role) {
+        Role role,
+        String rfcCurp,
+        String empresa,
+        LocalDate validUntil) {
 }

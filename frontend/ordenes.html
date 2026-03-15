@@ -16,6 +16,21 @@
     <main class="flex-grow container mx-auto px-6 py-8">
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800">Órdenes</h1>
+            <div class="flex gap-4">
+                <select id="filtroEstado" class="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm">
+                    <option value="Todos">Todos los Estados</option>
+                    <option value="CREATED">Creada</option>
+                    <option value="PAYMENT_PENDING">Pago Pendiente</option>
+                    <option value="PAID">Pagada</option>
+                    <option value="OUT_OF_STOCK">Sin Stock</option>
+                    <option value="CANCELLED">Cancelada</option>
+                    <option value="SHIPPED">Enviada</option>
+                    <option value="DELIVERED">Entregada</option>
+                </select>
+                <select id="filtroUsuario" class="hidden border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm">
+                    <option value="Todos">Todos los Usuarios</option>
+                </select>
+            </div>
         </header>
 
         <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -24,6 +39,7 @@
                     <thead class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
                         <tr>
                             <th class="py-3 px-6 text-left">Orden</th>
+                            <th id="thUsuario" class="py-3 px-6 text-left hidden">Usuario</th>
                             <th class="py-3 px-6 text-left">Estado</th>
                             <th class="py-3 px-6 text-left">Fecha</th>
                             <th class="py-3 px-6 text-right">Total</th>

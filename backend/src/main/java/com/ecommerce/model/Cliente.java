@@ -5,22 +5,30 @@ import java.time.LocalDate;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "clientes")
 public class Cliente extends Usuario {
 
-    @Column(name = "direccion_envio")
-    private String direccionEnvio;
+    @Column(name = "rfc_curp", length = 18, nullable = false)
+    private String rfcCurp;
 
-    public Cliente(String nombre, String email, String password, LocalDate fechaNacimiento, String direccionEnvio) {
+    public String getRfcCurp() {
+        return rfcCurp;
+    }
+
+    public void setRfcCurp(String rfcCurp) {
+        this.rfcCurp = rfcCurp;
+    }
+
+    public Cliente(String nombre, String email, String password, LocalDate fechaNacimiento, String rfcCurp) {
         super(nombre, email, password, fechaNacimiento, Role.CUSTOMER);
-        this.direccionEnvio = direccionEnvio;
+        this.rfcCurp = rfcCurp;
     }
 }
