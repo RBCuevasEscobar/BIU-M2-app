@@ -4,6 +4,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\config\WebConfig.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\AuthController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\CarritoController.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\ConfigController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\DireccionController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\OrdenController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\PaymentController.java
@@ -55,6 +56,8 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\ProductoRepository.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\ShipmentRepository.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\UsuarioRepository.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\security\JwtConfig.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\security\JwtProvider.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\security\TokenAuthenticationFilter.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\security\UsuarioSecurity.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\service\AdministradorService.java

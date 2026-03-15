@@ -560,3 +560,51 @@ Se actualizó la lógica de la UI para garantizar que las órdenes retengan un `
 ### Modelo de Despacho Logístico (`ordenes.js`)
 - **Detalle Dinámico**: Se reescribió la visualización del layout en `modalDetalle` para mostrar, en formato de tarjeta o bloque HTML aislado, los datos granulares de la dirección original inyectada, blindando la orden de cambios posteriores.
 - **Portal de Administrador (`abrirModalDespacho`)**: Como beneficio corporativo clave, los Administradores obtienen despliegue absoluto en GUI sobre "_hacia dónde_" va el paquete en el popup de `Despachar`, listando la dirección completa y teléfono de contacto adjunto. Esto previene aperturas de múltiples pestañas y consolida la experiencia logística en una sola vista.
+
+---
+
+## 🔒 JWT Authentication Lifecycle (Fase 9)
+
+La Fase 9 reemplaza radicalmente los Mock Tokens inyectables estáticos (`mock-jwt-token-{id}`) instalando el motor criptográfico completo **JSON Web Tokens (JWT)** empleando la biblioteca `io.jsonwebtoken`. 
+
+### Arquitectura de Autenticación Criptográfica
+- **Emisión**: Al enviar solicitudes a `/api/auth/login`, el backend `UsuarioService` coteja contraseñas usando algoritmos BCrypt con el hash en MySQL. Tras el match, se emite un certificado asíncrono con `JwtProvider` encriptado bajo *Keys HMAC-SHA*.
+- **Apertura y Manejo Dinámico**: El Administrador es portador de una nueva GUI (`config-auth.html`) que consume los REST endpoints del servidor para manipular en memoria el `JwtConfig.expirationTime` (Ejemplo: *60 minutos* o *24 horas*). Cada token expedido desde este panel adoptará los límites asignados de forma rígida y en tiempo real. 
+
+### Diagrama Secuencial de Transacciones JWT
+
+```mermaid
+sequenceDiagram
+    actor Cliente
+    participant Browser as Frontend (App)
+    participant Auth as AuthController (Backend)
+    participant Config as JwtConfig / Panel
+    participant Security as JwtProvider & Filter
+    participant Endpoint as API Rest Privada
+
+    %% Proceso de Autenticacion
+    Cliente->>Browser: Envía Credenciales (Email/Pass)
+    Browser->>Auth: POST /api/auth/login
+    Auth->>Auth: Valida BCrypt
+    Auth->>Security: Solicita Generación
+    Security-->>Config: check expirationTime
+    Security-->>Auth: Retorna <<encoded.jwt.string>>
+    Auth-->>Browser: 200 OK Body {token: "..."}
+    Browser->>Browser: Salva localStore("token")
+
+    %% Proceso de Navegacion / Consumo
+    Cliente->>Browser: Accede a Mis Órdenes
+    Browser->>Security: GET /api/ordenes (Bearer JWT)
+    Security->>Security: Verifica Firma Secreta
+    alt JWT Expirado o Inválido
+        Security-->>Browser: 401 Unauthorized
+        Browser->>Browser: Limpia LocalStore
+        Browser-->>Cliente: Redirige -> login.html
+    else JWT Valido
+        Security->>Security: Extrae userId & role
+        Security->>Context: Inyecta Contexto de Sesión
+        Security-->>Endpoint: Filtro Passed
+        Endpoint-->>Browser: 200 OK (Datos JSON)
+        Browser-->>Cliente: Renderea Tabla HTML
+    end
+```

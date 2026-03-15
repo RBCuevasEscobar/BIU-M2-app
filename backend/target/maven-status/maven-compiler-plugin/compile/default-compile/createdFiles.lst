@@ -6,6 +6,7 @@ com\ecommerce\model\PaymentTransaction.class
 com\ecommerce\service\UsuarioService.class
 com\ecommerce\service\AdministradorService.class
 com\ecommerce\repository\UsuarioRepository.class
+com\ecommerce\security\JwtConfig.class
 com\ecommerce\dto\OrdenDetalleDTO.class
 com\ecommerce\controller\AuthController.class
 com\ecommerce\payment\ProcesoPagoFactory.class
@@ -34,6 +35,7 @@ com\ecommerce\repository\OrdenRepository.class
 com\ecommerce\model\Orden.class
 com\ecommerce\service\CarritoService.class
 com\ecommerce\inventory\GestorInventarioFactory.class
+com\ecommerce\security\JwtProvider.class
 com\ecommerce\security\UsuarioSecurity.class
 com\ecommerce\repository\ProductoRepository.class
 com\ecommerce\model\Cliente.class
@@ -48,6 +50,7 @@ com\ecommerce\service\DireccionService.class
 com\ecommerce\dto\ProductoDTO.class
 com\ecommerce\repository\ShipmentRepository.class
 com\ecommerce\payment\PagoPayPal.class
+com\ecommerce\controller\ConfigController.class
 com\ecommerce\payment\PagoTransferencia.class
 com\ecommerce\security\TokenAuthenticationFilter.class
 com\ecommerce\dto\OrdenDTO.class

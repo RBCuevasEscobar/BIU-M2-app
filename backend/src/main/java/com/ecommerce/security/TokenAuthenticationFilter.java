@@ -20,9 +20,11 @@ import java.util.Collections;
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     private final UsuarioRepository usuarioRepository;
+    private final JwtProvider jwtProvider;
 
-    public TokenAuthenticationFilter(UsuarioRepository usuarioRepository) {
+    public TokenAuthenticationFilter(UsuarioRepository usuarioRepository, JwtProvider jwtProvider) {
         this.usuarioRepository = usuarioRepository;
+        this.jwtProvider = jwtProvider;
     }
 
     @Override
@@ -37,27 +39,23 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
 
-            // Mock token validation: extract user ID from token
-            // Format: "mock-jwt-token-{userId}"
-            if (token.startsWith("mock-jwt-token-")) {
-                try {
-                    Long userId = Long.parseLong(token.substring(15));
-                    Usuario usuario = usuarioRepository.findById(userId).orElse(null);
+            if (jwtProvider.validateToken(token)) {
+                String email = jwtProvider.extractEmail(token);
+                Long userId = jwtProvider.extractUserId(token);
+                String role = jwtProvider.extractClaims(token).get("role", String.class);
+                
+                // Add an explicit call to DB to ensure user is active (optional depending on rigorousness)
+                Usuario usuario = usuarioRepository.findById(userId).orElse(null);
 
-                    if (usuario != null) {
-                        // Create authentication token with role
-                        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(
-                                "ROLE_" + usuario.getRole().name());
-                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                usuario.getEmail(),
-                                null,
-                                Collections.singletonList(authority));
+                if (usuario != null && email.equals(usuario.getEmail())) {
+                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            email,
+                            null,
+                            Collections.singletonList(authority));
 
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    }
-                } catch (NumberFormatException e) {
-                    // Invalid token format, continue without authentication
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
         }

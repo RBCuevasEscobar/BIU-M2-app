@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración de Autenticación - E-Commerce</title>
+    <!-- Tailwind CSS desde el CDN oficial -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Estilos Personalizados Base -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen text-gray-800">
+    <!-- Nav renderizado por JS -->
+    <div id="mainNav"></div>
+
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-2xl">
+        <div class="mb-6 flex justify-between items-center">
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+                <i class="fas fa-shield-alt text-blue-600"></i> Autenticación JWT
+            </h1>
+        </div>
+
+        <div class="bg-white rounded-xl shadow border border-gray-100 p-8 space-y-6">
+            <div>
+                <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Ajustes de JSON Web Token</h2>
+                <p class="text-sm text-gray-600 mb-6 font-medium">Define el tiempo máximo de validez global con el cual los nuevos *Tokens de Accesos* serán creados. Cuando los usuarios exedan este umbral después del login, tendrán que volver a iniciar sesión.</p>
+                
+                <form id="jwtConfigForm" class="space-y-4 max-w-md">
+                    <div class="space-y-1">
+                        <label class="block text-sm font-semibold text-gray-700">Tiempo de Expiración</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="expiryValue" required min="1" step="1"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-right font-mono text-gray-800 shadow-sm"
+                                placeholder="Ejem: 24">
+                            
+                            <select id="expiryUnit" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 text-gray-700 shadow-sm cursor-pointer font-semibold">
+                                <option value="1000">Segundos</option>
+                                <option value="60000">Minutos</option>
+                                <option value="3600000">Horas</option>
+                                <option value="86400000">Días</option>
+                            </select>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1 italic"><i class="fas fa-info-circle mr-1 text-blue-500"></i><span id="labelDetail">24 horas de validez en sesión</span></p>
+                    </div>
+
+                    <div class="pt-4 flex justify-end">
+                        <button type="submit" id="btnGuardarConfig" disabled
+                            class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded shadow transition flex items-center font-bold">
+                            <i class="fas fa-save mr-2"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Information Banner -->
+            <div class="mt-8 bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-500 mt-1 text-lg"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800">Nota del Arquitectura</h3>
+                        <div class="mt-2 text-sm text-blue-700">
+                            <p>El JWT reemplaza permanentemente a los Mock Tokens para mitigar ataques de personificación. Modificar esta configuración requiere privilegios completos de Nivel de Administrador global del sistema.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center py-4 mt-auto">
+        <p>&copy; 2026 E-Commerce. Todos los derechos reservados.</p>
+    </footer>
+
+    <script type="module" src="js/config-auth.js"></script>
+</body>
+</html>

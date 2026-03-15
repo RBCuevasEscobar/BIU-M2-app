@@ -20,6 +20,9 @@ public class UsuarioService {
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Autowired
+    private com.ecommerce.security.JwtProvider jwtProvider;
+
+    @Autowired
     private UsuarioRepository usuarioRepository;
 
     @Transactional
@@ -76,8 +79,9 @@ public class UsuarioService {
             throw new RuntimeException("Credenciales inválidas");
         }
 
-        // Simulate JWT generation for Phase 2
-        String token = "mock-jwt-token-" + usuario.getId();
+        // Generate rigorous JSON Web Token using Provider
+        String token = jwtProvider.generateToken(usuario.getEmail(), usuario.getId(), usuario.getRole().name());
+        
         return new com.ecommerce.dto.LoginResponse(usuario.getId(), usuario.getNombre(), usuario.getRole(), token);
     }
 

@@ -82,16 +82,24 @@ export const UI = {
             },
             ADMIN: {
                 products: [
-                    { label: 'Gestión Órdenes', href: 'ordenes.html' },
-                    { label: 'Gestion Usuarios', href: 'usuarios.html' }
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    { label: '<i class="fas fa-cog"></i> JWT', href: 'config-auth.html' }
                 ],
                 users: [
                     { label: 'Gestion Productos', href: 'productos.html' },
-                    { label: 'Gestion Órdenes', href: 'ordenes.html' }
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    { label: '<i class="fas fa-cog"></i> JWT', href: 'config-auth.html' }
                 ],
                 orders: [
                     { label: 'Gestion Usuarios', href: 'usuarios.html' },
-                    { label: 'Gestion Productos', href: 'productos.html' }
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    { label: '<i class="fas fa-cog"></i> JWT', href: 'config-auth.html' }
+                ],
+                'config-auth': [
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' }
                 ]
             },
             SUPPLIER: {
