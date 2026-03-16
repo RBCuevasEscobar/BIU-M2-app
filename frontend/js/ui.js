@@ -34,11 +34,27 @@ export const UI = {
         } else {
             const links = this.getLinksByRoleAndContext(user.role, context);
             links.forEach(l => {
-                right.innerHTML += `
-                    <a href="${l.href}" class="text-gray-700 hover:text-blue-600 font-medium">
-                        ${l.label}
-                    </a>
-                `;
+                if (l.isDropdown) {
+                    const dropdownId = 'dropdown-' + Math.random().toString(36).substr(2, 9);
+                    let dropdownHtml = `
+                    <div class="relative">
+                        <button onclick="document.getElementById('${dropdownId}').classList.toggle('hidden')" class="text-gray-700 font-medium hover:text-blue-600 focus:outline-none flex items-center">
+                            ${l.label} <i class="fas fa-chevron-down text-xs ml-1"></i>
+                        </button>
+                        <div id="${dropdownId}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-100 z-50">
+                            <div class="py-1">`;
+                    l.items.forEach(sub => {
+                        dropdownHtml += `<a href="${sub.href}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">${sub.label}</a>`;
+                    });
+                    dropdownHtml += `</div></div></div>`;
+                    right.innerHTML += dropdownHtml;
+                } else {
+                    right.innerHTML += `
+                        <a href="${l.href}" class="text-gray-700 hover:text-blue-600 font-medium">
+                            ${l.label}
+                        </a>
+                    `;
+                }
             });
 
             right.innerHTML += `
@@ -84,22 +100,64 @@ export const UI = {
                 products: [
                     { label: 'Gestion Órdenes', href: 'ordenes.html' },
                     { label: 'Gestion Usuarios', href: 'usuarios.html' },
-                    { label: '<i class="fas fa-cog"></i> JWT', href: 'config-auth.html' }
+                    { 
+                        isDropdown: true, 
+                        label: '<i class="fas fa-cog"></i> Configuración', 
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ] 
+                    }
                 ],
                 users: [
                     { label: 'Gestion Productos', href: 'productos.html' },
                     { label: 'Gestion Órdenes', href: 'ordenes.html' },
-                    { label: '<i class="fas fa-cog"></i> JWT', href: 'config-auth.html' }
+                    { 
+                        isDropdown: true, 
+                        label: '<i class="fas fa-cog"></i> Configuración', 
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ] 
+                    }
                 ],
                 orders: [
                     { label: 'Gestion Usuarios', href: 'usuarios.html' },
                     { label: 'Gestion Productos', href: 'productos.html' },
-                    { label: '<i class="fas fa-cog"></i> JWT', href: 'config-auth.html' }
+                    { 
+                        isDropdown: true, 
+                        label: '<i class="fas fa-cog"></i> Configuración', 
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ] 
+                    }
                 ],
                 'config-auth': [
                     { label: 'Gestion Usuarios', href: 'usuarios.html' },
                     { label: 'Gestion Productos', href: 'productos.html' },
-                    { label: 'Gestion Órdenes', href: 'ordenes.html' }
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    { 
+                        isDropdown: true, 
+                        label: '<i class="fas fa-cog"></i> Configuración', 
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ] 
+                    }
+                ],
+                'config-sistema': [
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    { 
+                        isDropdown: true, 
+                        label: '<i class="fas fa-cog"></i> Configuración', 
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ] 
+                    }
                 ]
             },
             SUPPLIER: {

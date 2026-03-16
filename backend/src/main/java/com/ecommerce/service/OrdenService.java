@@ -50,6 +50,9 @@ public class OrdenService {
     private GestorInventarioFactory inventarioFactory;
 
     @Autowired
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
+    @Autowired
     private ProcesoPagoFactory pagoFactory;
 
     private Usuario getUsuarioActual() {
@@ -105,8 +108,11 @@ public class OrdenService {
         // Limpiar carrito
         carrito.getProductos().clear();
         carritoRepository.save(carrito);
+        
+        Orden guardada = ordenRepository.save(orden);
+        eventPublisher.publishEvent(new com.ecommerce.observer.events.OrdenCreadaEvent(this, guardada));
 
-        return toDTO(ordenRepository.save(orden));
+        return toDTO(guardada);
     }
 
     /**
@@ -167,11 +173,8 @@ public class OrdenService {
             }
             orden.setEstado(EstadoOrden.PAID);
 
-            // 3. Descontar Stock definitivo porque ya se pagó
-            for (OrdenDetalle detalle : orden.getDetalles()) {
-                GestorInventario gestor = inventarioFactory.obtenerGestor(detalle.getProducto());
-                gestor.actualizarStock(detalle.getProducto(), -detalle.getCantidad());
-            }
+            // 3. Descontar Stock definitivo y Auditorias delegadas a Observadores
+            eventPublisher.publishEvent(new com.ecommerce.observer.events.OrdenPagadaEvent(this, orden));
         } else {
             // Se queda en pending si falla (el prompt indica: "Si un intento de pago falla,
             // el estado permanece PAYMENT_PENDING")
@@ -216,8 +219,11 @@ public class OrdenService {
         }
 
         orden.setEstado(EstadoOrden.CANCELLED);
-        // Si no descontamos stock sino hasta PAID, no devolvemos nada al cancelar.
-        return toDTO(ordenRepository.save(orden));
+        Orden guardada = ordenRepository.save(orden);
+        
+        eventPublisher.publishEvent(new com.ecommerce.observer.events.OrdenCanceladaEvent(this, guardada));
+        
+        return toDTO(guardada);
     }
 
     /**
@@ -238,7 +244,10 @@ public class OrdenService {
         orden.setShipment(shipment);
         orden.setEstado(EstadoOrden.SHIPPED);
 
-        return toDTO(ordenRepository.save(orden));
+        Orden guardada = ordenRepository.save(orden);
+        eventPublisher.publishEvent(new com.ecommerce.observer.events.OrdenDespachadaEvent(this, guardada));
+
+        return toDTO(guardada);
     }
 
     /**
@@ -258,7 +267,10 @@ public class OrdenService {
         }
         orden.setEstado(EstadoOrden.DELIVERED);
 
-        return toDTO(ordenRepository.save(orden));
+        Orden guardada = ordenRepository.save(orden);
+        eventPublisher.publishEvent(new com.ecommerce.observer.events.OrdenEntregadaEvent(this, guardada));
+
+        return toDTO(guardada);
     }
 
     private void validarPropietarioOAdmin(Orden orden) {

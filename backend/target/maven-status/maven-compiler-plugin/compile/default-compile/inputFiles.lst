@@ -1,10 +1,13 @@
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\BackendApplication.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\config\AsyncConfig.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\config\ConfiguracionSistema.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\config\DataSeeder.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\config\SecurityConfig.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\config\WebConfig.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\AuthController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\CarritoController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\ConfigController.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\ConfigSistemaController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\DireccionController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\OrdenController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\PaymentController.java
@@ -24,6 +27,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\ProductUpdateRequest.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\ShipmentDTO.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\dto\UsuarioUpdateRequest.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\factory\FabricaEntidades.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\inventory\GestorInventario.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\inventory\GestorInventarioDigital.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\inventory\GestorInventarioFactory.java
@@ -44,6 +48,15 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Role.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Shipment.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\model\Usuario.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\observer\AuditoriaObserver.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\observer\events\OrdenCanceladaEvent.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\observer\events\OrdenCreadaEvent.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\observer\events\OrdenDespachadaEvent.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\observer\events\OrdenEntregadaEvent.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\observer\events\OrdenPagadaEvent.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\observer\events\StockBajoEvent.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\observer\InventarioObserver.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\observer\NotificacionObserver.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\payment\PagoPayPal.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\payment\PagoTarjeta.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\payment\PagoTransferencia.java

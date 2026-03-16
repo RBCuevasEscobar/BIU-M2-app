@@ -1031,7 +1031,86 @@ C4Component
 ```
 * **Nivel 4 (Código)**: *(Revisar sección 5. Modelo de Clases UML detallado arriba para implementaciones locales)*.
 
-### 7. Ciclo de Vida de una Orden (Secuencia Completa)
+### 7. Patrones de Diseño Enterprise Estructurales y de Comportamiento (Supernova Mode)
+
+Para solidificar la integridad y escalabilidad de los servicios C4 declarados anteriormente, se implementó una serie de Patrones de Diseño formales orientados a transacciones seguras bajo concurrencia Spring Boot:
+
+#### A. Patrón Singleton (Configuración Hilo-Seguro)
+- **Objetivo**: Garantizar que exista una sola fuente de verdad en la memoria de la JVM para parámetros variables del negocio (como IVA, Stock Mínimo o Moneda).
+- **Implementación**: Clase `ConfiguracionSistema.java`.
+- **Funcionamiento**: Emplea el algoritmo *Double-Checked Locking* en su constructor privado. Sus propiedades mutables (`AtomicReference`, `AtomicInteger`) previenen condiciones de carrera (*Race Conditions*) permitiendo que miles de hilos HTTP consulten la misma instancia sin bloqueos severos.
+
+```java
+@Component
+public class ConfiguracionSistema {
+    private static volatile ConfiguracionSistema instance;
+    private final AtomicReference<Double> iva = new AtomicReference<>(0.16);
+    
+    private ConfiguracionSistema() {}
+
+    public static ConfiguracionSistema getInstance() {
+        if (instance == null) {
+            synchronized (ConfiguracionSistema.class) {
+                if (instance == null) { instance = new ConfiguracionSistema(); }
+            }
+        }
+        return instance;
+    }
+}
+```
+
+#### B. Patrón Factory (Desacoplamiento Polimórfico)
+- **Objetivo**: Abstraer la compleja ramificación de objetos que heredan de `Usuario` y `Producto`, salvaguardando el Principio de Responsabilidad Única (SRP) en los servicios de negocio.
+- **Implementación**: Componente `FabricaEntidades.java`.
+- **Funcionamiento**: En lugar de ensuciar el `ProductoService` con condicionales `new ProductoFisico()` o `new ProductoDigital()`, la Fábrica recibe el rol o tipo y genera la concreción adecuada. Esto centraliza la inicialización de estado per-entidad.
+
+```java
+@Component
+public class FabricaEntidades {
+    public Producto crearProductoSegunTipo(String tipo) {
+        if (tipo == null) throw new IllegalArgumentException("Tipo no puede ser null");
+        switch (tipo.toLowerCase()) {
+            case "fisico": return new ProductoFisico();
+            case "digital": return new ProductoDigital();
+            default: throw new IllegalArgumentException("Tipo de producto desconocido");
+        }
+    }
+}
+```
+
+#### C. Patrón Observer (Event-Driven Architecture)
+- **Objetivo**: Desacoplar la rígida tubería de `OrdenService` aislando sub-procesos lentos (como notificaciones telefónicas o rebajas de almacén) del hilo principal del pago (Checkout), mejorando radicalmente la latencia percibida por el usuario.
+- **Implementación**: `ApplicationEventPublisher` y clases bajo `com.ecommerce.observer.*`.
+- **Funcionamiento**: 
+  - **Dominio de Eventos (Publishers)**: En cada transición de la Máquina de Estados (ej. `PRE_PAID` a `PAID`), se detona un suceso determinístico (`eventPublisher.publishEvent(new OrdenPagadaEvent(this, orden))`).
+  - **Receptores Pasivos (Listeners)**:
+    1. `InventarioObserver`: Escucha el ticket pagado y deduce formalmente de MySQL. Si detecta desabasto, lanza recursivamente otro evento: `StockBajoEvent`.
+    2. `NotificacionObserver`: Actúa puramente notificando correos/SMS al recibir el suceso de "Despacho" o "Entrega".
+    3. `AuditoriaObserver`: Operativo mediante la anotación de concurrencia nativa `@Async` (delega un sub-hilo paralelo logístico), garantizando que el log de seguridad no interrumpa el `200 OK` de respuesta final al frontend.
+
+```java
+@Component
+public class InventarioObserver {
+    @EventListener
+    public void onOrdenPagada(OrdenPagadaEvent event) {
+        // Deduzca stock delegadamente
+        for (OrdenDetalle detalle : event.getOrden().getDetalles()) {
+           gestor.actualizarStock(detalle.getProducto(), -detalle.getCantidad());
+        }
+    }
+}
+
+@Component
+public class AuditoriaObserver {
+    @Async
+    @EventListener
+    public void auditarTransicionPagada(OrdenPagadaEvent event) {
+        System.out.println("[AUDIT] Pago procesado: ID " + event.getOrden().getId());
+    }
+}
+```
+
+### 8. Ciclo de Vida de una Orden (Secuencia Completa)
 
 ```mermaid
 sequenceDiagram
@@ -1068,7 +1147,7 @@ sequenceDiagram
     BACK->>BD: Sella ciclo logístico. Orden->DELIVERED.
 ```
 
-### 8. Análisis y Documentación de Postman (Flujos Automatizados)
+### 9. Análisis y Documentación de Postman (Flujos Automatizados)
 
 El ciclo vital de la API se modeló exhaustivamente dentro del archivo generado `backend/ECommerce_Collection.json`.
 * **CREATE / POST**: Probado en la ruta de Usuarios, Inicio de Sesión y Conversión de Carrito a Checkout.
@@ -1078,7 +1157,7 @@ El ciclo vital de la API se modeló exhaustivamente dentro del archivo generado 
   2. Envíos: Los endpoints logísticos crean las firmas de mensajería alterando la Orden base preexistente.
 * El archivo de Postman incluye secuencias JavaScript reactivas (*Scripts `Tests`*) capaces de inyectar los tokens de autorización transparentemente entre endpoints.
 
-### 9. Especificación Reconstruida OpenAPI / Swagger
+### 10. Especificación Reconstruida OpenAPI / Swagger
 
 Referencia estática OpenAPI `3.0.0` extraída desde la arquitectura de controladores Spring.
 ```yaml
@@ -1127,7 +1206,7 @@ components:
       bearerFormat: JWT
 ```
 
-### 10. Interfaces de Pago
+### 11. Interfaces de Pago
 
 El patrón *Strategy / Factory* se manifiesta bajo el paquete `payment`.
 * `ProcesoPago` es la super-interface central definiendo firmas lógicas: `iniciarPago(Orden)`, `verificarPago(Orden)`, `confirmarPago(Orden)`.
@@ -1248,7 +1327,7 @@ public class ProcesoPagoFactory {
     }
 ```
 
-### 11. Seguridad y Manejo de Sesiones Avanzadas
+### 12. Seguridad y Manejo de Sesiones Avanzadas
 
 El motor Java subyacente implementa autenticación completamente **Stateless**.
 * **Protección Criptográfica**: Las contraseñas se ofuscan en la base de datos tras una vía de escape unidireccional por `BCryptPasswordEncoder`, blindando frente a exfiltraciones relacionales.

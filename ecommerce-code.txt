@@ -677,6 +677,25 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
 			<version>9.0.0</version>
 			<scope>runtime</scope>
 		</dependency>
+
+		<!-- JWT Authentication Libraries -->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.12.3</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.12.3</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.12.3</version>
+			<scope>runtime</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -1453,6 +1472,48 @@ public class CarritoController {
 }
 
 
+================ backend\src\main\java\com\ecommerce\controller\ConfigController.java ================
+
+package com.ecommerce.controller;
+
+import com.ecommerce.security.JwtConfig;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/config/jwt")
+public class ConfigController {
+
+    private final JwtConfig jwtConfig;
+
+    public ConfigController(JwtConfig jwtConfig) {
+        this.jwtConfig = jwtConfig;
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getJwtConfig() {
+        return ResponseEntity.ok(Map.of(
+                "expirationTime", jwtConfig.getExpirationTime()
+        ));
+    }
+
+    @PutMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> updateJwtConfig(@RequestBody Map<String, Object> body) {
+        if (body.containsKey("expirationTime")) {
+            long newExpiration = Long.parseLong(body.get("expirationTime").toString());
+            jwtConfig.setExpirationTime(newExpiration);
+            return ResponseEntity.ok(Map.of("message", "Configuración JWT actualizada", "expirationTime", newExpiration));
+        }
+        return ResponseEntity.badRequest().body(Map.of("message", "Falta el parámetro expirationTime"));
+    }
+}
+
+
 ================ backend\src\main\java\com\ecommerce\controller\DireccionController.java ================
 
 package com.ecommerce.controller;
@@ -1574,6 +1635,12 @@ public class OrdenController {
         return ResponseEntity.ok(ordenService.crearOrdenDesdeCarrito(direccionId));
     }
 
+    @PostMapping("/{id}/pending")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+    public ResponseEntity<OrdenDTO> marcarComoPendiente(@PathVariable Long id) {
+        return ResponseEntity.ok(ordenService.marcarComoPendiente(id));
+    }
+
     @PostMapping("/{id}/cancelar")
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     public ResponseEntity<OrdenDTO> cancelarOrden(@PathVariable Long id) {
@@ -1618,12 +1685,21 @@ public class PaymentController {
     private OrdenService ordenService;
 
     @PostMapping("/procesar")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('CUSTOMER')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     public ResponseEntity<OrdenDTO> procesarPago(@RequestBody Map<String, Object> body) {
         Long ordenId = Long.valueOf(body.get("ordenId").toString());
         String metodoPago = body.getOrDefault("metodoPago", "Tarjeta").toString();
 
-        OrdenDTO ordenProcesada = ordenService.procesarPago(ordenId, metodoPago);
+        Long direccionId = null;
+        if (body.containsKey("direccionId") && body.get("direccionId") != null) {
+            try {
+                direccionId = Long.valueOf(body.get("direccionId").toString());
+            } catch (NumberFormatException e) {
+                // Ignore or handle
+            }
+        }
+
+        OrdenDTO ordenProcesada = ordenService.procesarPago(ordenId, metodoPago, direccionId);
         return ResponseEntity.ok(ordenProcesada);
     }
 }
@@ -1975,6 +2051,7 @@ public class OrdenDTO {
     private LocalDateTime fechaCreacion;
     private LocalDateTime ultimaModificacion;
 
+    private Long usuarioId;
     private String usuarioEmail;
     private String usuarioNombre;
     private String usuarioRfcCurp;
@@ -3433,6 +3510,103 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 }
 
 
+================ backend\src\main\java\com\ecommerce\security\JwtConfig.java ================
+
+package com.ecommerce.security;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class JwtConfig {
+
+    // Secret Key length minimum for HS256 is 256 bits (32 bytes)
+    private String secretKey = "EcommerceSecretKeySuperSeguraConLongitudApropiadaParaJwt";
+    
+    // Default Expiration in milliseconds (24 Hours default)
+    private long expirationTime = 86400000;
+
+    public String getSecretKey() {
+        return secretKey;
+    }
+
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
+    }
+
+    public long getExpirationTime() {
+        return expirationTime;
+    }
+
+    public void setExpirationTime(long expirationTime) {
+        this.expirationTime = expirationTime;
+    }
+}
+
+
+================ backend\src\main\java\com\ecommerce\security\JwtProvider.java ================
+
+package com.ecommerce.security;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.util.Date;
+
+@Component
+public class JwtProvider {
+
+    private final JwtConfig jwtConfig;
+
+    public JwtProvider(JwtConfig jwtConfig) {
+        this.jwtConfig = jwtConfig;
+    }
+
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(jwtConfig.getSecretKey().getBytes());
+    }
+
+    public String generateToken(String email, Long userId, String role) {
+        return Jwts.builder()
+                .subject(email)
+                .claim("userId", userId)
+                .claim("role", role)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + jwtConfig.getExpirationTime()))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
+            return true;
+        } catch (Exception e) {
+            // Expired, invalid signature, or malformed
+            return false;
+        }
+    }
+
+    public Claims extractClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    public Long extractUserId(String token) {
+        return extractClaims(token).get("userId", Long.class);
+    }
+
+    public String extractEmail(String token) {
+        return extractClaims(token).getSubject();
+    }
+}
+
+
 ================ backend\src\main\java\com\ecommerce\security\TokenAuthenticationFilter.java ================
 
 package com.ecommerce.security;
@@ -3457,9 +3631,11 @@ import java.util.Collections;
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     private final UsuarioRepository usuarioRepository;
+    private final JwtProvider jwtProvider;
 
-    public TokenAuthenticationFilter(UsuarioRepository usuarioRepository) {
+    public TokenAuthenticationFilter(UsuarioRepository usuarioRepository, JwtProvider jwtProvider) {
         this.usuarioRepository = usuarioRepository;
+        this.jwtProvider = jwtProvider;
     }
 
     @Override
@@ -3474,27 +3650,23 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
 
-            // Mock token validation: extract user ID from token
-            // Format: "mock-jwt-token-{userId}"
-            if (token.startsWith("mock-jwt-token-")) {
-                try {
-                    Long userId = Long.parseLong(token.substring(15));
-                    Usuario usuario = usuarioRepository.findById(userId).orElse(null);
+            if (jwtProvider.validateToken(token)) {
+                String email = jwtProvider.extractEmail(token);
+                Long userId = jwtProvider.extractUserId(token);
+                String role = jwtProvider.extractClaims(token).get("role", String.class);
+                
+                // Add an explicit call to DB to ensure user is active (optional depending on rigorousness)
+                Usuario usuario = usuarioRepository.findById(userId).orElse(null);
 
-                    if (usuario != null) {
-                        // Create authentication token with role
-                        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(
-                                "ROLE_" + usuario.getRole().name());
-                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                usuario.getEmail(),
-                                null,
-                                Collections.singletonList(authority));
+                if (usuario != null && email.equals(usuario.getEmail())) {
+                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            email,
+                            null,
+                            Collections.singletonList(authority));
 
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    }
-                } catch (NumberFormatException e) {
-                    // Invalid token format, continue without authentication
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
         }
@@ -3956,9 +4128,18 @@ public class OrdenService {
      * FASE 2: Procesar Pago y Verificar Stock
      */
     @Transactional
-    public OrdenDTO procesarPago(Long ordenId, String metodoPago) {
+    public OrdenDTO procesarPago(Long ordenId, String metodoPago, Long direccionId) {
         Orden orden = ordenRepository.findById(ordenId)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+        if (direccionId != null) {
+            Direccion direccion = direccionRepository.findById(direccionId)
+                    .orElseThrow(() -> new RuntimeException("Dirección no encontrada"));
+            if (!direccion.getUsuario().getId().equals(orden.getUsuario().getId())) {
+                throw new RuntimeException("La dirección no pertenece al propietario de la orden");
+            }
+            orden.setDireccionEnvio(direccion);
+        }
 
         // Validaciones Máquina de Estados
         if (orden.getEstado() == EstadoOrden.PAID || orden.getEstado() == EstadoOrden.SHIPPED
@@ -4010,6 +4191,25 @@ public class OrdenService {
             // Se queda en pending si falla (el prompt indica: "Si un intento de pago falla,
             // el estado permanece PAYMENT_PENDING")
             orden.setEstado(EstadoOrden.PAYMENT_PENDING);
+        }
+
+        return toDTO(ordenRepository.save(orden));
+    }
+
+    /**
+     * Marcar Orden como Pendiente de Pago (Transición Checkout)
+     */
+    @Transactional
+    public OrdenDTO marcarComoPendiente(Long ordenId) {
+        Orden orden = ordenRepository.findById(ordenId)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+        validarPropietarioOAdmin(orden);
+
+        if (orden.getEstado() == EstadoOrden.CREATED) {
+            orden.setEstado(EstadoOrden.PAYMENT_PENDING);
+        } else if (orden.getEstado() != EstadoOrden.PAYMENT_PENDING) {
+            throw new RuntimeException("La orden debe estar en estado CREATED para iniciar el pago.");
         }
 
         return toDTO(ordenRepository.save(orden));
@@ -4104,6 +4304,7 @@ public class OrdenService {
         dto.setFechaCreacion(orden.getFechaCreacion());
         dto.setUltimaModificacion(orden.getUltimaModificacion());
 
+        dto.setUsuarioId(orden.getUsuario().getId());
         dto.setUsuarioEmail(orden.getUsuario().getEmail());
         dto.setUsuarioNombre(orden.getUsuario().getNombre());
         if (orden.getUsuario() instanceof com.ecommerce.model.Cliente cliente) {
@@ -4369,6 +4570,9 @@ public class UsuarioService {
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Autowired
+    private com.ecommerce.security.JwtProvider jwtProvider;
+
+    @Autowired
     private UsuarioRepository usuarioRepository;
 
     @Transactional
@@ -4425,8 +4629,9 @@ public class UsuarioService {
             throw new RuntimeException("Credenciales inválidas");
         }
 
-        // Simulate JWT generation for Phase 2
-        String token = "mock-jwt-token-" + usuario.getId();
+        // Generate rigorous JSON Web Token using Provider
+        String token = jwtProvider.generateToken(usuario.getEmail(), usuario.getId(), usuario.getRole().name());
+        
         return new com.ecommerce.dto.LoginResponse(usuario.getId(), usuario.getNombre(), usuario.getRole(), token);
     }
 
@@ -4579,6 +4784,7 @@ com\ecommerce\model\PaymentTransaction.class
 com\ecommerce\service\UsuarioService.class
 com\ecommerce\service\AdministradorService.class
 com\ecommerce\repository\UsuarioRepository.class
+com\ecommerce\security\JwtConfig.class
 com\ecommerce\dto\OrdenDetalleDTO.class
 com\ecommerce\controller\AuthController.class
 com\ecommerce\payment\ProcesoPagoFactory.class
@@ -4607,6 +4813,7 @@ com\ecommerce\repository\OrdenRepository.class
 com\ecommerce\model\Orden.class
 com\ecommerce\service\CarritoService.class
 com\ecommerce\inventory\GestorInventarioFactory.class
+com\ecommerce\security\JwtProvider.class
 com\ecommerce\security\UsuarioSecurity.class
 com\ecommerce\repository\ProductoRepository.class
 com\ecommerce\model\Cliente.class
@@ -4621,6 +4828,7 @@ com\ecommerce\service\DireccionService.class
 com\ecommerce\dto\ProductoDTO.class
 com\ecommerce\repository\ShipmentRepository.class
 com\ecommerce\payment\PagoPayPal.class
+com\ecommerce\controller\ConfigController.class
 com\ecommerce\payment\PagoTransferencia.class
 com\ecommerce\security\TokenAuthenticationFilter.class
 com\ecommerce\dto\OrdenDTO.class
@@ -4646,6 +4854,7 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\config\WebConfig.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\AuthController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\CarritoController.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\ConfigController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\DireccionController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\OrdenController.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\controller\PaymentController.java
@@ -4697,6 +4906,8 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\ProductoRepository.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\ShipmentRepository.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\repository\UsuarioRepository.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\security\JwtConfig.java
+C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\security\JwtProvider.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\security\TokenAuthenticationFilter.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\security\UsuarioSecurity.java
 C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java\com\ecommerce\service\AdministradorService.java
@@ -4999,6 +5210,91 @@ C:\Users\DELL\.gemini\antigravity\playground\spectral-oort\backend\src\main\java
 </body>
 
 </html>
+
+================ frontend\config-auth.html ================
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración de Autenticación - E-Commerce</title>
+    <!-- Tailwind CSS desde el CDN oficial -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Estilos Personalizados Base -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen text-gray-800">
+    <!-- Nav renderizado por JS -->
+    <div id="mainNav"></div>
+
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-2xl">
+        <div class="mb-6 flex justify-between items-center">
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+                <i class="fas fa-shield-alt text-blue-600"></i> Autenticación JWT
+            </h1>
+        </div>
+
+        <div class="bg-white rounded-xl shadow border border-gray-100 p-8 space-y-6">
+            <div>
+                <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Ajustes de JSON Web Token</h2>
+                <p class="text-sm text-gray-600 mb-6 font-medium">Define el tiempo máximo de validez global con el cual los nuevos *Tokens de Accesos* serán creados. Cuando los usuarios exedan este umbral después del login, tendrán que volver a iniciar sesión.</p>
+                
+                <form id="jwtConfigForm" class="space-y-4 max-w-md">
+                    <div class="space-y-1">
+                        <label class="block text-sm font-semibold text-gray-700">Tiempo de Expiración</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="expiryValue" required min="1" step="1"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-right font-mono text-gray-800 shadow-sm"
+                                placeholder="Ejem: 24">
+                            
+                            <select id="expiryUnit" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 text-gray-700 shadow-sm cursor-pointer font-semibold">
+                                <option value="1000">Segundos</option>
+                                <option value="60000">Minutos</option>
+                                <option value="3600000">Horas</option>
+                                <option value="86400000">Días</option>
+                            </select>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1 italic"><i class="fas fa-info-circle mr-1 text-blue-500"></i><span id="labelDetail">24 horas de validez en sesión</span></p>
+                    </div>
+
+                    <div class="pt-4 flex justify-end">
+                        <button type="submit" id="btnGuardarConfig" disabled
+                            class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded shadow transition flex items-center font-bold">
+                            <i class="fas fa-save mr-2"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Information Banner -->
+            <div class="mt-8 bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-500 mt-1 text-lg"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800">Nota del Arquitectura</h3>
+                        <div class="mt-2 text-sm text-blue-700">
+                            <p>El JWT reemplaza permanentemente a los Mock Tokens para mitigar ataques de personificación. Modificar esta configuración requiere privilegios completos de Nivel de Administrador global del sistema.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center py-4 mt-auto">
+        <p>&copy; 2026 E-Commerce. Todos los derechos reservados.</p>
+    </footer>
+
+    <script type="module" src="js/config-auth.js"></script>
+</body>
+</html>
+
 
 ================ frontend\direcciones.html ================
 
@@ -8503,21 +8799,32 @@ const Checkout = {
 
     async loadData(id) {
         this.ordenId = id; // Could be null
-
-        const [direcciones, usuarioData] = await Promise.all([
-            Api.get("/direcciones/mis-direcciones"),
-            Api.get(`/usuarios/${Auth.getCurrentUser().id}`)
-        ]);
-
-        this.usuarioRfc = usuarioData.rfcCurp;
+        let userIdToFetch = Auth.getCurrentUser().id;
 
         if (id) {
             const ordenes = await Api.get("/ordenes");
             this.orden = ordenes.find(o => o.id == id);
+            if (this.orden && this.orden.usuarioId) {
+                userIdToFetch = this.orden.usuarioId;
+            }
             this.renderResumenFromOrden();
         } else {
             const carrito = await Api.get("/carrito");
             this.carrito = carrito;
+            this.renderResumenFromCarrito();
+        }
+
+        const [direcciones, usuarioData] = await Promise.all([
+            Api.get(`/direcciones/usuario/${userIdToFetch}`),
+            Api.get(`/usuarios/${userIdToFetch}`)
+        ]);
+
+        this.usuarioRfc = usuarioData.rfcCurp;
+
+        // Force re-render after capturing RFC
+        if (id) {
+            this.renderResumenFromOrden();
+        } else {
             this.renderResumenFromCarrito();
         }
 
@@ -8753,7 +9060,8 @@ const Checkout = {
             // FASE 2: Enviar pago
             const res = await Api.post("/payments/procesar", {
                 ordenId: actualOrdenId,
-                metodoPago: this.metodoPago
+                metodoPago: this.metodoPago,
+                direccionId: this.direccion
             })
 
             if (res.estado === "PAID" || res.estado === "PAYMENT_PENDING") {
@@ -8780,6 +9088,124 @@ const Checkout = {
 }
 
 document.addEventListener("DOMContentLoaded", () => Checkout.init())
+
+================ frontend\js\config-auth.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+let formInputValue = document.getElementById('expiryValue');
+let formInputUnit = document.getElementById('expiryUnit');
+let submitBtn = document.getElementById('btnGuardarConfig');
+let form = document.getElementById('jwtConfigForm');
+let labelHelp = document.getElementById('labelDetail');
+
+let actualMs = 0;
+
+document.addEventListener('DOMContentLoaded', async () => {
+
+    if (!Auth.requireAuth(["ADMIN"])) return;
+
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'config-auth'
+    });
+
+    await loadInitialConfig();
+    setupListeners();
+
+});
+
+async function loadInitialConfig() {
+    try {
+        const res = await Api.get('/config/jwt');
+        actualMs = res.expirationTime || 86400000;
+        
+        applyToUI(actualMs);
+        formatLabel();
+    } catch (e) {
+        UI.showNotification('Error obteniendo la configuración actual', 'error');
+    }
+}
+
+function applyToUI(ms) {
+    if (ms >= 86400000 && ms % 86400000 === 0) {
+        formInputValue.value = ms / 86400000;
+        formInputUnit.value = 86400000;
+    } else if (ms >= 3600000 && ms % 3600000 === 0) {
+        formInputValue.value = ms / 3600000;
+        formInputUnit.value = 3600000;
+    } else if (ms >= 60000 && ms % 60000 === 0) {
+        formInputValue.value = ms / 60000;
+        formInputUnit.value = 60000;
+    } else {
+        formInputValue.value = ms / 1000;
+        formInputUnit.value = 1000;
+    }
+}
+
+function setupListeners() {
+    formInputValue.addEventListener('input', () => {
+        checkForm();
+        formatLabel();
+    });
+    
+    formInputUnit.addEventListener('change', () => {
+        checkForm();
+        formatLabel();
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await saveConfig();
+    });
+}
+
+function checkForm() {
+    const v = parseInt(formInputValue.value);
+    const msValue = v * parseInt(formInputUnit.value);
+    
+    if (v > 0 && msValue !== actualMs) {
+        submitBtn.disabled = false;
+    } else {
+        submitBtn.disabled = true;
+    }
+}
+
+function formatLabel() {
+    const val = formInputValue.value;
+    const ut = formInputUnit.options[formInputUnit.selectedIndex]?.text.toLowerCase() || "";
+    labelHelp.textContent = val > 0 ? `${val} ${ut} de validez en sesión calculados.` : "Ingrese un tiempo de expiración.";
+}
+
+async function saveConfig() {
+    const v = parseInt(formInputValue.value);
+    const msValue = v * parseInt(formInputUnit.value);
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Procesando...';
+
+    try {
+        const res = await Api.put('/config/jwt', { expirationTime: msValue });
+        
+        actualMs = res.expirationTime;
+        checkForm();
+        
+        UI.showNotification('Milisegundos Expiración ajustados exitosamente a: ' + actualMs, 'success');
+
+        submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Guardado';
+        setTimeout(() => {
+            submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Guardar Cambios';
+        }, 3000);
+
+    } catch (e) {
+        UI.showNotification('Error al actualizar la configuración: ' + e.message, 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Guardar Cambios';
+    }
+}
+
 
 ================ frontend\js\direcciones.js ================
 
@@ -9289,7 +9715,7 @@ function getActionHTML(orden) {
     if (roleActual === 'CUSTOMER') {
         const puedePagar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
         if (puedePagar) {
-            html += `<button onclick="window.location.href='checkout.html?ordenId=${orden.id}'" class="text-green-500 hover:text-green-700 p-1" title="Pagar">
+            html += `<button onclick="window.iniciarPago(${orden.id})" class="text-green-500 hover:text-green-700 p-1" title="Pagar">
                         <i class="fas fa-credit-card"></i> Pagar
                      </button>`;
         }
@@ -9303,7 +9729,7 @@ function getActionHTML(orden) {
     } else if (roleActual === 'ADMIN') {
         const puedePagar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
         if (puedePagar) {
-            html += `<button onclick="window.location.href='checkout.html?ordenId=${orden.id}'" class="text-green-500 hover:text-green-700 p-1" title="Pagar">
+            html += `<button onclick="window.iniciarPago(${orden.id})" class="text-green-500 hover:text-green-700 p-1" title="Pagar">
                         <i class="fas fa-credit-card"></i> Pagar
                      </button>`;
         }
@@ -9329,6 +9755,15 @@ function getActionHTML(orden) {
 }
 
 // ---------------- ACCIONES ----------------
+
+window.iniciarPago = async (id) => {
+    try {
+        await Api.post(`/ordenes/${id}/pending`);
+        window.location.href = `checkout.html?ordenId=${id}`;
+    } catch (e) {
+        UI.showNotification('Error al iniciar el pago: ' + e.message, 'error');
+    }
+};
 
 window.cancelarOrden = async (id) => {
     if (!confirm('¿Estás seguro que deseas cancelar esta orden?')) return;
@@ -10064,16 +10499,24 @@ export const UI = {
             },
             ADMIN: {
                 products: [
-                    { label: 'Gestión Órdenes', href: 'ordenes.html' },
-                    { label: 'Gestion Usuarios', href: 'usuarios.html' }
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    { label: '<i class="fas fa-cog"></i> JWT', href: 'config-auth.html' }
                 ],
                 users: [
                     { label: 'Gestion Productos', href: 'productos.html' },
-                    { label: 'Gestion Órdenes', href: 'ordenes.html' }
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    { label: '<i class="fas fa-cog"></i> JWT', href: 'config-auth.html' }
                 ],
                 orders: [
                     { label: 'Gestion Usuarios', href: 'usuarios.html' },
-                    { label: 'Gestion Productos', href: 'productos.html' }
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    { label: '<i class="fas fa-cog"></i> JWT', href: 'config-auth.html' }
+                ],
+                'config-auth': [
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' }
                 ]
             },
             SUPPLIER: {

@@ -23,6 +23,9 @@ import java.util.Optional;
 public class ProductoService {
 
     @Autowired
+    private com.ecommerce.factory.FabricaEntidades fabricaEntidades;
+
+    @Autowired
     private ProductoRepository productoRepository;
 
     private final UsuarioRepository usuarioRepository;
@@ -33,16 +36,13 @@ public class ProductoService {
     @SuppressWarnings("null")
     @Transactional
     public ProductoDTO guardarProducto(ProductoRequestDTO request) {
-        Producto producto;
-        if ("Fisico".equalsIgnoreCase(request.getTipo())) {
-            ProductoFisico pf = new ProductoFisico();
+        Producto producto = fabricaEntidades.crearProductoSegunTipo(request.getTipo());
+        
+        if (producto instanceof ProductoFisico pf) {
             pf.setStock(request.getStock());
             pf.setPeso(request.getPeso());
-            producto = pf;
-        } else {
-            ProductoDigital pd = new ProductoDigital();
+        } else if (producto instanceof ProductoDigital pd) {
             pd.setUrlDescarga(request.getUrlDescarga());
-            producto = pd;
         }
 
         updateCommonFields(producto, request);

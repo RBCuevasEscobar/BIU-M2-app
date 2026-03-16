@@ -1,0 +1,256 @@
+openapi: 3.0.3
+info:
+  title: E-Commerce REST API
+  description: Enterprise REST API para plataforma E-Commerce basada en Spring Boot, JPA, y JWT Security.
+  version: 3.0.0
+  contact:
+    name: Arquitectura E-Commerce
+servers:
+  - url: http://localhost:8080/api
+    description: Servidor de Desarrollo Local
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Authorization header using the Bearer scheme.
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    LoginResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        role:
+          type: string
+        token:
+          type: string
+    UsuarioDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        rfcCurp:
+          type: string
+        empresa:
+          type: string
+    ProductoDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        precio:
+          type: number
+        tipo:
+          type: string
+        descripcion:
+          type: string
+        stock:
+          type: integer
+    OrdenDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        estado:
+          type: string
+        total:
+          type: number
+        direccionId:
+          type: integer
+    DireccionDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        calle:
+          type: string
+        codigoPostal:
+          type: string
+    ShipmentDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        ordenId:
+          type: integer
+        mensajeria:
+          type: string
+        numeroGuia:
+          type: string
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      summary: Autenticar Usuario y emitir JWT
+      tags: [Autenticación]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Autenticación exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Credenciales inválidas
+
+  /usuarios/admin:
+    post:
+      summary: Crear nuevo usuario desde Panel Administrativo
+      tags: [Usuarios]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsuarioDTO'
+      responses:
+        '200':
+          description: Creado
+  
+  /productos:
+    get:
+      summary: Listar catálogo de productos
+      tags: [Productos]
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductoDTO'
+    post:
+      summary: Crear un producto nuevo (ADMIN/SUPPLIER)
+      tags: [Productos]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoDTO'
+      responses:
+        '200':
+          description: Creado
+          
+  /carrito:
+    get:
+      summary: Obtener el carrito actual
+      tags: [Carrito]
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Vaciar carrito
+      tags: [Carrito]
+      responses:
+        '200':
+          description: Vacío
+          
+  /ordenes/checkout:
+    post:
+      summary: Transformar el carrito en una Orden CREATED
+      tags: [Órdenes, Checkout]
+      responses:
+        '200':
+          description: Orden creada satisfactoriamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrdenDTO'
+
+  /payments/procesar:
+    post:
+      summary: Procesar pago para una orden y fijar la dirección de destino.
+      tags: [Pagos]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ordenId:
+                  type: integer
+                metodoPago:
+                  type: string
+                direccionId:
+                  type: integer
+                monto:
+                  type: number
+      responses:
+        '200':
+          description: Pago liquidado, orden PAID.
+
+  /shipments/despachar/{ordenId}:
+    post:
+      summary: Transiciona la orden de PAID a SHIPPED
+      tags: [Logística y Despachos]
+      parameters:
+        - name: ordenId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShipmentDTO'
+      responses:
+        '200':
+          description: Despachado exitosamente
+
+  /config/jwt:
+    get:
+      summary: Obtener configuración dinámica JWT
+      tags: [Configuración]
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Mutar tiempo de vida (expirationTime) de JWTs futuros.
+      tags: [Configuración]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                expirationTime:
+                  type: integer
+      responses:
+        '200':
+          description: Mutado exitosamente

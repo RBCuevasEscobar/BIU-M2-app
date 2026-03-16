@@ -1,0 +1,170 @@
+{
+	"info": {
+		"_postman_id": "8b52af3e-4f7f-442b-927a-590b1aa7f8ee",
+		"name": "E-Commerce Extended Collection (Supernova)",
+		"description": "Collection extending Postman routes for Cart, Checkout, Observer validations, JWT Configuration and Pattern implementations.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Autenticación",
+			"item": [
+				{
+					"name": "1. Login Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"adminpass\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Productos y Fabricas",
+			"item": [
+				{
+					"name": "2. Crear Producto Físico (Factory)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Laptop Gamer Supernova\",\n    \"precio\": 25000.0,\n    \"tipo\": \"Fisico\",\n    \"descripcion\": \"Hardware potentisimo\",\n    \"stock\": 10,\n    \"peso\": 2.5\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/productos",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"productos"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Checkout y Observer Lifecycle",
+			"item": [
+				{
+					"name": "3. Proceder Checkout (Lanza OrdenCreadaEvent)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/api/ordenes/checkout",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"ordenes",
+								"checkout"
+							]
+						}
+					}
+				},
+				{
+					"name": "4. Procesar Pago (Lanza OrdenPagadaEvent)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ordenId\": 1,\n    \"metodoPago\": \"CREDIT_CARD\",\n    \"monto\": 25000.0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/payments/procesar",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"payments",
+								"procesar"
+							]
+						}
+					}
+				},
+				{
+					"name": "5. Cancelar Orden (Lanza OrdenCanceladaEvent)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/api/ordenes/1/cancelar",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"ordenes",
+								"1",
+								"cancelar"
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}

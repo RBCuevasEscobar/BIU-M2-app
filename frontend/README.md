@@ -446,6 +446,18 @@ El frontend de esta plataforma eCommerce ha sido construído con adherencia a la
   3. Ejecuta el bloqueo del DOM UI simulando latencia (loader intermitente) enviando los parámetros a `/api/payments/procesar`. 
   4. Finaliza pintando la pastilla o *Badge* del estado transformado de gris (`CREATED`) a verde vibrante (`PAID`).
 
+## Flujos por Rol de Usuario
+
+El sistema cuenta con 3 roles con menús y permisos dinámicos.
+
+### 1. Panel de Administración (Role: `ADMIN`)
+* **Gestor de Usuarios** (`usuarios.html`): CRUD completo. Visualiza RFC/CURP y controla la variable "Válido Hasta" (`validUntil`) mediante interfaces Calendarizadas.
+* **Gestor de Productos** (`productos.html`): Único rol autorizado para crear productos (Físico o Digital), asignar portadas y subir carruseles de imágenes múltiples. Control central del campo `proveedor`.
+* **Despacho Logístico** (`ordenes.html`): Aprueba la creación de folios de rastreo (`Shipments`) para paquetes y marca la transacción terminal como "Entregada" (`DELIVERED`).
+* **Configuración del Sistema** (`config-auth.html` y `config-sistema.html`): Menú desplegable global para alterar las directivas internas del servidor.
+  * *JWT*: Altera la vigencia, en tiempo real, del token criptográfico emitido.
+  * *Sistema*: Interacciona directamente con el **Singleton** del backend permitiendo alterar atómicamente el IVA (Impuestos), el umbral de Stock Mínimo global y los modos de Depuración (Debug).
+
 #### C. Interfaz de Despacho Logístico (Envíos)
 - **Vista**: Modal oculto invocado dentro de `ordenes.html`, exclusivamente persistente para el rol `ADMIN`.
 - **Propósito**: Efectuar la transición de estados `PAID` → `SHIPPED` → `DELIVERED`.
@@ -605,6 +617,16 @@ sequenceDiagram
         Security->>Context: Inyecta Contexto de Sesión
         Security-->>Endpoint: Filtro Passed
         Endpoint-->>Browser: 200 OK (Datos JSON)
+        Endpoint-->>Browser: 200 OK (Datos JSON)
         Browser-->>Cliente: Renderea Tabla HTML
     end
 ```
+
+---
+
+## 🏛 Supernova Enterprise Architecture (Fase 10)
+
+El esqueleto dinámico de esta plataforma Frontend es alimentado por un **Spring Boot Backend** recientemente extendido transaccionalmente que cuenta con:
+- **Patrón Singleton**: El estado unificado global de tarifas e IVA (`ConfiguracionSistema.java`) previene el desajuste de montos.
+- **Patrón Factory**: Los usuarios del Panel de Admin (`FabricaEntidades.java`) abstrae lógicamente a Clientes, Proveedores y Tipos de Productos por polimorfismo, sin depender de constructores crudos.
+- **Event-Driven Observer**: Las liquidaciones del eCommerce no estancan el flujo cliente (frontend) buscando descontar Base de Datos o enviar e-mails; Todo corre delegadamente con hilos `@Async` (`InventarioObserver`, `NotificacionObserver`, `AuditoriaObserver` e interfaz transaccional `ApplicationEventPublisher`).

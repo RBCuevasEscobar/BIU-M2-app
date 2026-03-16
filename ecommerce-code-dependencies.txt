@@ -2,6 +2,9 @@ External dependencies
 
 Source: backend\pom.xml
 - com.mysql:mysql-connector-j:9.0.0 (runtime)
+- io.jsonwebtoken:jjwt-api:0.12.3
+- io.jsonwebtoken:jjwt-impl:0.12.3 (runtime)
+- io.jsonwebtoken:jjwt-jackson:0.12.3 (runtime)
 - org.projectlombok:lombok
 - org.springframework.boot:spring-boot-starter-data-jpa
 - org.springframework.boot:spring-boot-starter-security
@@ -19,8 +22,8 @@ Source: frontend\package.json (devDependencies)
 - tailwindcss ^4.1.18
 
 Internal dependency graph
-Nodes: 101
-Edges: 22
+Nodes: 106
+Edges: 25
 
 Nodes:
 - .mvn\wrapper\maven-wrapper.properties
@@ -34,6 +37,7 @@ Nodes:
 - backend\src\main\java\com\ecommerce\config\WebConfig.java
 - backend\src\main\java\com\ecommerce\controller\AuthController.java
 - backend\src\main\java\com\ecommerce\controller\CarritoController.java
+- backend\src\main\java\com\ecommerce\controller\ConfigController.java
 - backend\src\main\java\com\ecommerce\controller\DireccionController.java
 - backend\src\main\java\com\ecommerce\controller\OrdenController.java
 - backend\src\main\java\com\ecommerce\controller\PaymentController.java
@@ -85,6 +89,8 @@ Nodes:
 - backend\src\main\java\com\ecommerce\repository\ProductoRepository.java
 - backend\src\main\java\com\ecommerce\repository\ShipmentRepository.java
 - backend\src\main\java\com\ecommerce\repository\UsuarioRepository.java
+- backend\src\main\java\com\ecommerce\security\JwtConfig.java
+- backend\src\main\java\com\ecommerce\security\JwtProvider.java
 - backend\src\main\java\com\ecommerce\security\TokenAuthenticationFilter.java
 - backend\src\main\java\com\ecommerce\security\UsuarioSecurity.java
 - backend\src\main\java\com\ecommerce\service\AdministradorService.java
@@ -100,6 +106,7 @@ Nodes:
 - backend\target\maven-status\maven-compiler-plugin\compile\default-compile\inputFiles.lst
 - frontend\carrito.html
 - frontend\checkout.html
+- frontend\config-auth.html
 - frontend\css\output.css
 - frontend\css\styles.css
 - frontend\direcciones.html
@@ -110,6 +117,7 @@ Nodes:
 - frontend\js\auth.js
 - frontend\js\carrito.js
 - frontend\js\checkout.js
+- frontend\js\config-auth.js
 - frontend\js\direcciones.js
 - frontend\js\ordenes.js
 - frontend\js\productos.js
@@ -136,6 +144,9 @@ Edges:
 - frontend\js\checkout.js -> frontend\js\api.js (import)
 - frontend\js\checkout.js -> frontend\js\auth.js (import)
 - frontend\js\checkout.js -> frontend\js\ui.js (import)
+- frontend\js\config-auth.js -> frontend\js\api.js (import)
+- frontend\js\config-auth.js -> frontend\js\auth.js (import)
+- frontend\js\config-auth.js -> frontend\js\ui.js (import)
 - frontend\js\direcciones.js -> frontend\js\api.js (import)
 - frontend\js\direcciones.js -> frontend\js\auth.js (import)
 - frontend\js\direcciones.js -> frontend\js\ui.js (import)
