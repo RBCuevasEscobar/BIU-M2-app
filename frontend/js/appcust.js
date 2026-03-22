@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             await Api.post(`/carrito/productos/${btn.dataset.id}`);
             UI.showNotification('Producto agregado al carrito');
+            UI.updateCartBadge();
         } catch (err) {
             UI.showNotification('No se pudo agregar al carrito', 'error');
         }
@@ -146,6 +147,30 @@ function buildProductCard(product) {
 
     return card;
 }
+
+const input = document.getElementById("input");
+const messages = document.getElementById("messages");
+
+input.addEventListener("keypress", async (e) => {
+    if (e.key === "Enter") {
+        const text = input.value;
+        input.value = "";
+
+        messages.innerHTML += `<div><b>Tú:</b> ${text}</div>`;
+
+        const res = await fetch("http://localhost:8080/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text })
+        }
+        );
+
+        const data = await res.json();
+
+        messages.innerHTML += `<div><b>Bot:</b> ${data.response}</div>`;
+    }
+}
+);
 
 // ── Galería / Popup de imágenes ────────────────────────────────────────────────
 let galeriaActual = [];

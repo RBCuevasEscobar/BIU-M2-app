@@ -137,7 +137,7 @@ function renderizarCarrito(carrito) {
 }
 
 function actualizarTotales(subtotal) {
-    const impuestos = subtotal * 0.15; // 15% tax
+    const impuestos = subtotal * 0.16; // 16% tax
     const total = subtotal + impuestos;
 
     const elSub = document.getElementById('subtotal');
@@ -153,6 +153,7 @@ window.agregarAlCarrito = async (productoId) => {
     try {
         await Api.post(`/carrito/productos/${productoId}`);
         cargarCarrito();
+        UI.updateCartBadge();
         UI.showNotification('Cantidad actualizada');
     } catch (error) {
         UI.showNotification('Error al actualizar', 'error');
@@ -163,6 +164,7 @@ window.eliminarDelCarrito = async (productoId) => {
     try {
         await Api.delete(`/carrito/productos/${productoId}`);
         cargarCarrito();
+        UI.updateCartBadge();
         UI.showNotification('Producto eliminado');
     } catch (error) {
         UI.showNotification('Error al eliminar', 'error');
@@ -190,6 +192,7 @@ async function vaciarCarrito() {
     try {
         await Api.delete('/carrito');
         cargarCarrito();
+        UI.updateCartBadge();
         UI.showNotification('Carrito vaciado');
     } catch (error) {
         UI.showNotification('Error al vaciar carrito', 'error');

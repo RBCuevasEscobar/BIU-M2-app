@@ -22,22 +22,27 @@ Source: frontend\package.json (devDependencies)
 - tailwindcss ^4.1.18
 
 Internal dependency graph
-Nodes: 106
-Edges: 25
+Nodes: 138
+Edges: 28
 
 Nodes:
 - .mvn\wrapper\maven-wrapper.properties
 - backend\ECommerce_Collection.json
+- backend\ECommerce_Collection_Extended.json
 - backend\maven\apache-maven-3.9.6\conf\settings.xml
 - backend\maven\apache-maven-3.9.6\conf\toolchains.xml
 - backend\pom.xml
 - backend\src\main\java\com\ecommerce\BackendApplication.java
+- backend\src\main\java\com\ecommerce\config\AsyncConfig.java
+- backend\src\main\java\com\ecommerce\config\ConfiguracionSistema.java
+- backend\src\main\java\com\ecommerce\config\ConfiguracionSistemaLoader.java
 - backend\src\main\java\com\ecommerce\config\DataSeeder.java
 - backend\src\main\java\com\ecommerce\config\SecurityConfig.java
 - backend\src\main\java\com\ecommerce\config\WebConfig.java
 - backend\src\main\java\com\ecommerce\controller\AuthController.java
 - backend\src\main\java\com\ecommerce\controller\CarritoController.java
 - backend\src\main\java\com\ecommerce\controller\ConfigController.java
+- backend\src\main\java\com\ecommerce\controller\ConfigSistemaController.java
 - backend\src\main\java\com\ecommerce\controller\DireccionController.java
 - backend\src\main\java\com\ecommerce\controller\OrdenController.java
 - backend\src\main\java\com\ecommerce\controller\PaymentController.java
@@ -57,6 +62,7 @@ Nodes:
 - backend\src\main\java\com\ecommerce\dto\ProductoRequestDTO.java
 - backend\src\main\java\com\ecommerce\dto\ShipmentDTO.java
 - backend\src\main\java\com\ecommerce\dto\UsuarioUpdateRequest.java
+- backend\src\main\java\com\ecommerce\factory\FabricaEntidades.java
 - backend\src\main\java\com\ecommerce\inventory\GestorInventario.java
 - backend\src\main\java\com\ecommerce\inventory\GestorInventarioDigital.java
 - backend\src\main\java\com\ecommerce\inventory\GestorInventarioFactory.java
@@ -76,7 +82,17 @@ Nodes:
 - backend\src\main\java\com\ecommerce\model\Proveedor.java
 - backend\src\main\java\com\ecommerce\model\Role.java
 - backend\src\main\java\com\ecommerce\model\Shipment.java
+- backend\src\main\java\com\ecommerce\model\SystemConfig.java
 - backend\src\main\java\com\ecommerce\model\Usuario.java
+- backend\src\main\java\com\ecommerce\observer\AuditoriaObserver.java
+- backend\src\main\java\com\ecommerce\observer\InventarioObserver.java
+- backend\src\main\java\com\ecommerce\observer\NotificacionObserver.java
+- backend\src\main\java\com\ecommerce\observer\events\OrdenCanceladaEvent.java
+- backend\src\main\java\com\ecommerce\observer\events\OrdenCreadaEvent.java
+- backend\src\main\java\com\ecommerce\observer\events\OrdenDespachadaEvent.java
+- backend\src\main\java\com\ecommerce\observer\events\OrdenEntregadaEvent.java
+- backend\src\main\java\com\ecommerce\observer\events\OrdenPagadaEvent.java
+- backend\src\main\java\com\ecommerce\observer\events\StockBajoEvent.java
 - backend\src\main\java\com\ecommerce\payment\PagoPayPal.java
 - backend\src\main\java\com\ecommerce\payment\PagoTarjeta.java
 - backend\src\main\java\com\ecommerce\payment\PagoTransferencia.java
@@ -88,6 +104,7 @@ Nodes:
 - backend\src\main\java\com\ecommerce\repository\PaymentTransactionRepository.java
 - backend\src\main\java\com\ecommerce\repository\ProductoRepository.java
 - backend\src\main\java\com\ecommerce\repository\ShipmentRepository.java
+- backend\src\main\java\com\ecommerce\repository\SystemConfigRepository.java
 - backend\src\main\java\com\ecommerce\repository\UsuarioRepository.java
 - backend\src\main\java\com\ecommerce\security\JwtConfig.java
 - backend\src\main\java\com\ecommerce\security\JwtProvider.java
@@ -95,18 +112,32 @@ Nodes:
 - backend\src\main\java\com\ecommerce\security\UsuarioSecurity.java
 - backend\src\main\java\com\ecommerce\service\AdministradorService.java
 - backend\src\main\java\com\ecommerce\service\CarritoService.java
+- backend\src\main\java\com\ecommerce\service\ConfiguracionSistemaService.java
 - backend\src\main\java\com\ecommerce\service\DireccionService.java
 - backend\src\main\java\com\ecommerce\service\OrdenService.java
 - backend\src\main\java\com\ecommerce\service\ProductoService.java
 - backend\src\main\java\com\ecommerce\service\UsuarioService.java
 - backend\src\main\resources\application.properties
+- backend\src\test\java\com\ecommerce\ConfiguracionSistemaServiceTest.java
+- backend\src\test\java\com\ecommerce\ConfiguracionSistemaTest.java
+- backend\src\test\java\com\ecommerce\FabricaEntidadesTest.java
+- backend\src\test\java\com\ecommerce\ObserverEventosTest.java
+- backend\src\test\java\com\ecommerce\SystemConfigRepositoryTest.java
 - backend\target\classes\application.properties
 - backend\target\maven-archiver\pom.properties
 - backend\target\maven-status\maven-compiler-plugin\compile\default-compile\createdFiles.lst
 - backend\target\maven-status\maven-compiler-plugin\compile\default-compile\inputFiles.lst
+- backend\target\maven-status\maven-compiler-plugin\testCompile\default-testCompile\createdFiles.lst
+- backend\target\maven-status\maven-compiler-plugin\testCompile\default-testCompile\inputFiles.lst
+- backend\target\surefire-reports\TEST-com.ecommerce.ConfiguracionSistemaServiceTest.xml
+- backend\target\surefire-reports\TEST-com.ecommerce.ConfiguracionSistemaTest.xml
+- backend\target\surefire-reports\TEST-com.ecommerce.FabricaEntidadesTest.xml
+- backend\target\surefire-reports\TEST-com.ecommerce.ObserverEventosTest.xml
+- backend\target\surefire-reports\TEST-com.ecommerce.SystemConfigRepositoryTest.xml
 - frontend\carrito.html
 - frontend\checkout.html
 - frontend\config-auth.html
+- frontend\config-sistema.html
 - frontend\css\output.css
 - frontend\css\styles.css
 - frontend\direcciones.html
@@ -118,6 +149,7 @@ Nodes:
 - frontend\js\carrito.js
 - frontend\js\checkout.js
 - frontend\js\config-auth.js
+- frontend\js\config-sistema.js
 - frontend\js\direcciones.js
 - frontend\js\ordenes.js
 - frontend\js\productos.js
@@ -147,6 +179,9 @@ Edges:
 - frontend\js\config-auth.js -> frontend\js\api.js (import)
 - frontend\js\config-auth.js -> frontend\js\auth.js (import)
 - frontend\js\config-auth.js -> frontend\js\ui.js (import)
+- frontend\js\config-sistema.js -> frontend\js\api.js (import)
+- frontend\js\config-sistema.js -> frontend\js\auth.js (import)
+- frontend\js\config-sistema.js -> frontend\js\ui.js (import)
 - frontend\js\direcciones.js -> frontend\js\api.js (import)
 - frontend\js\direcciones.js -> frontend\js\auth.js (import)
 - frontend\js\direcciones.js -> frontend\js\ui.js (import)

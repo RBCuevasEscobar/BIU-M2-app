@@ -1,0 +1,3622 @@
+
+
+================ frontend\css\output.css ================
+
+/*! tailwindcss v4.1.18 | MIT License | https://tailwindcss.com */
+@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-space-y-reverse:0;--tw-space-x-reverse:0;--tw-border-style:solid;--tw-leading:initial;--tw-font-weight:initial;--tw-shadow:0 0 #0000;--tw-shadow-color:initial;--tw-shadow-alpha:100%;--tw-inset-shadow:0 0 #0000;--tw-inset-shadow-color:initial;--tw-inset-shadow-alpha:100%;--tw-ring-color:initial;--tw-ring-shadow:0 0 #0000;--tw-inset-ring-color:initial;--tw-inset-ring-shadow:0 0 #0000;--tw-ring-inset:initial;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-offset-shadow:0 0 #0000;--tw-blur:initial;--tw-brightness:initial;--tw-contrast:initial;--tw-grayscale:initial;--tw-hue-rotate:initial;--tw-invert:initial;--tw-opacity:initial;--tw-saturate:initial;--tw-sepia:initial;--tw-drop-shadow:initial;--tw-drop-shadow-color:initial;--tw-drop-shadow-alpha:100%;--tw-drop-shadow-size:initial;--tw-duration:initial;--tw-scale-x:1;--tw-scale-y:1;--tw-scale-z:1}}}@layer theme{:root,:host{--font-sans:ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";--font-mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;--color-red-100:oklch(93.6% .032 17.717);--color-red-200:oklch(88.5% .062 18.334);--color-red-400:oklch(70.4% .191 22.216);--color-red-500:oklch(63.7% .237 25.331);--color-red-600:oklch(57.7% .245 27.325);--color-red-700:oklch(50.5% .213 27.518);--color-red-800:oklch(44.4% .177 26.899);--color-orange-500:oklch(70.5% .213 47.604);--color-yellow-100:oklch(97.3% .071 103.193);--color-yellow-500:oklch(79.5% .184 86.047);--color-yellow-600:oklch(68.1% .162 75.834);--color-yellow-700:oklch(55.4% .135 66.442);--color-yellow-800:oklch(47.6% .114 61.907);--color-green-100:oklch(96.2% .044 156.743);--color-green-500:oklch(72.3% .219 149.579);--color-green-600:oklch(62.7% .194 149.214);--color-green-700:oklch(52.7% .154 150.069);--color-green-800:oklch(44.8% .119 151.328);--color-blue-50:oklch(97% .014 254.604);--color-blue-100:oklch(93.2% .032 255.585);--color-blue-200:oklch(88.2% .059 254.128);--color-blue-400:oklch(70.7% .165 254.624);--color-blue-500:oklch(62.3% .214 259.815);--color-blue-600:oklch(54.6% .245 262.881);--color-blue-700:oklch(48.8% .243 264.376);--color-blue-800:oklch(42.4% .199 265.638);--color-purple-100:oklch(94.6% .033 307.174);--color-purple-500:oklch(62.7% .265 303.9);--color-purple-700:oklch(49.6% .265 301.924);--color-purple-800:oklch(43.8% .218 303.724);--color-gray-50:oklch(98.5% .002 247.839);--color-gray-100:oklch(96.7% .003 264.542);--color-gray-200:oklch(92.8% .006 264.531);--color-gray-300:oklch(87.2% .01 258.338);--color-gray-400:oklch(70.7% .022 261.325);--color-gray-500:oklch(55.1% .027 264.364);--color-gray-600:oklch(44.6% .03 256.802);--color-gray-700:oklch(37.3% .034 259.733);--color-gray-800:oklch(27.8% .033 256.848);--color-gray-900:oklch(21% .034 264.665);--color-black:#000;--color-white:#fff;--spacing:.25rem;--container-sm:24rem;--container-md:28rem;--container-lg:32rem;--container-2xl:42rem;--container-7xl:80rem;--text-xs:.75rem;--text-xs--line-height:calc(1/.75);--text-sm:.875rem;--text-sm--line-height:calc(1.25/.875);--text-base:1rem;--text-base--line-height:calc(1.5/1);--text-lg:1.125rem;--text-lg--line-height:calc(1.75/1.125);--text-xl:1.25rem;--text-xl--line-height:calc(1.75/1.25);--text-2xl:1.5rem;--text-2xl--line-height:calc(2/1.5);--text-3xl:1.875rem;--text-3xl--line-height:calc(2.25/1.875);--text-4xl:2.25rem;--text-4xl--line-height:calc(2.5/2.25);--text-5xl:3rem;--text-5xl--line-height:1;--font-weight-light:300;--font-weight-medium:500;--font-weight-semibold:600;--font-weight-bold:700;--font-weight-extrabold:800;--leading-normal:1.5;--radius-md:.375rem;--radius-lg:.5rem;--radius-xl:.75rem;--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4,0,.2,1);--default-font-family:var(--font-sans);--default-mono-font-family:var(--font-mono)}}@layer base{*,:after,:before,::backdrop{box-sizing:border-box;border:0 solid;margin:0;padding:0}::file-selector-button{box-sizing:border-box;border:0 solid;margin:0;padding:0}html,:host{-webkit-text-size-adjust:100%;tab-size:4;line-height:1.5;font-family:var(--default-font-family,ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji");font-feature-settings:var(--default-font-feature-settings,normal);font-variation-settings:var(--default-font-variation-settings,normal);-webkit-tap-highlight-color:transparent}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:var(--default-mono-font-family,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace);font-feature-settings:var(--default-mono-font-feature-settings,normal);font-variation-settings:var(--default-mono-font-variation-settings,normal);font-size:1em}small{font-size:80%}sub,sup{vertical-align:baseline;font-size:75%;line-height:0;position:relative}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}:-moz-focusring{outline:auto}progress{vertical-align:baseline}summary{display:list-item}ol,ul,menu{list-style:none}img,svg,video,canvas,audio,iframe,embed,object{vertical-align:middle;display:block}img,video{max-width:100%;height:auto}button,input,select,optgroup,textarea{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}::file-selector-button{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}:where(select:is([multiple],[size])) optgroup{font-weight:bolder}:where(select:is([multiple],[size])) optgroup option{padding-inline-start:20px}::file-selector-button{margin-inline-end:4px}::placeholder{opacity:1}@supports (not ((-webkit-appearance:-apple-pay-button))) or (contain-intrinsic-size:1px){::placeholder{color:currentColor}@supports (color:color-mix(in lab, red, red)){::placeholder{color:color-mix(in oklab,currentcolor 50%,transparent)}}}textarea{resize:vertical}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-date-and-time-value{min-height:1lh;text-align:inherit}::-webkit-datetime-edit{display:inline-flex}::-webkit-datetime-edit-fields-wrapper{padding:0}::-webkit-datetime-edit{padding-block:0}::-webkit-datetime-edit-year-field{padding-block:0}::-webkit-datetime-edit-month-field{padding-block:0}::-webkit-datetime-edit-day-field{padding-block:0}::-webkit-datetime-edit-hour-field{padding-block:0}::-webkit-datetime-edit-minute-field{padding-block:0}::-webkit-datetime-edit-second-field{padding-block:0}::-webkit-datetime-edit-millisecond-field{padding-block:0}::-webkit-datetime-edit-meridiem-field{padding-block:0}::-webkit-calendar-picker-indicator{line-height:1}:-moz-ui-invalid{box-shadow:none}button,input:where([type=button],[type=reset],[type=submit]){appearance:button}::file-selector-button{appearance:button}::-webkit-inner-spin-button{height:auto}::-webkit-outer-spin-button{height:auto}[hidden]:where(:not([hidden=until-found])){display:none!important}}@layer components;@layer utilities{.\@container{container-type:inline-size}.visible{visibility:visible}.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.static{position:static}.sticky{position:sticky}.inset-0{inset:calc(var(--spacing)*0)}.inset-y-0{inset-block:calc(var(--spacing)*0)}.top-0{top:calc(var(--spacing)*0)}.top-5{top:calc(var(--spacing)*5)}.top-8{top:calc(var(--spacing)*8)}.right-5{right:calc(var(--spacing)*5)}.left-0{left:calc(var(--spacing)*0)}.z-10{z-index:10}.z-50{z-index:50}.col-span-full{grid-column:1/-1}.container{width:100%}@media (min-width:40rem){.container{max-width:40rem}}@media (min-width:48rem){.container{max-width:48rem}}@media (min-width:64rem){.container{max-width:64rem}}@media (min-width:80rem){.container{max-width:80rem}}@media (min-width:96rem){.container{max-width:96rem}}.mx-1{margin-inline:calc(var(--spacing)*1)}.mx-4{margin-inline:calc(var(--spacing)*4)}.mx-auto{margin-inline:auto}.my-4{margin-block:calc(var(--spacing)*4)}.mt-0\.5{margin-top:calc(var(--spacing)*.5)}.mt-1{margin-top:calc(var(--spacing)*1)}.mt-1\.5{margin-top:calc(var(--spacing)*1.5)}.mt-2{margin-top:calc(var(--spacing)*2)}.mt-3{margin-top:calc(var(--spacing)*3)}.mt-4{margin-top:calc(var(--spacing)*4)}.mt-6{margin-top:calc(var(--spacing)*6)}.mt-12{margin-top:calc(var(--spacing)*12)}.mt-auto{margin-top:auto}.mr-1{margin-right:calc(var(--spacing)*1)}.mr-2{margin-right:calc(var(--spacing)*2)}.mr-3{margin-right:calc(var(--spacing)*3)}.mb-1{margin-bottom:calc(var(--spacing)*1)}.mb-2{margin-bottom:calc(var(--spacing)*2)}.mb-3{margin-bottom:calc(var(--spacing)*3)}.mb-4{margin-bottom:calc(var(--spacing)*4)}.mb-6{margin-bottom:calc(var(--spacing)*6)}.mb-8{margin-bottom:calc(var(--spacing)*8)}.mb-12{margin-bottom:calc(var(--spacing)*12)}.ml-1{margin-left:calc(var(--spacing)*1)}.ml-2{margin-left:calc(var(--spacing)*2)}.line-clamp-2{-webkit-line-clamp:2;-webkit-box-orient:vertical;display:-webkit-box;overflow:hidden}.block{display:block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.inline{display:inline}.inline-block{display:inline-block}.table{display:table}.aspect-\[4\/3\]{aspect-ratio:4/3}.h-1{height:calc(var(--spacing)*1)}.h-4{height:calc(var(--spacing)*4)}.h-8{height:calc(var(--spacing)*8)}.h-12{height:calc(var(--spacing)*12)}.h-16{height:calc(var(--spacing)*16)}.h-full{height:100%}.max-h-48{max-height:calc(var(--spacing)*48)}.max-h-full{max-height:100%}.min-h-\[140px\]{min-height:140px}.min-h-screen{min-height:100vh}.w-0{width:calc(var(--spacing)*0)}.w-4{width:calc(var(--spacing)*4)}.w-8{width:calc(var(--spacing)*8)}.w-12{width:calc(var(--spacing)*12)}.w-full{width:100%}.max-w-2xl{max-width:var(--container-2xl)}.max-w-7xl{max-width:var(--container-7xl)}.max-w-full{max-width:100%}.max-w-lg{max-width:var(--container-lg)}.max-w-md{max-width:var(--container-md)}.max-w-sm{max-width:var(--container-sm)}.flex-1{flex:1}.shrink-0{flex-shrink:0}.flex-grow{flex-grow:1}.table-auto{table-layout:auto}.border-collapse{border-collapse:collapse}.transform{transform:var(--tw-rotate-x,)var(--tw-rotate-y,)var(--tw-rotate-z,)var(--tw-skew-x,)var(--tw-skew-y,)}.cursor-not-allowed{cursor:not-allowed}.cursor-pointer{cursor:pointer}.resize-none{resize:none}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.items-end{align-items:flex-end}.items-start{align-items:flex-start}.justify-between{justify-content:space-between}.justify-center{justify-content:center}.justify-end{justify-content:flex-end}.gap-1{gap:calc(var(--spacing)*1)}.gap-1\.5{gap:calc(var(--spacing)*1.5)}.gap-2{gap:calc(var(--spacing)*2)}.gap-3{gap:calc(var(--spacing)*3)}.gap-4{gap:calc(var(--spacing)*4)}.gap-6{gap:calc(var(--spacing)*6)}.gap-8{gap:calc(var(--spacing)*8)}:where(.space-y-0\.5>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*.5)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*.5)*calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-2>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*2)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*2)*calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-3>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*3)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*3)*calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-4>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*4)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*4)*calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-6>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*6)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*6)*calc(1 - var(--tw-space-y-reverse)))}.gap-x-6{column-gap:calc(var(--spacing)*6)}:where(.space-x-4>:not(:last-child)){--tw-space-x-reverse:0;margin-inline-start:calc(calc(var(--spacing)*4)*var(--tw-space-x-reverse));margin-inline-end:calc(calc(var(--spacing)*4)*calc(1 - var(--tw-space-x-reverse)))}.gap-y-10{row-gap:calc(var(--spacing)*10)}.truncate{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.rounded{border-radius:.25rem}.rounded-full{border-radius:3.40282e38px}.rounded-lg{border-radius:var(--radius-lg)}.rounded-md{border-radius:var(--radius-md)}.rounded-xl{border-radius:var(--radius-xl)}.rounded-t-xl{border-top-left-radius:var(--radius-xl);border-top-right-radius:var(--radius-xl)}.border{border-style:var(--tw-border-style);border-width:1px}.border-t{border-top-style:var(--tw-border-style);border-top-width:1px}.border-b{border-bottom-style:var(--tw-border-style);border-bottom-width:1px}.border-blue-100{border-color:var(--color-blue-100)}.border-blue-200{border-color:var(--color-blue-200)}.border-gray-100{border-color:var(--color-gray-100)}.border-gray-200{border-color:var(--color-gray-200)}.border-gray-300{border-color:var(--color-gray-300)}.border-green-500{border-color:var(--color-green-500)}.border-red-500{border-color:var(--color-red-500)}.bg-black{background-color:var(--color-black)}.bg-blue-50{background-color:var(--color-blue-50)}.bg-blue-100{background-color:var(--color-blue-100)}.bg-blue-600{background-color:var(--color-blue-600)}.bg-gray-50{background-color:var(--color-gray-50)}.bg-gray-100{background-color:var(--color-gray-100)}.bg-gray-200{background-color:var(--color-gray-200)}.bg-gray-300{background-color:var(--color-gray-300)}.bg-gray-600{background-color:var(--color-gray-600)}.bg-gray-800{background-color:var(--color-gray-800)}.bg-green-100{background-color:var(--color-green-100)}.bg-green-500{background-color:var(--color-green-500)}.bg-purple-100{background-color:var(--color-purple-100)}.bg-red-100{background-color:var(--color-red-100)}.bg-red-500{background-color:var(--color-red-500)}.bg-white{background-color:var(--color-white)}.bg-yellow-100{background-color:var(--color-yellow-100)}.bg-yellow-500{background-color:var(--color-yellow-500)}.object-contain{object-fit:contain}.object-cover{object-fit:cover}.p-1{padding:calc(var(--spacing)*1)}.p-2{padding:calc(var(--spacing)*2)}.p-3{padding:calc(var(--spacing)*3)}.p-4{padding:calc(var(--spacing)*4)}.p-6{padding:calc(var(--spacing)*6)}.p-8{padding:calc(var(--spacing)*8)}.px-1{padding-inline:calc(var(--spacing)*1)}.px-2{padding-inline:calc(var(--spacing)*2)}.px-3{padding-inline:calc(var(--spacing)*3)}.px-4{padding-inline:calc(var(--spacing)*4)}.px-5{padding-inline:calc(var(--spacing)*5)}.px-6{padding-inline:calc(var(--spacing)*6)}.py-0\.5{padding-block:calc(var(--spacing)*.5)}.py-1{padding-block:calc(var(--spacing)*1)}.py-1\.5{padding-block:calc(var(--spacing)*1.5)}.py-2{padding-block:calc(var(--spacing)*2)}.py-3{padding-block:calc(var(--spacing)*3)}.py-4{padding-block:calc(var(--spacing)*4)}.py-5{padding-block:calc(var(--spacing)*5)}.py-6{padding-block:calc(var(--spacing)*6)}.py-8{padding-block:calc(var(--spacing)*8)}.py-10{padding-block:calc(var(--spacing)*10)}.py-12{padding-block:calc(var(--spacing)*12)}.py-16{padding-block:calc(var(--spacing)*16)}.pt-2{padding-top:calc(var(--spacing)*2)}.pt-3{padding-top:calc(var(--spacing)*3)}.pt-4{padding-top:calc(var(--spacing)*4)}.pt-6{padding-top:calc(var(--spacing)*6)}.pr-2{padding-right:calc(var(--spacing)*2)}.pr-3{padding-right:calc(var(--spacing)*3)}.pb-1{padding-bottom:calc(var(--spacing)*1)}.pb-2{padding-bottom:calc(var(--spacing)*2)}.pb-3{padding-bottom:calc(var(--spacing)*3)}.pb-4{padding-bottom:calc(var(--spacing)*4)}.pb-6{padding-bottom:calc(var(--spacing)*6)}.pl-3{padding-left:calc(var(--spacing)*3)}.pl-10{padding-left:calc(var(--spacing)*10)}.text-center{text-align:center}.text-left{text-align:left}.text-right{text-align:right}.font-sans{font-family:var(--font-sans)}.text-2xl{font-size:var(--text-2xl);line-height:var(--tw-leading,var(--text-2xl--line-height))}.text-3xl{font-size:var(--text-3xl);line-height:var(--tw-leading,var(--text-3xl--line-height))}.text-4xl{font-size:var(--text-4xl);line-height:var(--tw-leading,var(--text-4xl--line-height))}.text-5xl{font-size:var(--text-5xl);line-height:var(--tw-leading,var(--text-5xl--line-height))}.text-base{font-size:var(--text-base);line-height:var(--tw-leading,var(--text-base--line-height))}.text-lg{font-size:var(--text-lg);line-height:var(--tw-leading,var(--text-lg--line-height))}.text-sm{font-size:var(--text-sm);line-height:var(--tw-leading,var(--text-sm--line-height))}.text-xl{font-size:var(--text-xl);line-height:var(--tw-leading,var(--text-xl--line-height))}.text-xs{font-size:var(--text-xs);line-height:var(--tw-leading,var(--text-xs--line-height))}.leading-normal{--tw-leading:var(--leading-normal);line-height:var(--leading-normal)}.font-bold{--tw-font-weight:var(--font-weight-bold);font-weight:var(--font-weight-bold)}.font-extrabold{--tw-font-weight:var(--font-weight-extrabold);font-weight:var(--font-weight-extrabold)}.font-light{--tw-font-weight:var(--font-weight-light);font-weight:var(--font-weight-light)}.font-medium{--tw-font-weight:var(--font-weight-medium);font-weight:var(--font-weight-medium)}.font-semibold{--tw-font-weight:var(--font-weight-semibold);font-weight:var(--font-weight-semibold)}.whitespace-nowrap{white-space:nowrap}.text-blue-400{color:var(--color-blue-400)}.text-blue-500{color:var(--color-blue-500)}.text-blue-600{color:var(--color-blue-600)}.text-blue-700{color:var(--color-blue-700)}.text-blue-800{color:var(--color-blue-800)}.text-gray-300{color:var(--color-gray-300)}.text-gray-400{color:var(--color-gray-400)}.text-gray-500{color:var(--color-gray-500)}.text-gray-600{color:var(--color-gray-600)}.text-gray-700{color:var(--color-gray-700)}.text-gray-800{color:var(--color-gray-800)}.text-gray-900{color:var(--color-gray-900)}.text-green-500{color:var(--color-green-500)}.text-green-600{color:var(--color-green-600)}.text-green-800{color:var(--color-green-800)}.text-orange-500{color:var(--color-orange-500)}.text-purple-500{color:var(--color-purple-500)}.text-purple-700{color:var(--color-purple-700)}.text-purple-800{color:var(--color-purple-800)}.text-red-400{color:var(--color-red-400)}.text-red-500{color:var(--color-red-500)}.text-red-600{color:var(--color-red-600)}.text-red-800{color:var(--color-red-800)}.text-white{color:var(--color-white)}.text-yellow-500{color:var(--color-yellow-500)}.text-yellow-600{color:var(--color-yellow-600)}.text-yellow-800{color:var(--color-yellow-800)}.uppercase{text-transform:uppercase}.italic{font-style:italic}.not-italic{font-style:normal}.underline{text-decoration-line:underline}.accent-blue-600{accent-color:var(--color-blue-600)}.opacity-0{opacity:0}.opacity-50{opacity:.5}.shadow{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a),0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-2xl{--tw-shadow:0 25px 50px -12px var(--tw-shadow-color,#00000040);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px var(--tw-shadow-color,#0000001a),0 4px 6px -4px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px var(--tw-shadow-color,#0000001a),0 2px 4px -2px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a),0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px var(--tw-shadow-color,#0000001a),0 8px 10px -6px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.ring-2{--tw-ring-shadow:var(--tw-ring-inset,)0 0 0 calc(2px + var(--tw-ring-offset-width))var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.ring-blue-400{--tw-ring-color:var(--color-blue-400)}.blur{--tw-blur:blur(8px);filter:var(--tw-blur,)var(--tw-brightness,)var(--tw-contrast,)var(--tw-grayscale,)var(--tw-hue-rotate,)var(--tw-invert,)var(--tw-saturate,)var(--tw-sepia,)var(--tw-drop-shadow,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter,display,content-visibility,overlay,pointer-events;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-all{transition-property:all;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-colors{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-shadow{transition-property:box-shadow;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-transform{transition-property:transform,translate,scale,rotate;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.duration-200{--tw-duration:.2s;transition-duration:.2s}.duration-300{--tw-duration:.3s;transition-duration:.3s}.outline-none{--tw-outline-style:none;outline-style:none}@media (hover:hover){.group-hover\:scale-105:is(:where(.group):hover *){--tw-scale-x:105%;--tw-scale-y:105%;--tw-scale-z:105%;scale:var(--tw-scale-x)var(--tw-scale-y)}}.invalid\:border-red-500:invalid{border-color:var(--color-red-500)}.invalid\:ring-red-500:invalid{--tw-ring-color:var(--color-red-500)}.focus-within\:ring-2:focus-within{--tw-ring-shadow:var(--tw-ring-inset,)0 0 0 calc(2px + var(--tw-ring-offset-width))var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.focus-within\:ring-blue-500:focus-within{--tw-ring-color:var(--color-blue-500)}@media (hover:hover){.hover\:border-blue-500:hover{border-color:var(--color-blue-500)}.hover\:bg-blue-50:hover{background-color:var(--color-blue-50)}.hover\:bg-blue-200:hover{background-color:var(--color-blue-200)}.hover\:bg-blue-600:hover{background-color:var(--color-blue-600)}.hover\:bg-blue-700:hover{background-color:var(--color-blue-700)}.hover\:bg-gray-50:hover{background-color:var(--color-gray-50)}.hover\:bg-gray-100:hover{background-color:var(--color-gray-100)}.hover\:bg-gray-200:hover{background-color:var(--color-gray-200)}.hover\:bg-gray-300:hover{background-color:var(--color-gray-300)}.hover\:bg-gray-400:hover{background-color:var(--color-gray-400)}.hover\:bg-red-200:hover{background-color:var(--color-red-200)}.hover\:text-blue-600:hover{color:var(--color-blue-600)}.hover\:text-blue-700:hover{color:var(--color-blue-700)}.hover\:text-blue-800:hover{color:var(--color-blue-800)}.hover\:text-gray-600:hover{color:var(--color-gray-600)}.hover\:text-green-700:hover{color:var(--color-green-700)}.hover\:text-purple-700:hover{color:var(--color-purple-700)}.hover\:text-red-600:hover{color:var(--color-red-600)}.hover\:text-red-700:hover{color:var(--color-red-700)}.hover\:text-white:hover{color:var(--color-white)}.hover\:text-yellow-700:hover{color:var(--color-yellow-700)}.hover\:underline:hover{text-decoration-line:underline}.hover\:shadow-lg:hover{--tw-shadow:0 10px 15px -3px var(--tw-shadow-color,#0000001a),0 4px 6px -4px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.hover\:shadow-md:hover{--tw-shadow:0 4px 6px -1px var(--tw-shadow-color,#0000001a),0 2px 4px -2px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}}.focus\:ring-2:focus{--tw-ring-shadow:var(--tw-ring-inset,)0 0 0 calc(2px + var(--tw-ring-offset-width))var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.focus\:ring-blue-400:focus{--tw-ring-color:var(--color-blue-400)}.focus\:ring-blue-500:focus{--tw-ring-color:var(--color-blue-500)}.focus\:outline-none:focus{--tw-outline-style:none;outline-style:none}.disabled\:cursor-not-allowed:disabled{cursor:not-allowed}.disabled\:opacity-50:disabled{opacity:.5}@media (min-width:40rem){.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.sm\:px-6{padding-inline:calc(var(--spacing)*6)}.sm\:text-4xl{font-size:var(--text-4xl);line-height:var(--tw-leading,var(--text-4xl--line-height))}}@media (min-width:48rem){.md\:w-1\/3{width:33.3333%}.md\:w-2\/3{width:66.6667%}.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.md\:flex-row{flex-direction:row}}@media (min-width:64rem){.lg\:col-span-1{grid-column:span 1/span 1}.lg\:col-span-2{grid-column:span 2/span 2}.lg\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.lg\:px-8{padding-inline:calc(var(--spacing)*8)}}@media (min-width:80rem){.xl\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.xl\:gap-x-8{column-gap:calc(var(--spacing)*8)}}@media (min-width:96rem){.\32 xl\:grid-cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}}}body{background-color:var(--color-gray-50);font-family:var(--font-sans);color:var(--color-gray-800)}@property --tw-rotate-x{syntax:"*";inherits:false}@property --tw-rotate-y{syntax:"*";inherits:false}@property --tw-rotate-z{syntax:"*";inherits:false}@property --tw-skew-x{syntax:"*";inherits:false}@property --tw-skew-y{syntax:"*";inherits:false}@property --tw-space-y-reverse{syntax:"*";inherits:false;initial-value:0}@property --tw-space-x-reverse{syntax:"*";inherits:false;initial-value:0}@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}@property --tw-leading{syntax:"*";inherits:false}@property --tw-font-weight{syntax:"*";inherits:false}@property --tw-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:"*";inherits:false}@property --tw-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-inset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:"*";inherits:false}@property --tw-inset-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-ring-color{syntax:"*";inherits:false}@property --tw-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:"*";inherits:false}@property --tw-inset-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:"*";inherits:false}@property --tw-ring-offset-width{syntax:"<length>";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:"*";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-blur{syntax:"*";inherits:false}@property --tw-brightness{syntax:"*";inherits:false}@property --tw-contrast{syntax:"*";inherits:false}@property --tw-grayscale{syntax:"*";inherits:false}@property --tw-hue-rotate{syntax:"*";inherits:false}@property --tw-invert{syntax:"*";inherits:false}@property --tw-opacity{syntax:"*";inherits:false}@property --tw-saturate{syntax:"*";inherits:false}@property --tw-sepia{syntax:"*";inherits:false}@property --tw-drop-shadow{syntax:"*";inherits:false}@property --tw-drop-shadow-color{syntax:"*";inherits:false}@property --tw-drop-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-drop-shadow-size{syntax:"*";inherits:false}@property --tw-duration{syntax:"*";inherits:false}@property --tw-scale-x{syntax:"*";inherits:false;initial-value:1}@property --tw-scale-y{syntax:"*";inherits:false;initial-value:1}@property --tw-scale-z{syntax:"*";inherits:false;initial-value:1}
+
+================ frontend\css\styles.css ================
+
+@import "tailwindcss";
+
+/* Custom Styles if needed (minimal, using Tailwind classes mostly) */
+body {
+    @apply bg-gray-50 text-gray-800 font-sans;
+}
+
+================ frontend\js\api.js ================
+
+const API_BASE_URL = 'http://localhost:8080/api';
+
+class Api {
+
+    static async request(endpoint, method = 'GET', body = null, options = {}) {
+
+        const isPublic = options.public === true;
+
+        const headers = {};
+
+        if (!isPublic) {
+            const token = localStorage.getItem('token');
+
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+        }
+
+        if (body) {
+            headers['Content-Type'] = 'application/json';
+        }
+
+        const fetchOptions = {
+            method,
+            headers
+        };
+
+        if (body) {
+            fetchOptions.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
+
+        /* --------------------------------------------------
+           MANEJO DE AUTENTICACIÓN CORREGIDO
+        -------------------------------------------------- */
+
+        // SOLO 401 significa token inválido
+        if (!isPublic && response.status === 401) {
+
+            console.warn("Token inválido o expirado");
+
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+
+            window.location.href = 'login.html';
+
+            throw new Error('Sesión expirada');
+        }
+
+        // 403 = permiso denegado
+        if (response.status === 403) {
+
+            console.warn("Acceso denegado:", endpoint);
+
+            throw new Error('No tienes permisos para realizar esta acción');
+        }
+
+        if (response.status === 204) {
+            return null;
+        }
+
+        if (!response.ok) {
+
+            let message = `Error ${response.status}`;
+
+            try {
+                const errorData = await response.json();
+
+                if (errorData && errorData.message) {
+                    message = errorData.message;
+                }
+
+            } catch {
+                // ignore
+            }
+
+            throw new Error(message);
+        }
+
+        return response.json();
+    }
+
+    static get(endpoint, options = {}) {
+        return this.request(endpoint, 'GET', null, options);
+    }
+
+    static post(endpoint, body, options = {}) {
+        return this.request(endpoint, 'POST', body, options);
+    }
+
+    static put(endpoint, body, options = {}) {
+        return this.request(endpoint, 'PUT', body, options);
+    }
+
+    static delete(endpoint, options = {}) {
+        return this.request(endpoint, 'DELETE', null, options);
+    }
+}
+
+export default Api;
+
+================ frontend\js\app.js ================
+
+/**
+ * app.js – Landing Page (index.html)
+ * ─────────────────────────────────────────────────────────────
+ * Muestra productos para usuarios NO autenticados.
+ * IMPORTANTE: El botón "Agregar al Carrito" NO se muestra en
+ * esta vista. El usuario debe iniciar sesión para comprar.
+ * ─────────────────────────────────────────────────────────────
+ */
+document.addEventListener('DOMContentLoaded', async () => {
+    const productList = document.getElementById('product-list');
+
+    try {
+        const response = await fetch('http://localhost:8080/api/productos');
+        if (!response.ok) throw new Error('Error fetching products');
+
+        const products = await response.json();
+
+        if (products.length === 0) {
+            productList.innerHTML = '<p class="col-span-full text-center text-gray-500 py-12">No hay productos disponibles.</p>';
+            return;
+        }
+
+        productList.innerHTML = products.map(product => {
+            const imagenes = product.imagenes || [];
+            const imgDefault = imagenes.find(i => i.isDefault) || imagenes[0];
+            const imgSrc = imgDefault ? imgDefault.imagenUrl : null;
+
+            const tipo = product.tipo || (product.peso !== undefined && !product.urlDescarga ? 'Físico' : 'Digital');
+            const tipoBadge = (tipo === 'Fisico' || tipo === 'Físico')
+                ? '<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">Físico</span>'
+                : '<span class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">Digital</span>';
+
+            const descripcionHtml = product.descripcion
+                ? `<p class="mt-1 text-sm text-gray-500">${product.descripcion}</p>`
+                : '';
+
+            return `
+            <div class="group bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
+                <div class="relative w-full aspect-[4/3] overflow-hidden rounded-t-xl bg-white flex items-center justify-center">
+                    ${imgSrc
+                    ? `<img src="${imgSrc}" 
+                            srcset="
+                                ${imgSrc} 400w,
+                                ${imgSrc} 800w,
+                                ${imgSrc} 1200w
+                            "
+                            sizes="
+                                (max-width:640px) 100vw,
+                                (max-width:1024px) 50vw,
+                                25vw
+                            "
+                            alt="${product.nombre}" 
+                            loading="lazy"
+                            decoding="async"
+                            class="
+                                absolute 
+                                inset-0 
+                                w-full 
+                                h-full 
+                                object-contain 
+                                p-4 
+                                transition-transform 
+                                duration-300 
+                                group-hover:scale-105 
+                                cursor-pointer
+                            "
+                            style="aspect-ratio:4/3"
+                            onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=Sin+imagen'">`
+                    : `<div class="flex items-center justify-center h-full text-gray-300">
+                               <svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                       d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                               </svg>
+                           </div>`
+                }
+                </div>
+                <div class="p-4 flex flex-col flex-1 min-h-[140px]">
+                    <div class="flex justify-between items-start gap-1 mb-1">
+                        <h3 class="text-base font-semibold text-gray-900">${product.nombre}</h3>
+                        ${tipoBadge}
+                    </div>
+                    ${descripcionHtml}
+                    <div class="mt-auto pt-3 flex items-center justify-between">
+                        <span class="text-xl font-bold text-gray-900">${product.precio.toFixed(2)}</span>
+                    </div>
+                    <!-- El botón de carrito NO aparece para usuarios no autenticados -->
+                    <a href="login.html"
+                        class="mt-3 w-full text-center bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors duration-200 border border-gray-200">
+                        Iniciar sesión para comprar
+                    </a>
+                </div>
+            </div>`;
+        }).join('');
+
+    } catch (error) {
+        console.error(error);
+        productList.innerHTML = '<p class="col-span-full text-center text-red-500">No se pudieron cargar los productos. Asegúrate de que el backend esté corriendo.</p>';
+    }
+});
+
+
+================ frontend\js\appcust.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+
+    UI.renderNavBar({ containerId: 'mainNav', context: 'products' });
+
+    const productList = document.getElementById('product-list-customer');
+
+    try {
+        const products = await Api.get('/productos');
+        if (!products) throw new Error('Error fetching products');
+
+        if (products.length === 0) {
+            productList.innerHTML = '<p class="col-span-full text-center text-gray-500 py-12">No hay productos disponibles.</p>';
+            return;
+        }
+
+        // Renderizar tarjetas en GRID (layout de productoscustomer)
+        const fragment = document.createDocumentFragment();
+
+        products.forEach(product => {
+            const card = buildProductCard(product);
+            fragment.appendChild(card);
+        });
+
+        productList.innerHTML = '';
+        productList.appendChild(fragment);
+
+    } catch (error) {
+        console.error(error);
+        productList.innerHTML = '<p class="col-span-full text-center text-red-500 py-8">No se pudieron cargar los productos. Asegúrate de que el backend esté corriendo.</p>';
+    }
+
+    // Delegación de eventos: Agregar al carrito
+    productList.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-action="carrito"]');
+        if (!btn) return;
+        try {
+            await Api.post(`/carrito/productos/${btn.dataset.id}`);
+            UI.showNotification('Producto agregado al carrito');
+            UI.updateCartBadge();
+        } catch (err) {
+            UI.showNotification('No se pudo agregar al carrito', 'error');
+        }
+    });
+
+    // Delegación de eventos: Abrir galería de imágenes al click
+    productList.addEventListener('click', (e) => {
+
+        const img = e.target.closest('[data-action="galeria"]');
+        if (!img) return;
+
+        const card = img.closest('article');
+        const urls = JSON.parse(card.dataset.images);
+
+        abrirGaleria(urls, 0);
+
+    });
+
+    // Logout global
+    window.logout = () => Auth.logout();
+});
+
+// ── Construir tarjeta de producto (grid) ──────────────────────────────────────
+function buildProductCard(product) {
+
+    if (!Auth.requireAuth(["CUSTOMER"])) return;
+
+    const imagenes = product.imagenes || [];
+    const imgDefault = imagenes.find(i => i.isDefault) || imagenes[0];
+
+    const card = document.createElement('article');
+
+    card.className = `
+        group relative bg-white border border-gray-200
+        rounded-xl shadow-sm hover:shadow-lg
+        transition-shadow duration-200 flex flex-col
+    `;
+
+    card.dataset.productId = product.id;
+    card.dataset.images = JSON.stringify(imagenes.map(i => i.imagenUrl));
+
+    const tipo = product.tipo || (product.peso !== undefined ? 'Físico' : 'Digital');
+
+    const badge =
+        tipo === 'Fisico'
+            ? `<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">Físico</span>`
+            : `<span class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">Digital</span>`;
+
+    const imgSrc = imgDefault ? imgDefault.imagenUrl : null;
+
+    card.innerHTML = `
+        
+        <div class="relative w-full rounded-t-xl bg-white aspect-[4/3] flex items-center justify-center">
+
+        ${imgSrc
+            ? `<img
+                src="${imgSrc}"
+                alt="${product.nombre}"
+                loading="lazy"
+                decoding="async"
+                class="absolute inset-0 w-full h-full object-contain p-4 transition-transform duration-300 group-hover:scale-105 cursor-pointer"
+                data-action="galeria"
+                onerror="this.src='https://via.placeholder.com/400?text=Sin+imagen'">`
+            : `<div class="flex items-center justify-center w-full h-full text-gray-300">
+                <i class="fas fa-image text-5xl"></i>
+            </div>`
+        }
+        </div>
+        <div class="p-4 flex flex-col flex-1 min-h-[140px]">
+
+            <div class="flex items-start justify-between gap-2 mb-1">
+                <h3 class="text-base font-semibold text-gray-900">
+                    ${product.nombre}
+                </h3>
+                ${badge}
+            </div>
+
+            ${product.descripcion
+            ? `<p class="mt-1 text-sm text-gray-500">${product.descripcion}</p>`
+            : ''}
+
+            <div class="mt-auto pt-3">
+
+                <span class="text-xl font-bold text-gray-900">
+                    ${UI.formatCurrency(product.precio)}
+                </span>
+
+                <button
+                    class="mt-3 w-full bg-blue-600 hover:bg-blue-700
+                    text-white py-2 rounded-lg text-sm font-medium
+                    flex items-center justify-center gap-2"
+                    data-action="carrito"
+                    data-id="${product.id}">
+
+                    <i class="fas fa-cart-plus"></i>
+                    Agregar al Carrito
+
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+    return card;
+}
+
+// ── Galería / Popup de imágenes ────────────────────────────────────────────────
+let galeriaActual = [];
+let galeriaIndex = 0;
+
+function abrirGaleria(urls, startIndex = 0) {
+
+    if (!urls || urls.length === 0) return;
+
+    galeriaActual = urls;
+    galeriaIndex = startIndex;
+
+    let overlay = document.getElementById("galeriaOverlay");
+
+    if (!overlay) {
+
+        overlay = document.createElement("div");
+        overlay.id = "galeriaOverlay";
+
+        overlay.style.position = "fixed";
+        overlay.style.inset = "0";
+        overlay.style.background = "rgba(0,0,0,0.95)";
+        overlay.style.zIndex = "9999";
+        overlay.style.display = "flex";
+        overlay.style.alignItems = "center";
+        overlay.style.justifyContent = "center";
+
+        overlay.innerHTML = `
+
+        <!-- BOTON CERRAR -->
+        <button id="btnGaleriaClose"
+            style="
+            position:absolute;
+            top:15px;
+            right:25px;
+            font-size:32px;
+            color:white;
+            background:none;
+            border:none;
+            cursor:pointer;
+            z-index:10000;">
+            <i class="fas fa-times"></i>
+        </button>
+
+        <div style="position:relative;width:100%;max-width:1100px;padding:20px">
+
+            <!-- contenedor imagen -->
+            <div style="
+                position:relative;
+                width:100%;
+                height:520px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                background:white;
+                border-radius:10px;
+                overflow:hidden;
+            ">
+
+                <button id="btnGaleriaPrev"
+                    style="
+                    position:absolute;
+                    left:15px;
+                    width:45px;
+                    height:45px;
+                    border-radius:50%;
+                    background:rgba(252, 251, 251, 0.6);
+                    color:black;
+                    border:none;
+                    cursor:pointer;
+                    z-index:10">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+
+                <img id="galeriaImg"
+                    style="
+                    max-width:90%;
+                    max-height:90%;
+                    object-fit:contain;
+                    ">
+
+                <button id="btnGaleriaNext"
+                    style="
+                    position:absolute;
+                    right:15px;
+                    width:45px;
+                    height:45px;
+                    border-radius:50%;
+                    background:rgba(252, 251, 251, 0.6);
+                    color:black;
+                    border:none;
+                    cursor:pointer;
+                    z-index:10">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+
+            </div>
+
+            <div id="galeriaCounter"
+                style="color:white;text-align:center;margin-top:8px"></div>
+
+            <div id="galeriaThumbs"
+                style="
+                margin-top:12px;
+                display:flex;
+                gap:8px;
+                justify-content:center;
+                flex-wrap:wrap;
+                max-height:110px;
+                overflow-y:auto"></div>
+
+        </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        document.getElementById("btnGaleriaClose")
+            .addEventListener("click", cerrarGaleria);
+
+        document.getElementById("btnGaleriaPrev")
+            .addEventListener("click", () => navegarGaleria(-1));
+
+        document.getElementById("btnGaleriaNext")
+            .addEventListener("click", () => navegarGaleria(1));
+
+        overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) cerrarGaleria();
+        });
+
+    }
+
+    overlay.style.display = "flex";
+
+    actualizarGaleria();
+}
+
+function cerrarGaleria() {
+
+    const overlay = document.getElementById("galeriaOverlay");
+
+    if (!overlay) return;
+
+    overlay.style.display = "none";
+}
+
+function navegarGaleria(dir) {
+    galeriaIndex = (galeriaIndex + dir + galeriaActual.length) % galeriaActual.length;
+    actualizarGaleria();
+}
+
+function actualizarGaleria() {
+
+    const img = document.getElementById("galeriaImg");
+    const counter = document.getElementById("galeriaCounter");
+    const thumbs = document.getElementById("galeriaThumbs");
+
+    if (!img) return;
+
+    img.src = galeriaActual[galeriaIndex];
+
+    counter.textContent =
+        `${galeriaIndex + 1} / ${galeriaActual.length}`;
+
+    thumbs.innerHTML = "";
+
+    galeriaActual.forEach((url, i) => {
+
+        const thumb = document.createElement("img");
+
+        thumb.src = url;
+
+        thumb.style.width = "80px";
+        thumb.style.height = "80px";
+        thumb.style.objectFit = "cover";
+        thumb.style.borderRadius = "6px";
+        thumb.style.cursor = "pointer";
+        thumb.style.border =
+            i === galeriaIndex
+                ? "3px solid #3b82f6"
+                : "2px solid transparent";
+
+        thumb.onclick = () => {
+            galeriaIndex = i;
+            actualizarGaleria();
+        };
+
+        thumbs.appendChild(thumb);
+
+    });
+
+    const hideNav = galeriaActual.length <= 1;
+
+    document.getElementById("btnGaleriaPrev").style.display =
+        hideNav ? "none" : "block";
+
+    document.getElementById("btnGaleriaNext").style.display =
+        hideNav ? "none" : "block";
+}
+
+window.__galeriaGoTo = (idx) => {
+    galeriaIndex = idx;
+    actualizarGaleria();
+};
+
+
+================ frontend\js\auth.js ================
+
+import Api from './api.js';
+
+const Auth = {
+
+    login: async (email, password) => {
+        try {
+
+            const response = await Api.post(
+                '/auth/login',
+                { email, password },    // 🔑 CLAVE
+                { public: true }
+            );
+            // Save session 
+            localStorage.setItem('user', JSON.stringify(response));
+            localStorage.setItem('token', response.token);
+
+            Auth.redirectBasedOnRole(response.role);
+
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    logout: () => {
+        // Limpiar sesión
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+
+        window.location.href = 'index.html';
+    },
+
+    getCurrentUser: () => {
+
+        const userStr = localStorage.getItem('user');
+
+        if (!userStr) return null;
+
+        try {
+            return JSON.parse(userStr);
+        } catch {
+            return null;
+        }
+    },
+
+    getToken: () => {
+        return localStorage.getItem('token');
+    },
+
+    isAuthenticated: () => {
+
+        const token = Auth.getToken();
+
+        if (!token) return false;
+
+        return token !== null && token !== undefined && token.length > 0;
+    },
+
+    requireAuth: (allowedRoles = []) => {
+
+        const user = Auth.getCurrentUser();
+
+        if (!Auth.isAuthenticated() || !user) {
+            window.location.href = 'login.html';
+            return false;
+        }
+
+        // Validación ADMIN expirado
+        if (user.role === 'ADMIN' && user.validUntil) {
+
+            const validUntil = new Date(user.validUntil);
+
+            if (validUntil < new Date()) {
+
+                alert('Tu rol de administrador ha expirado');
+
+                Auth.logout();
+
+                return false;
+            }
+        }
+
+        // Validación de roles permitidos
+        if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+
+            alert('Acceso no autorizado para tu rol.');
+
+            window.location.href = 'index.html'; // Fallback
+
+            return false;
+        }
+
+        return true;
+    },
+
+    redirectBasedOnRole: (role) => {
+
+        if (role === 'ADMIN' || role === 'SUPPLIER') {
+
+            window.location.href = 'productos.html';
+
+        } else {
+
+            window.location.href = 'productoscustomer.html';
+
+        }
+    }
+
+};
+
+
+// -----------------------------
+// LOGIN FORM
+// -----------------------------
+
+const loginForm = document.getElementById('loginForm');
+
+if (loginForm) {
+
+    loginForm.addEventListener('submit', async (e) => {
+
+        e.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        const errorMessage = document.getElementById('errorMessage');
+
+        try {
+
+            await Auth.login(email, password);
+
+        } catch (error) {
+
+            console.error(error.message);
+
+            errorMessage.textContent = 'Credenciales inválidas o error de conexión';
+
+            errorMessage.classList.remove('hidden');
+        }
+    });
+}
+
+
+// Exponer logout globalmente
+window.logout = Auth.logout;
+
+export default Auth;
+
+================ frontend\js\carrito.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Auth Check
+    if (!Auth.isAuthenticated()) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'cart'
+    });
+    cargarCarrito();
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    // Phase 2: Order implementation
+    const btnOrder = document.getElementById('btnOrder');
+    if (btnOrder) {
+        btnOrder.addEventListener('click', realizarOrder);
+    }
+
+    const btnVaciar = document.getElementById('btnVaciar');
+    if (btnVaciar) {
+        btnVaciar.addEventListener('click', vaciarCarrito);
+    }
+}
+
+async function cargarCarrito() {
+    try {
+        const carrito = await Api.get('/carrito');
+        renderizarCarrito(carrito);
+    } catch (error) {
+        // If 404, it might mean empty logic so we show empty state
+        if (error.message && error.message.includes('404')) {
+            renderizarCarrito({ productos: [] });
+        } else {
+            // UI.showNotification('Error al cargar el carrito ' + error.message, 'error');
+            // Fallback for empty
+            renderizarCarrito({ productos: [] });
+        }
+    }
+}
+
+function actualizarEstadoAccionesCarrito(hayProductos) {
+    const btnOrder = document.getElementById('btnOrder');
+    const btnVaciar = document.getElementById('btnVaciar');
+
+    [btnOrder, btnVaciar].forEach(btn => {
+        if (!btn) return;
+
+        btn.disabled = !hayProductos;
+
+        if (!hayProductos) {
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    });
+}
+
+function renderizarCarrito(carrito) {
+    const tbody = document.getElementById('listaCarrito');
+    if (!tbody) return;
+
+    const emptyCartMsg = document.getElementById('emptyCart');
+
+    tbody.innerHTML = '';
+
+    const productos = carrito.productos || [];
+
+    // ✅ Caso carrito vacío
+    if (productos.length === 0) {
+        if (emptyCartMsg) emptyCartMsg.classList.remove('hidden');
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-4 text-gray-500">
+                    El carrito está vacío
+                </td>
+            </tr>
+        `;
+
+        actualizarTotales(0);
+        actualizarEstadoAccionesCarrito(false);
+        return;
+    }
+
+    // ✅ Hay productos
+    if (emptyCartMsg) emptyCartMsg.classList.add('hidden');
+
+    // Agrupar productos
+    const productosMap = new Map();
+
+    productos.forEach(p => {
+        if (productosMap.has(p.id)) {
+            productosMap.get(p.id).cantidad++;
+        } else {
+            productosMap.set(p.id, { ...p, cantidad: 1 });
+        }
+    });
+
+    let subtotal = 0;
+
+    productosMap.forEach(p => {
+        const totalProducto = p.precio * p.cantidad;
+        subtotal += totalProducto;
+
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-200';
+        row.innerHTML = `
+            <td class="py-3 px-6 text-left font-medium">${p.nombre}</td>
+            <td class="py-3 px-6 text-left">${UI.formatCurrency(p.precio)}</td>
+            <td class="py-3 px-6 text-center">
+                <div class="flex items-center justify-center gap-2">
+                    <button class="bg-gray-200 px-2 rounded hover:bg-gray-300" onclick="window.eliminarDelCarrito(${p.id})">-</button>
+                    <span>${p.cantidad}</span>
+                    <button class="bg-gray-200 px-2 rounded hover:bg-gray-300" onclick="window.agregarAlCarrito(${p.id})">+</button>
+                </div>
+            </td>
+            <td class="py-3 px-6 text-right font-bold">${UI.formatCurrency(totalProducto)}</td>
+            <td class="py-3 px-6 text-center">
+                <button class="text-red-500 hover:text-red-700" onclick="window.eliminarDelCarrito(${p.id})">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    actualizarTotales(subtotal);
+    actualizarEstadoAccionesCarrito(true);
+}
+
+function actualizarTotales(subtotal) {
+    const impuestos = subtotal * 0.16; // 16% tax
+    const total = subtotal + impuestos;
+
+    const elSub = document.getElementById('subtotal');
+    const elImp = document.getElementById('impuestos');
+    const elTot = document.getElementById('total');
+
+    if (elSub) elSub.textContent = UI.formatCurrency(subtotal);
+    if (elImp) elImp.textContent = UI.formatCurrency(impuestos);
+    if (elTot) elTot.textContent = UI.formatCurrency(total);
+}
+
+window.agregarAlCarrito = async (productoId) => {
+    try {
+        await Api.post(`/carrito/productos/${productoId}`);
+        cargarCarrito();
+        UI.updateCartBadge();
+        UI.showNotification('Cantidad actualizada');
+    } catch (error) {
+        UI.showNotification('Error al actualizar', 'error');
+    }
+};
+
+window.eliminarDelCarrito = async (productoId) => {
+    try {
+        await Api.delete(`/carrito/productos/${productoId}`);
+        cargarCarrito();
+        UI.updateCartBadge();
+        UI.showNotification('Producto eliminado');
+    } catch (error) {
+        UI.showNotification('Error al eliminar', 'error');
+    }
+};
+
+async function realizarOrder() {
+    if (!confirm('¿Confirmar pedido?')) return;
+
+    try {
+        await Api.post('/ordenes/checkout');
+        // Redirect or show success
+        UI.showNotification('¡Pedido realizado con éxito!', 'success');
+        setTimeout(() => {
+            window.location.href = 'ordenes.html';
+        }, 1500);
+    } catch (error) {
+        UI.showNotification('Error en la generacion del pedido: ' + error.message, 'error');
+    }
+}
+
+async function vaciarCarrito() {
+    if (!confirm('¿Vaciar el carrito completo?')) return;
+
+    try {
+        await Api.delete('/carrito');
+        cargarCarrito();
+        UI.updateCartBadge();
+        UI.showNotification('Carrito vaciado');
+    } catch (error) {
+        UI.showNotification('Error al vaciar carrito', 'error');
+    }
+}
+
+================ frontend\js\checkout.js ================
+
+import Api from './api.js'
+import { UI } from './ui.js'
+import Auth from './auth.js'
+
+const Checkout = {
+
+    orden: null,
+    direccion: null,
+    metodoPago: "Tarjeta",
+
+    async init() {
+
+        if (!Auth.requireAuth(["CUSTOMER", "ADMIN"])) return
+
+        UI.renderNavBar({
+            containerId: "mainNav",
+            context: "checkout"
+        })
+
+        const params = new URLSearchParams(window.location.search)
+        const id = params.get("ordenId")
+
+        await this.loadData(id)
+
+        this.bindEvents()
+
+    },
+
+    async loadData(id) {
+        this.ordenId = id; // Could be null
+        let userIdToFetch = Auth.getCurrentUser().id;
+
+        if (id) {
+            const ordenes = await Api.get("/ordenes");
+            this.orden = ordenes.find(o => o.id == id);
+            if (this.orden && this.orden.usuarioId) {
+                userIdToFetch = this.orden.usuarioId;
+            }
+            this.renderResumenFromOrden();
+        } else {
+            const carrito = await Api.get("/carrito");
+            this.carrito = carrito;
+            this.renderResumenFromCarrito();
+        }
+
+        const [direcciones, usuarioData] = await Promise.all([
+            Api.get(`/direcciones/usuario/${userIdToFetch}`),
+            Api.get(`/usuarios/${userIdToFetch}`)
+        ]);
+
+        this.usuarioRfc = usuarioData.rfcCurp;
+
+        // Force re-render after capturing RFC
+        if (id) {
+            this.renderResumenFromOrden();
+        } else {
+            this.renderResumenFromCarrito();
+        }
+
+        this.renderDirecciones(direcciones);
+    },
+
+    bindEvents() {
+
+        document
+            .querySelectorAll('input[name="metodoPago"]')
+            .forEach(r => {
+
+                r.addEventListener("change", (e) => {
+                    this.metodoPago = e.target.value
+                    this.updateMetodoPago()
+                })
+
+            })
+
+        document
+            .getElementById("checkoutForm")
+            .addEventListener("submit", (e) => this.procesarPago(e))
+
+    },
+
+    renderDirecciones(list) {
+
+        const cont = document.getElementById("listaDirecciones")
+        const loading = document.getElementById("loadingDirecciones")
+
+        loading.classList.add("hidden")
+        cont.classList.remove("hidden")
+
+        cont.innerHTML = ""
+
+        if (!list || list.length === 0) {
+
+            document.getElementById("noDirecciones").classList.remove("hidden")
+            return
+        }
+
+        list.sort((a, b) => b.preferida - a.preferida);
+
+        list.forEach((dir, index) => {
+
+            const card = document.createElement("div")
+
+            card.className =
+                "direccion-card border p-4 rounded-lg cursor-pointer hover:border-blue-500 transition"
+
+            card.innerHTML = `
+                <strong class="inline-block text-gray-800">${dir.alias || "Dirección"}</strong> ${dir.preferida ? '<span class="badge-preferida"><i class="fas fa-star"></i> Preferida</span>' : ''}
+                <p class="text-sm text-gray-600">${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ', Int. ' + dir.numeroInterior : ''}</p>
+                <p class="text-sm text-gray-600">${dir.colonia}</p>
+                <p class="text-sm text-gray-600">${dir.ciudad}</p>
+                <p class="text-sm text-gray-600">${dir.municipio}, ${dir.estado}</p>
+                <p class="text-sm text-gray-600">C.P. ${dir.codigoPostal}</p>
+                <p class="text-sm text-gray-600">${dir.referencia ? `<p class="text-xs text-gray-400">${dir.referencia}</p>` : ''}</p>
+            `
+            card.addEventListener("click", () => {
+
+                this.direccion = dir.id
+
+                document
+                    .querySelectorAll(".direccion-card")
+                    .forEach(c => {
+                        c.classList.remove("ring-2", "ring-blue-400", "bg-blue-50")
+                    })
+
+                card.classList.add("ring-2", "ring-blue-400", "bg-blue-50", "shadow-sm")
+
+            })
+
+            cont.appendChild(card)
+
+            // seleccionar direccion preferida automaticamente
+            if (index === 0) {
+
+                this.direccion = dir.id
+                card.classList.add("ring-2", "ring-blue-400", "bg-blue-50", "shadow-sm")
+
+            }
+
+        })
+
+    },
+
+    renderResumenFromOrden() {
+        const orden = this.orden;
+
+        document.getElementById("loadingResumen").classList.add("hidden")
+        document.getElementById("resumenContent").classList.remove("hidden")
+
+        if (this.usuarioRfc) {
+            const container = document.getElementById("rfcContainer");
+            if (container) {
+                container.classList.remove("hidden");
+                document.getElementById("checkoutRfcDisplay").textContent = this.usuarioRfc;
+            }
+        }
+
+        document.getElementById("ordenIdDisplay").textContent = orden.id
+        document.getElementById("ordenEstadoDisplay").textContent = orden.estado
+
+        const ul = document.getElementById("listaResumenItems")
+        ul.innerHTML = ""
+
+        let subtotal = 0
+
+        orden.detalles.forEach(d => {
+            const nombre = d.productoNombre || (d.producto?.nombre) || "Producto"
+            const sub = d.subtotal || (d.precio * d.cantidad)
+
+            subtotal += sub
+
+            const li = document.createElement("li")
+            li.className = "flex justify-between text-sm"
+            li.innerHTML = `
+                <span>${d.cantidad}x ${nombre}</span>
+                <span>${UI.formatCurrency(sub)}</span>
+            `
+            ul.appendChild(li)
+        })
+
+        const tax = subtotal * 0.16
+        const total = subtotal + tax
+
+        document.getElementById("resumenSubtotal").textContent = UI.formatCurrency(subtotal)
+        document.getElementById("resumenImpuestos").textContent = UI.formatCurrency(tax)
+        document.getElementById("resumenTotal").textContent = UI.formatCurrency(total)
+    },
+
+    renderResumenFromCarrito() {
+        if (!this.carrito || !this.carrito.productos || this.carrito.productos.length === 0) {
+            UI.showNotification("Tu carrito está vacío", "warning");
+            setTimeout(() => window.location.href = "carrito.html", 1500);
+            return;
+        }
+
+        document.getElementById("loadingResumen").classList.add("hidden");
+        document.getElementById("resumenContent").classList.remove("hidden");
+        
+        if (this.usuarioRfc) {
+            const container = document.getElementById("rfcContainer");
+            if (container) {
+                container.classList.remove("hidden");
+                document.getElementById("checkoutRfcDisplay").textContent = this.usuarioRfc;
+            }
+        }
+        
+        document.getElementById("ordenIdDisplay").textContent = "Nueva";
+        document.getElementById("ordenEstadoDisplay").textContent = "PENDING";
+
+        const ul = document.getElementById("listaResumenItems");
+        ul.innerHTML = "";
+
+        let subtotal = 0;
+        const map = new Map();
+        this.carrito.productos.forEach(p => {
+            if (map.has(p.id)) map.get(p.id).cantidad++;
+            else map.set(p.id, { ...p, cantidad: 1 });
+        });
+
+        map.forEach(p => {
+            const sub = p.precio * p.cantidad;
+            subtotal += sub;
+
+            const li = document.createElement("li");
+            li.className = "flex justify-between text-sm";
+            li.innerHTML = `
+                <span>${p.cantidad}x ${p.nombre}</span>
+                <span>${UI.formatCurrency(sub)}</span>
+            `;
+            ul.appendChild(li);
+        });
+
+        const tax = subtotal * 0.16;
+        const total = subtotal + tax;
+
+        document.getElementById("resumenSubtotal").textContent = UI.formatCurrency(subtotal);
+        document.getElementById("resumenImpuestos").textContent = UI.formatCurrency(tax);
+        document.getElementById("resumenTotal").textContent = UI.formatCurrency(total);
+    },
+
+    updateMetodoPago() {
+
+        const panel = document.getElementById("panelTarjeta")
+        const msg = document.getElementById("panelMensajeStatic")
+        const text = document.getElementById("mensajeEstatico")
+
+        if (this.metodoPago === "Tarjeta") {
+
+            panel.classList.remove("hidden")
+            msg.classList.add("hidden")
+
+        } else {
+
+            panel.classList.add("hidden")
+            msg.classList.remove("hidden")
+
+            text.textContent =
+                this.metodoPago === "PayPal"
+                    ? "Serás redirigido a PayPal"
+                    : "Se mostrarán datos bancarios"
+
+        }
+
+    },
+
+    async procesarPago(e) {
+
+        e.preventDefault()
+
+        if (!this.direccion) {
+            UI.showNotification("Selecciona una dirección", "warning")
+            return
+        }
+
+        const btn = document.getElementById("btnProcesarPago")
+        btn.disabled = true
+
+        try {
+            let actualOrdenId = this.ordenId;
+
+            // FASE 1: Crear la orden si no existe (viniendo del carrito)
+            if (!actualOrdenId) {
+                const urlCheckout = `/ordenes/checkout?direccionId=${this.direccion}`;
+                const nuevaOrden = await Api.post(urlCheckout);
+                actualOrdenId = nuevaOrden.id;
+                this.ordenId = actualOrdenId; // guardarlo por si falla el pago y quiere reintentar
+            }
+
+            // FASE 2: Enviar pago
+            const res = await Api.post("/payments/procesar", {
+                ordenId: actualOrdenId,
+                metodoPago: this.metodoPago,
+                direccionId: this.direccion
+            })
+
+            if (res.estado === "PAID" || res.estado === "PAYMENT_PENDING") {
+                UI.showNotification("Proceso completado", "success")
+                setTimeout(() => {
+                    window.location.href = "ordenes.html"
+                }, 1500)
+            } else if (res.estado === "OUT_OF_STOCK") {
+                UI.showNotification("Lo sentimos, no hay inventario suficiente.", "error")
+                setTimeout(() => {
+                    window.location.href = "ordenes.html"
+                }, 2000)
+            }
+
+        } catch (err) {
+
+            UI.showNotification(err.message, "error")
+            btn.disabled = false
+
+        }
+
+    }
+
+}
+
+document.addEventListener("DOMContentLoaded", () => Checkout.init())
+
+================ frontend\js\config-auth.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+let formInputValue = document.getElementById('expiryValue');
+let formInputUnit = document.getElementById('expiryUnit');
+let submitBtn = document.getElementById('btnGuardarConfig');
+let form = document.getElementById('jwtConfigForm');
+let labelHelp = document.getElementById('labelDetail');
+
+let actualMs = 0;
+
+document.addEventListener('DOMContentLoaded', async () => {
+
+    if (!Auth.requireAuth(["ADMIN"])) return;
+
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'config-auth'
+    });
+
+    await loadInitialConfig();
+    setupListeners();
+
+});
+
+async function loadInitialConfig() {
+    try {
+        const res = await Api.get('/config/jwt');
+        actualMs = res.expirationTime || 86400000;
+        
+        applyToUI(actualMs);
+        formatLabel();
+    } catch (e) {
+        UI.showNotification('Error obteniendo la configuración actual', 'error');
+    }
+}
+
+function applyToUI(ms) {
+    if (ms >= 86400000 && ms % 86400000 === 0) {
+        formInputValue.value = ms / 86400000;
+        formInputUnit.value = 86400000;
+    } else if (ms >= 3600000 && ms % 3600000 === 0) {
+        formInputValue.value = ms / 3600000;
+        formInputUnit.value = 3600000;
+    } else if (ms >= 60000 && ms % 60000 === 0) {
+        formInputValue.value = ms / 60000;
+        formInputUnit.value = 60000;
+    } else {
+        formInputValue.value = ms / 1000;
+        formInputUnit.value = 1000;
+    }
+}
+
+function setupListeners() {
+    formInputValue.addEventListener('input', () => {
+        checkForm();
+        formatLabel();
+    });
+    
+    formInputUnit.addEventListener('change', () => {
+        checkForm();
+        formatLabel();
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await saveConfig();
+    });
+}
+
+function checkForm() {
+    const v = parseInt(formInputValue.value);
+    const msValue = v * parseInt(formInputUnit.value);
+    
+    if (v > 0 && msValue !== actualMs) {
+        submitBtn.disabled = false;
+    } else {
+        submitBtn.disabled = true;
+    }
+}
+
+function formatLabel() {
+    const val = formInputValue.value;
+    const ut = formInputUnit.options[formInputUnit.selectedIndex]?.text.toLowerCase() || "";
+    labelHelp.textContent = val > 0 ? `${val} ${ut} de validez en sesión calculados.` : "Ingrese un tiempo de expiración.";
+}
+
+async function saveConfig() {
+    const v = parseInt(formInputValue.value);
+    const msValue = v * parseInt(formInputUnit.value);
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Procesando...';
+
+    try {
+        const res = await Api.put('/config/jwt', { expirationTime: msValue });
+        
+        actualMs = res.expirationTime;
+        checkForm();
+        
+        UI.showNotification('Milisegundos Expiración ajustados exitosamente a: ' + actualMs, 'success');
+
+        submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Guardado';
+        setTimeout(() => {
+            submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Guardar Cambios';
+        }, 3000);
+
+    } catch (e) {
+        UI.showNotification('Error al actualizar la configuración: ' + e.message, 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Guardar Cambios';
+    }
+}
+
+
+================ frontend\js\config-sistema.js ================
+
+import Api from './api.js';
+import Auth from './auth.js';
+import { UI } from './ui.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Verificación de Seguridad Rol Administrativo
+    if (!Auth.requireAuth(['ADMIN'])) return;
+    UI.renderNavBar({ containerId: 'mainNav', context: 'config-sistema' });
+    window.logout = () => { Auth.logout(); window.location.href = 'index.html'; };
+
+    // 3. Capturar Elementos del DOM
+    const form = document.getElementById('sistemaConfigForm');
+    const ivaInput = document.getElementById('ivaInput');
+    const monedaInput = document.getElementById('monedaInput');
+    const stockInput = document.getElementById('stockInput');
+    const maxProdInput = document.getElementById('maxProdInput');
+    const debugToggle = document.getElementById('debugToggle');
+
+    // 4. Cargar Parámetros Globales (GET /api/config/sistema)
+    async function loadConfig() {
+        try {
+            const data = await Api.get('/config/sistema');
+
+            // Hidratar Interfaz con las primitivas del Singleton
+            ivaInput.value = data.iva;
+            monedaInput.value = data.monedaSistema;
+            stockInput.value = data.stockMinimo;
+            maxProdInput.value = data.maxProductosOrden;
+            debugToggle.checked = data.modoDebug;
+
+        } catch (error) {
+            UI.showNotification('Error al cargar configuración del sistema', 'error');
+            console.error('Initial Config Load Failed', error);
+        }
+    }
+
+    // 5. Salvar y Alterar el Singleton Global (PUT /api/config/sistema)
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const payload = {
+            iva: parseFloat(ivaInput.value),
+            monedaSistema: monedaInput.value.trim(),
+            stockMinimo: parseInt(stockInput.value),
+            maxProductosOrden: parseInt(maxProdInput.value),
+            modoDebug: debugToggle.checked
+        };
+
+        try {
+            const result = await Api.put('/config/sistema', payload);
+            UI.showNotification(result.message || 'Configuración guardada exitosamente.', 'success');
+        } catch (error) {
+            UI.showNotification(error.message || 'Fallo actualizando la configuración', 'error');
+            console.error('Config Submit Failed', error);
+        }
+    });
+
+    // Run Init
+    loadConfig();
+});
+
+
+================ frontend\js\direcciones.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+// ── Estado local de teléfonos en el modal ─────────────────────────────────────
+let telefonosModal = []; // string[]
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    if (!Auth.requireAuth(['CUSTOMER', 'ADMIN', 'SUPPLIER'])) return;
+
+    UI.renderNavBar({ containerId: 'mainNav', context: 'addresses' });
+    cargarDirecciones();
+    setupEventListeners();
+});
+
+// ── Event Listeners ────────────────────────────────────────────────────────────
+function setupEventListeners() {
+    document.getElementById('btnNuevaDireccion').addEventListener('click', () => abrirModal());
+    document.getElementById('btnCerrarModal').addEventListener('click', cerrarModal);
+    document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
+    document.getElementById('formDireccion').addEventListener('submit', guardarDireccion);
+    UI.setupModalCloser('modalDireccion');
+
+    document.getElementById('btnAgregarTel').addEventListener('click', agregarTelefono);
+    document.getElementById('nuevoTelefono').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); agregarTelefono(); }
+    });
+
+    // Contadores de caracteres
+    const conteos = [
+        ['alias', 'contadorAlias', 20],
+        ['calle', 'contadorCalle', 25],
+        ['numeroExterior', 'contadorNumExt', 10],
+        ['numeroInterior', 'contadorNumInt', 10],
+        ['referencia', 'contadorRef', 75],
+        ['colonia', 'contadorColonia', 40],
+        ['ciudad', 'contadorCiudad', 45],
+        ['municipio', 'contadorMunicipio', 45],
+        ['estado', 'contadorEstado', 25],
+    ];
+    conteos.forEach(([id, counterId, max]) => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', () => actualizarContador(id, counterId, max));
+        }
+    });
+}
+
+function actualizarContador(inputId, counterId, max) {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(counterId);
+    if (!input || !counter) return;
+    const len = input.value.length;
+    counter.textContent = `${len} / ${max}`;
+    counter.classList.toggle('warn', len >= max * 0.9);
+}
+
+// ── API calls ─────────────────────────────────────────────────────────────────
+async function cargarDirecciones() {
+    try {
+        const dirs = await Api.get('/direcciones/mis-direcciones');
+        renderizarDirecciones(dirs);
+    } catch (err) {
+        UI.showNotification('Error al cargar direcciones: ' + err.message, 'error');
+    }
+}
+
+// ── Renderizado de tarjetas ───────────────────────────────────────────────────
+function renderizarDirecciones(dirs) {
+    const container = document.getElementById('listaDirecciones');
+    const emptyState = document.getElementById('emptyState');
+    container.innerHTML = '';
+
+    const user = Auth.getCurrentUser();
+    const role = user ? user.role : '';
+
+    if (!dirs || dirs.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+    }
+    emptyState.classList.add('hidden');
+
+    dirs.forEach(dir => {
+        const card = document.createElement('article');
+        card.className = `direccion-card${dir.preferida ? ' preferida' : ''}`;
+        card.setAttribute('itemscope', '');
+        card.setAttribute('itemtype', 'https://schema.org/PostalAddress');
+
+        const tels = (dir.telefonos || []).map(t =>
+            `<span class="tel-item text-xs text-gray-600"><i class="fas fa-phone text-blue-400 mr-1"></i>${t}</span>`
+        ).join('');
+
+        const botones = construirBotonesTarjeta(dir, role);
+
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    ${dir.alias ? `<h3 class="font-semibold text-gray-800">${dir.alias}</h3>` : ''}
+                    ${dir.preferida ? '<span class="badge-preferida"><i class="fas fa-star"></i> Preferida</span>' : ''}
+                </div>
+                <div class="flex gap-1">${botones}</div>
+            </div>
+            <address class="not-italic text-sm text-gray-600 space-y-0.5">
+                <p itemprop="streetAddress">
+                    ${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ', Int. ' + dir.numeroInterior : ''}
+                </p>
+                ${dir.referencia ? `<p class="text-xs text-gray-400">${dir.referencia}</p>` : ''}
+                <p itemprop="addressLocality">${dir.colonia}</p>
+                <p itemprop="addressCity">${dir.ciudad}</p>
+                <p itemprop="addressRegion">${dir.municipio}, ${dir.estado}</p>
+                <p itemprop="postalCode">C.P. ${dir.codigoPostal}</p>
+            </address>
+            ${tels ? `<div class="flex flex-wrap gap-1 mt-3">${tels}</div>` : ''}
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+function construirBotonesTarjeta(dir, role) {
+    // CUSTOMER puede editar y eliminar sus propias direcciones
+    // SUPPLIER puede editar pero NO eliminar
+    let html = `
+        <button onclick="window.editarDireccion(${dir.id})"
+            class="w-8 h-8 rounded-full hover:bg-gray-100 text-yellow-500 transition" title="Editar">
+            <i class="fas fa-edit"></i>
+        </button>
+    `;
+    if (role !== 'SUPPLIER') {
+        html += `
+            <button onclick="window.eliminarDireccionPropia(${dir.id})"
+                class="w-8 h-8 rounded-full hover:bg-gray-100 text-red-400 transition" title="Eliminar">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        `;
+    }
+    return html;
+}
+
+// ── Teléfonos dentro del modal ────────────────────────────────────────────────
+function agregarTelefono() {
+    const input = document.getElementById('nuevoTelefono');
+    const val = input.value.trim();
+
+    if (!/^\d{10}$/.test(val)) {
+        UI.showNotification('El teléfono debe tener exactamente 10 dígitos', 'error');
+        return;
+    }
+    if (telefonosModal.includes(val)) {
+        UI.showNotification('Ese número ya está en la lista', 'error');
+        return;
+    }
+    telefonosModal.push(val);
+    input.value = '';
+    renderizarTelefonos();
+}
+
+function renderizarTelefonos() {
+    const container = document.getElementById('telefonosContainer');
+    const sinTels = document.getElementById('sinTelefonos');
+    container.innerHTML = '';
+
+    if (telefonosModal.length === 0) {
+        sinTels.classList.remove('hidden');
+        return;
+    }
+    sinTels.classList.add('hidden');
+
+    telefonosModal.forEach((tel, idx) => {
+        const item = document.createElement('div');
+        item.className = 'tel-item';
+        item.innerHTML = `
+            <i class="fas fa-phone text-blue-400 text-xs"></i>
+            <span class="flex-1 text-sm text-gray-700">${tel}</span>
+            <button type="button" onclick="window.quitarTelefono(${idx})"
+                class="text-red-400 hover:text-red-600 text-xs" title="Quitar">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(item);
+    });
+}
+
+window.quitarTelefono = (idx) => {
+    telefonosModal.splice(idx, 1);
+    renderizarTelefonos();
+};
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function abrirModal(dir = null) {
+    const form = document.getElementById('formDireccion');
+    form.reset();
+    telefonosModal = [];
+    document.getElementById('direccionId').value = '';
+    document.getElementById('modalTitle').textContent = dir ? 'Editar Dirección' : 'Nueva Dirección';
+
+    // Reiniciar contadores
+    ['contadorAlias', 'contadorCalle', 'contadorNumExt', 'contadorNumInt', 'contadorRef', 'contadorColonia', 'contadorCiudad', 'contadorMunicipio', 'contadorEstado'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = el.textContent.replace(/^\d+/, '0');
+    });
+
+    if (dir) {
+        document.getElementById('direccionId').value = dir.id;
+        document.getElementById('alias').value = dir.alias || '';
+        document.getElementById('preferida').checked = !!dir.preferida;
+        document.getElementById('calle').value = dir.calle || '';
+        document.getElementById('numeroExterior').value = dir.numeroExterior || '';
+        document.getElementById('numeroInterior').value = dir.numeroInterior || '';
+        document.getElementById('referencia').value = dir.referencia || '';
+        document.getElementById('colonia').value = dir.colonia || '';
+        document.getElementById('ciudad').value = dir.ciudad || '';
+        document.getElementById('municipio').value = dir.municipio || '';
+        document.getElementById('estado').value = dir.estado || '';
+        document.getElementById('codigoPostal').value = dir.codigoPostal || '';
+        telefonosModal = [...(dir.telefonos || [])];
+
+        // Actualizar contadores visualmente
+        const campos = ['alias', 'calle', 'numeroExterior', 'numeroInterior', 'referencia', 'colonia', 'ciudad', 'municipio', 'estado'];
+        const contadores = ['contadorAlias', 'contadorCalle', 'contadorNumExt', 'contadorNumInt', 'contadorRef', 'contadorColonia', 'contadorCiudad', 'contadorMunicipio', 'contadorEstado'];
+        const maximos = [20, 25, 10, 10, 35, 40, 45, 45, 25];
+        campos.forEach((id, i) => actualizarContador(id, contadores[i], maximos[i]));
+    }
+
+    renderizarTelefonos();
+    UI.toggleModal('modalDireccion', true);
+}
+
+function cerrarModal() {
+    UI.toggleModal('modalDireccion', false);
+    telefonosModal = [];
+}
+
+// ── Guardar (POST / PUT) ──────────────────────────────────────────────────────
+async function guardarDireccion(e) {
+    e.preventDefault();
+
+    const form = document.getElementById('formDireccion');
+
+    // 🔥 Validación HTML5 estándar
+    if (!form.checkValidity()) {
+        form.reportValidity();   // Muestra errores nativos
+        return;                  // ❌ NO enviar al backend
+    }
+
+    // Validar campos
+    const campos = ['alias', 'calle', 'numeroExterior', 'colonia', 'ciudad', 'municipio', 'estado', 'codigoPostal'];
+    const contadores = ['contadorAlias', 'contadorCalle', 'contadorNumExt', 'contadorColonia', 'contadorCiudad', 'contadorMunicipio', 'contadorEstado', 'contadorCP'];
+    const maximos = [20, 25, 10, 40, 45, 45, 25, 5];
+    campos.forEach((id, i) => {
+        const val = document.getElementById(id).value.trim();
+        if (!val) {
+            UI.showNotification(`El campo "${id}" es obligatorio`, 'error');
+            return;
+        }
+        actualizarContador(id, contadores[i], maximos[i]);
+    });
+
+    //Validar alias
+    const alias = document.getElementById('alias').value.trim();
+    if (!alias) {
+        UI.showNotification('El alias es obligatorio', 'error');
+        return;
+    }
+
+    // Validar CP
+    const cp = document.getElementById('codigoPostal').value.trim();
+    if (!/^\d{5}$/.test(cp)) {
+        UI.showNotification('El código postal debe tener exactamente 5 dígitos', 'error');
+        return;
+    }
+
+    // Validar mínimo un teléfono
+    if (telefonosModal.length === 0) {
+        document.getElementById('sinTelefonos').classList.remove('hidden');
+        UI.showNotification('Debe agregar al menos un teléfono', 'error');
+        return;
+    }
+
+    const id = document.getElementById('direccionId').value;
+
+    const body = {
+        preferida: document.getElementById('preferida').checked,
+        alias: document.getElementById('alias').value.trim(),
+        calle: document.getElementById('calle').value.trim(),
+        numeroExterior: document.getElementById('numeroExterior').value.trim(),
+        numeroInterior: document.getElementById('numeroInterior').value.trim() || null,
+        referencia: document.getElementById('referencia').value.trim() || null,
+        colonia: document.getElementById('colonia').value.trim(),
+        ciudad: document.getElementById('ciudad').value.trim(),
+        municipio: document.getElementById('municipio').value.trim(),
+        estado: document.getElementById('estado').value.trim(),
+        codigoPostal: cp,
+        telefonos: [...telefonosModal]
+    };
+
+    try {
+        if (id) {
+            await Api.put(`/direcciones/${id}`, body);
+            UI.showNotification('Dirección actualizada correctamente');
+        } else {
+            await Api.post('/direcciones', body);
+            UI.showNotification('Dirección creada correctamente');
+        }
+        cerrarModal();
+        cargarDirecciones();
+    } catch (err) {
+        UI.showNotification('Error al guardar: ' + err.message, 'error');
+    }
+}
+
+// ── Funciones globales ─────────────────────────────────────────────────────────
+window.editarDireccion = async (id) => {
+    try {
+        const dir = await Api.get(`/direcciones/${id}`);
+        abrirModal(dir);
+    } catch (err) {
+        UI.showNotification('Error al cargar dirección', 'error');
+    }
+};
+
+window.eliminarDireccionPropia = async (id) => {
+    if (!confirm('¿Eliminar esta dirección?\n\nEsta acción no se puede deshacer.')) return;
+    try {
+        await Api.delete(`/direcciones/${id}`);
+        UI.showNotification('Dirección eliminada');
+        cargarDirecciones();
+    } catch (err) {
+        UI.showNotification('Error al eliminar: ' + err.message, 'error');
+    }
+};
+
+
+================ frontend\js\ordenes.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+let ordenesGlobal = [];
+let usuariosGlobal = [];
+let roleActual = '';
+let userActual = {};
+
+document.addEventListener('DOMContentLoaded', async () => {
+
+    if (!Auth.requireAuth(["CUSTOMER", "ADMIN"])) return;
+
+    userActual = Auth.getCurrentUser();
+    roleActual = userActual.role;
+
+    UI.renderNavBar({
+        containerId: 'mainNav',
+        context: 'orders'
+    });
+
+    if (roleActual === 'ADMIN') {
+        document.getElementById('thUsuario').classList.remove('hidden');
+        document.getElementById('filtroUsuario').classList.remove('hidden');
+        cargarFiltroUsuarios();
+    }
+
+    setupEventListeners();
+    await cargarOrdenes();
+});
+
+async function cargarFiltroUsuarios() {
+    try {
+        usuariosGlobal = await Api.get('/usuarios');
+        const select = document.getElementById('filtroUsuario');
+        usuariosGlobal.filter(u => u.role === 'CUSTOMER').forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u.id; // Warning: ordenDTO currently lacks usuarioId, but backend filter maps it? Let's check backend. Wait, filtering is in JS! We need `orden.id` or we can filter by exact string if backend didn't provide it? Let's just put u.nombre and match o.usuarioNombre 
+            opt.textContent = u.nombre;
+            select.appendChild(opt);
+        });
+    } catch (e) {
+        console.error('Error cargando usuarios para el filtro', e);
+    }
+}
+
+function setupEventListeners() {
+    document.getElementById('filtroEstado').addEventListener('change', renderizarOrdenes);
+    document.getElementById('filtroUsuario').addEventListener('change', renderizarOrdenes);
+
+    // Modal de Despacho
+    window.cerrarModalDespacho = () => {
+        document.getElementById('modalDespacho').classList.add('hidden');
+        document.getElementById('formDespacho').reset();
+        resetValidation('courier');
+        resetValidation('trackingNumber');
+    };
+
+    const formDespacho = document.getElementById('formDespacho');
+    if (formDespacho) {
+        formDespacho.addEventListener('submit', handleSubmitDespacho);
+
+        // Dynamic validation
+        ['courier', 'trackingNumber'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => validarInputDespacho(el));
+                el.addEventListener('blur', () => validarInputDespacho(el));
+            }
+        });
+    }
+
+    // Modal Detalle
+    window.cerrarModalDetalle = () => {
+        document.getElementById('modalDetalle').classList.add('hidden');
+    };
+}
+
+async function cargarOrdenes() {
+    try {
+        ordenesGlobal = await Api.get('/ordenes');
+
+        // Sort by ID descending (newest first)
+        ordenesGlobal.sort((a, b) => b.id - a.id);
+
+        renderizarOrdenes();
+    } catch (error) {
+        UI.showNotification('Error al cargar órdenes. ' + error.message, 'error');
+    }
+}
+
+function renderizarOrdenes() {
+    const estadoFil = document.getElementById('filtroEstado').value;
+    const userNameFil = document.getElementById('filtroUsuario').options[document.getElementById('filtroUsuario').selectedIndex].text;
+    const isUserFilterActive = document.getElementById('filtroUsuario').value !== 'Todos';
+
+    let filtradas = ordenesGlobal;
+
+    if (estadoFil !== 'Todos') {
+        filtradas = filtradas.filter(o => o.estado === estadoFil);
+    }
+    if (isUserFilterActive) {
+        filtradas = filtradas.filter(o => o.usuarioNombre === userNameFil);
+    }
+
+    const tbody = document.getElementById('listaOrdenes');
+    tbody.innerHTML = '';
+
+    if (!filtradas || filtradas.length === 0) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        document.querySelector('table').classList.add('hidden');
+        return;
+    }
+
+    document.getElementById('emptyState').classList.add('hidden');
+    document.querySelector('table').classList.remove('hidden');
+
+    filtradas.forEach(orden => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-200 hover:bg-gray-50';
+
+        const fecha = new Date(orden.fechaCreacion).toLocaleDateString('es-ES', {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+
+        const badgeHtml = getBadgeHTML(orden.estado);
+        const actionHtml = getActionHTML(orden);
+        const userHtml = roleActual === 'ADMIN' ? `<td class="py-3 px-6 text-left font-medium text-gray-700">${orden.usuarioNombre || 'Desconocido'}</td>` : '';
+
+        row.innerHTML = `
+            <td class="py-3 px-6 text-left whitespace-nowrap font-medium text-gray-800">#${orden.id}</td>
+            ${userHtml}
+            <td class="py-3 px-6 text-left">${badgeHtml}</td>
+            <td class="py-3 px-6 text-left text-xs">${fecha}</td>
+            <td class="py-3 px-6 text-right font-bold text-gray-700">${UI.formatCurrency(orden.total)}</td>
+            <td class="py-3 px-6 text-center">
+                <div class="flex item-center justify-center gap-2">
+                    <button onclick="window.verDetalles(${orden.id})" class="text-blue-500 hover:text-blue-700 p-1" title="Ver Detalles">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    ${actionHtml}
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function getBadgeHTML(estado) {
+    const colorMap = {
+        'CREATED': 'bg-gray-200 text-gray-800',
+        'PAYMENT_PENDING': 'bg-yellow-100 text-yellow-800',
+        'PAID': 'bg-green-100 text-green-800',
+        'OUT_OF_STOCK': 'bg-red-100 text-red-800',
+        'CANCELLED': 'bg-gray-200 text-red-800',
+        'SHIPPED': 'bg-blue-100 text-blue-800',
+        'DELIVERED': 'bg-purple-100 text-purple-800'
+    };
+    const css = colorMap[estado] || 'bg-gray-100 text-gray-800';
+    return `<span class="px-3 py-1 rounded-full text-xs font-bold ${css}">${estado}</span>`;
+}
+
+function getActionHTML(orden) {
+    let html = '';
+    const estado = orden.estado;
+
+    if (roleActual === 'CUSTOMER') {
+        const puedePagar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
+        if (puedePagar) {
+            html += `<button onclick="window.iniciarPago(${orden.id})" class="text-green-500 hover:text-green-700 p-1" title="Pagar">
+                        <i class="fas fa-credit-card"></i> Pagar
+                     </button>`;
+        }
+
+        const puedeCancelar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
+        if (puedeCancelar) {
+            html += `<button onclick="window.cancelarOrden(${orden.id})" class="text-red-500 hover:text-red-700 p-1 ml-2" title="Cancelar">
+                        <i class="fas fa-ban"></i>
+                     </button>`;
+        }
+    } else if (roleActual === 'ADMIN') {
+        const puedePagar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
+        if (puedePagar) {
+            html += `<button onclick="window.iniciarPago(${orden.id})" class="text-green-500 hover:text-green-700 p-1" title="Pagar">
+                        <i class="fas fa-credit-card"></i> Pagar
+                     </button>`;
+        }
+
+        const puedeCancelar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
+        if (puedeCancelar) {
+            html += `<button onclick="window.cancelarOrden(${orden.id})" class="text-red-500 hover:text-red-700 p-1 ml-2" title="Cancelar">
+                        <i class="fas fa-ban"></i>
+                     </button>`;
+        }
+
+        if (estado === 'PAID') {
+            html += `<button onclick="window.abrirModalDespacho(${orden.id})" class="text-blue-500 hover:text-blue-700 p-1" title="Despachar">
+                        <i class="fas fa-truck"></i> Despachar
+                     </button>`;
+        } else if (estado === 'SHIPPED') {
+            html += `<button onclick="window.marcarEntregado(${orden.id})" class="text-purple-500 hover:text-purple-700 p-1" title="Marcar Entregado">
+                        <i class="fas fa-box-open"></i> Entregar
+                     </button>`;
+        }
+    }
+    return html;
+}
+
+// ---------------- ACCIONES ----------------
+
+window.iniciarPago = async (id) => {
+    try {
+        await Api.post(`/ordenes/${id}/pending`);
+        window.location.href = `checkout.html?ordenId=${id}`;
+    } catch (e) {
+        UI.showNotification('Error al iniciar el pago: ' + e.message, 'error');
+    }
+};
+
+window.cancelarOrden = async (id) => {
+    if (!confirm('¿Estás seguro que deseas cancelar esta orden?')) return;
+    try {
+        await Api.post(`/ordenes/${id}/cancelar`);
+        UI.showNotification('Orden cancelada exitosamente.', 'success');
+        cargarOrdenes();
+    } catch (e) {
+        UI.showNotification('Error al cancelar: ' + e.message, 'error');
+    }
+};
+
+window.marcarEntregado = async (id) => {
+    if (!confirm('¿Confirmar que la orden fue entregada al cliente?')) return;
+    try {
+        await Api.post(`/shipments/entregar/${id}`);
+        UI.showNotification('Orden marcada como entregada.', 'success');
+        cargarOrdenes();
+    } catch (e) {
+        UI.showNotification('Error al entregar: ' + e.message, 'error');
+    }
+}
+
+window.verDetalles = (id) => {
+    const orden = ordenesGlobal.find(o => o.id === id);
+    if (!orden) return;
+
+    document.getElementById('detalleId').textContent = orden.id;
+    const cont = document.getElementById('detalleContenido');
+
+    let html = `
+        <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+            <div>
+                <p class="text-gray-500 mb-1">Estado Actual</p>
+                ${getBadgeHTML(orden.estado)}
+            </div>
+    `;
+
+    if (orden.direccionEnvio) {
+        const dir = orden.direccionEnvio;
+        html += `
+            <div>
+                <p class="text-gray-500 mb-1">Dirección de Envío</p>
+                <div class="bg-gray-50 p-2 rounded text-xs border border-gray-200">
+                    <p class="font-bold">${dir.alias || 'Dirección'}</p>
+                    <p>${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ' Int ' + dir.numeroInterior : ''}</p>
+                    <p>${dir.colonia}</p>
+                    <p>${dir.ciudad}, ${dir.estado} CP ${dir.codigoPostal}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `</div>`;
+
+    if (orden.usuarioRfcCurp) {
+        html += `
+            <div class="bg-blue-50 p-3 rounded-lg mb-4 text-sm border border-blue-200">
+                <h4 class="font-bold text-blue-800 mb-1"><i class="fas fa-id-card mr-1"></i> RFC/CURP: </h4>
+                <p class="font-mono text-gray-700 font-semibold">${orden.usuarioRfcCurp}</p>
+            </div>
+        `;
+    }
+
+    function getNombreProducto(detalle) {
+        return detalle.productoNombre
+            || (detalle.producto ? detalle.producto.nombre : 'Producto');
+    }
+
+    if (orden.paymentTransaction) {
+        const trx = orden.paymentTransaction;
+        html += `
+            <div class="bg-gray-50 p-4 rounded-lg mb-4 text-sm border border-gray-200">
+                <h4 class="font-bold text-gray-700 mb-2 border-b pb-1"><i class="fas fa-money-check-alt mr-2 text-green-600"></i> Información de Pago</h4>
+                <div class="grid grid-cols-2 gap-2">
+                    <p><span class="font-medium">Método:</span> ${trx.paymentMethod}</p>
+                    <p><span class="font-medium">Estado:</span> ${trx.status}</p>
+                    <p><span class="font-medium">Transacción ID:</span> #${trx.id}</p>
+                    <p><span class="font-medium">Pagado el:</span> ${new Date(trx.transactionDate).toLocaleString('es-ES')}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    if (orden.shipment) {
+        const shp = orden.shipment;
+        html += `
+            <div class="bg-blue-50 p-4 rounded-lg mb-4 text-sm border border-blue-100">
+                <h4 class="font-bold text-blue-800 mb-2 border-b border-blue-200 pb-1"><i class="fas fa-truck mr-2"></i> Información de Envío</h4>
+                <div class="grid grid-cols-2 gap-2">
+                    <p><span class="font-medium">Courier:</span> ${shp.courier}</p>
+                    <p><span class="font-medium">Tracking:</span> <a href="#" class="text-blue-600 underline">${shp.trackingNumber}</a></p>
+                    <p><span class="font-medium">Despachado:</span> ${new Date(shp.dateDispatch).toLocaleString('es-ES')}</p>
+                    <p><span class="font-medium">Entregado:</span> ${shp.dateDelivered ? new Date(shp.dateDelivered).toLocaleString('es-ES') : '<span class="italic text-gray-500">Pendiente</span>'}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `
+        <div>
+            <h4 class="font-bold text-gray-700 mb-2 text-sm">Productos (${orden.detalles.length})</h4>
+            <div class="max-h-48 overflow-y-auto border rounded-lg p-2 bg-white">
+                <ul class="space-y-2">
+    `;
+
+    orden.detalles.forEach(d => {
+
+        const subtotal =
+            d.subtotal ||
+            (d.precio * d.cantidad);
+
+        html += `
+            <li class="flex justify-between items-center text-sm p-2 hover:bg-gray-50 rounded">
+                <div>
+                    <span class="font-bold text-gray-800 mr-2">${d.cantidad}x</span> 
+                    <span>${getNombreProducto(d)}</span>
+                </div>
+                <span class="font-medium">${UI.formatCurrency(subtotal)}</span>
+            </li>
+        `;
+    });
+
+    html += `</ul></div></div>
+            <div>
+                <p class="text-gray-500 mb-1">Total</p>
+                <p class="font-bold text-lg text-blue-600">${UI.formatCurrency(orden.total)}</p>
+            </div>`;
+
+    cont.innerHTML = html;
+    document.getElementById('modalDetalle').classList.remove('hidden');
+}
+
+
+// ---------------- MODAL DESPACHO ADMIN ----------------
+
+const despachoValidation = {
+    courier: false,
+    trackingNumber: false
+};
+
+window.abrirModalDespacho = (id) => {
+    const orden = ordenesGlobal.find(o => o.id === id);
+    document.getElementById('despachoOrdenId').textContent = id;
+
+    // Si la orden tiene direccion, mostrarla para que el admin sepa a donde enviar
+    const despachoInfo = document.getElementById('despachoDireccionInfo');
+    if (despachoInfo) {
+        if (orden && orden.direccionEnvio) {
+            const dir = orden.direccionEnvio;
+            despachoInfo.innerHTML = `
+                <div class="bg-blue-50 p-3 rounded-lg mb-4 text-sm border border-blue-200">
+                    <h4 class="font-bold text-blue-800 mb-1"><i class="fas fa-map-marker-alt mr-1"></i> Destino del Envío</h4>
+                    <p>${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ' Int ' + dir.numeroInterior : ''}</p>
+                    <p>${dir.colonia}, ${dir.municipio}</p>
+                    <p>${dir.ciudad}, ${dir.estado}. CP: ${dir.codigoPostal}</p>
+                    <p class="text-xs text-blue-600 mt-1">Tel: ${dir.telefonos?.join(', ') || 'N/A'}</p>
+                </div>
+            `;
+            despachoInfo.classList.remove('hidden');
+        } else {
+            despachoInfo.classList.add('hidden');
+        }
+    }
+
+    window.ordenDespachoActualId = id;
+    cerrarModalDespacho(); // Reset
+    document.getElementById('modalDespacho').classList.remove('hidden');
+    checkFormDespacho();
+};
+
+function validarInputDespacho(input) {
+    const id = input.id;
+    const value = input.value.trim();
+    let isValid = false;
+    const errorMsg = document.getElementById(`error-${id}`);
+
+    if (id === 'courier') {
+        isValid = value.length >= 2;
+    } else if (id === 'trackingNumber') {
+        isValid = value.length >= 5;
+    }
+
+    despachoValidation[id] = isValid;
+
+    if (isValid) {
+        input.classList.remove('border-red-500', 'invalid');
+        input.classList.add('border-green-500', 'valid');
+        if (errorMsg) errorMsg.classList.add('hidden');
+    } else {
+        input.classList.remove('border-green-500', 'valid');
+        input.classList.add('border-red-500', 'invalid');
+        if (errorMsg) errorMsg.classList.remove('hidden');
+    }
+
+    checkFormDespacho();
+}
+
+function checkFormDespacho() {
+    const valid = despachoValidation.courier && despachoValidation.trackingNumber;
+    document.getElementById('btnConfirmarDespacho').disabled = !valid;
+}
+
+function resetValidation(id) {
+    despachoValidation[id] = false;
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.remove('border-red-500', 'border-green-500', 'valid', 'invalid');
+    }
+    const err = document.getElementById(`error-${id}`);
+    if (err) err.classList.add('hidden');
+}
+
+async function handleSubmitDespacho(e) {
+    e.preventDefault();
+    if (!despachoValidation.courier || !despachoValidation.trackingNumber) return;
+
+    const btn = document.getElementById('btnConfirmarDespacho');
+    btn.disabled = true;
+    btn.innerHTML = 'Procesando...';
+
+    const courier = document.getElementById('courier').value.trim();
+    const trackingNumber = document.getElementById('trackingNumber').value.trim();
+    const id = window.ordenDespachoActualId;
+
+    try {
+        await Api.post(`/shipments/despachar/${id}`, { courier, trackingNumber });
+        UI.showNotification('Orden despachada con éxito', 'success');
+        cerrarModalDespacho();
+        cargarOrdenes();
+    } catch (error) {
+        UI.showNotification('Error: ' + error.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = 'Confirmar Despacho';
+    }
+}
+
+
+================ frontend\js\productos.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+// ── Estado local de imágenes en el modal ──────────────────────────────────────
+let imagenesModal = []; // [{ url: String, isDefault: Boolean }]
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    if (!Auth.requireAuth(["ADMIN", "SUPPLIER"])) return;
+
+    UI.renderNavBar({ containerId: 'mainNav', context: 'products' });
+    setupRoleBasedUI();
+    cargarProductos();
+    setupEventListeners();
+});
+
+// ── Configuración UI por Rol ───────────────────────────────────────────────────
+function setupRoleBasedUI() {
+    const user = Auth.getCurrentUser();
+    const role = user ? user.role : '';
+
+    // Mostrar botón Agregar solo para ADMIN
+    if (role === 'ADMIN') {
+        document.getElementById('btnAgregar').classList.remove('hidden');
+        document.getElementById('btnAgregar').classList.add('flex');
+    }
+
+    // El campo Proveedor solo es visible para ADMIN
+    const campoProveedor = document.getElementById('campoProveedor');
+    if (campoProveedor && role !== 'ADMIN') {
+        campoProveedor.classList.add('hidden');
+    }
+
+    // Ocultar columna de Stock para CUSTOMER
+    const thStock = document.getElementById('thStock');
+    if (thStock && role === 'CUSTOMER') {
+        thStock.classList.add('hidden');
+    }
+}
+
+// ── Event Listeners ────────────────────────────────────────────────────────────
+function setupEventListeners() {
+    document.getElementById('btnAgregar').addEventListener('click', () => abrirModal());
+    document.getElementById('btnCerrarModal').addEventListener('click', () => UI.toggleModal('modalProducto', false));
+    document.getElementById('btnCancelar').addEventListener('click', () => UI.toggleModal('modalProducto', false));
+    UI.setupModalCloser('modalProducto');
+
+    document.getElementById('tipo').addEventListener('change', toggleCamposTipo);
+    document.getElementById('formProducto').addEventListener('submit', guardarProducto);
+
+    // Filtro tipo
+    document.getElementById('filtroTipo').addEventListener('change', (e) => {
+        cargarProductos(e.target.value);
+    });
+
+    // Contador descripción
+    const txtDescripcion = document.getElementById('descripcion');
+    if (txtDescripcion) {
+        txtDescripcion.addEventListener('input', () => {
+            actualizarContador('descripcion', 'contadorDescripcion', 250);
+        });
+    }
+
+    // Contador proveedor
+    const txtProveedor = document.getElementById('proveedor');
+    if (txtProveedor) {
+        txtProveedor.addEventListener('input', () => {
+            actualizarContador('proveedor', 'contadorProveedor', 150);
+        });
+    }
+
+    // Agregar imagen al modal
+    document.getElementById('btnAgregarImagen').addEventListener('click', agregarImagenModal);
+
+    // También agregar imagen al presionar Enter en el campo
+    document.getElementById('nuevaImagenUrl').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            agregarImagenModal();
+        }
+    });
+}
+
+function actualizarContador(inputId, counterId, max) {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(counterId);
+    if (!input || !counter) return;
+    const len = input.value.length;
+    counter.textContent = `${len} / ${max}`;
+    counter.classList.toggle('warn', len >= max * 0.9);
+}
+
+function toggleCamposTipo() {
+    const tipo = document.getElementById('tipo').value;
+    document.getElementById('camposFisico').classList.toggle('hidden', tipo !== 'Fisico');
+    document.getElementById('camposDigital').classList.toggle('hidden', tipo !== 'Digital');
+}
+
+// ── Carga y renderizado de productos (TABLA para ADMIN/SUPPLIER) ───────────────
+async function cargarProductos(filtro = 'todos') {
+    try {
+        const productos = await Api.get('/productos');
+        renderizarTabla(productos, filtro);
+    } catch (error) {
+        UI.showNotification('Error al cargar productos', 'error');
+    }
+}
+
+function renderizarTabla(productos, filtro) {
+    const tbody = document.getElementById('listaProductos');
+    tbody.innerHTML = '';
+
+    const user = Auth.getCurrentUser();
+    const role = user ? user.role : '';
+
+    const filtrados = filtro === 'todos'
+        ? productos
+        : productos.filter(p => p.tipo === filtro);
+
+    if (filtrados.length === 0) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        return;
+    }
+    document.getElementById('emptyState').classList.add('hidden');
+
+    filtrados.forEach(p => {
+        const esFisico = p.tipo === 'Fisico';
+        const tipoBadge = esFisico
+            ? '<span class="bg-blue-100 text-blue-800 py-1 px-3 rounded-full text-xs">Físico</span>'
+            : '<span class="bg-purple-100 text-purple-800 py-1 px-3 rounded-full text-xs">Digital</span>';
+
+        // Imagen por defecto
+        const imgDefault = p.imagenes && p.imagenes.find(i => i.isDefault);
+        const imgSrc = imgDefault ? imgDefault.imagenUrl : (p.imagenes && p.imagenes.length > 0 ? p.imagenes[0].imagenUrl : null);
+        const imgTag = imgSrc
+            ? `<img src="${imgSrc}" alt="Imagen de ${p.nombre}" class="w-12 h-12 object-cover rounded" loading="lazy">`
+            : `<div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400"><i class="fas fa-image"></i></div>`;
+
+        let buttons = '';
+        if (role === 'ADMIN') {
+            buttons = `
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transition" onclick="window.editarProducto(${p.id})" title="Editar">
+                    <i class="fas fa-edit text-yellow-500"></i>
+                </button>
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transition ml-1" onclick="window.eliminarProducto(${p.id})" title="Eliminar">
+                    <i class="fas fa-trash-alt text-red-500"></i>
+                </button>
+            `;
+        } else if (role === 'SUPPLIER') {
+            buttons = `
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transition" onclick="window.editarProducto(${p.id})" title="Editar">
+                    <i class="fas fa-edit text-yellow-500"></i>
+                </button>
+            `;
+        } else if (role === 'CUSTOMER') {
+            buttons = `
+                <button class="w-8 h-8 rounded-full hover:bg-gray-200 transition" onclick="window.agregarAlCarrito(${p.id})" title="Agregar al Carrito">
+                    <i class="fas fa-cart-plus text-green-500"></i>
+                </button>
+            `;
+        }
+
+        const proveedorDisplay = p.proveedor
+            ? `<span class="text-xs text-gray-500 truncate" style="max-width:120px" title="${p.proveedor}">${p.proveedor}</span>`
+            : '<span class="text-xs text-gray-400 italic">—</span>';
+
+        // Lógica de Stock (Visible solo para ADMIN / SUPPLIER)
+        let stockDisplay = '';
+        if (role !== 'CUSTOMER') {
+            if (esFisico) {
+                const isLow = p.stock > 0 && p.stock <= 5;
+                const isOut = p.stock === 0;
+                const cssClass = isOut ? 'text-red-600 font-bold' : (isLow ? 'text-orange-500 font-bold' : 'text-green-600');
+                stockDisplay = `<td class="py-3 px-4"><span class="${cssClass}">${p.stock}</span></td>`;
+            } else {
+                stockDisplay = `<td class="py-3 px-4"><span class="text-gray-400 text-xs italic">∞ (Digital)</span></td>`;
+            }
+        }
+
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-200 hover:bg-gray-50';
+        row.innerHTML = `
+            <td class="py-3 px-4 font-medium">${p.id}</td>
+            <td class="py-3 px-4">${imgTag}</td>
+            <td class="py-3 px-4">
+                <div class="font-medium">${p.nombre}</div>
+                ${p.descripcion ? `<div class="text-xs text-gray-400 truncate" style="max-width:200px" title="${p.descripcion}">${p.descripcion}</div>` : ''}
+            </td>
+            <td class="py-3 px-4 font-bold text-gray-700">${UI.formatCurrency(p.precio)}</td>
+            ${stockDisplay}
+            <td class="py-3 px-4">${tipoBadge}</td>
+            <td class="py-3 px-4">${proveedorDisplay}</td>
+            <td class="py-3 px-4 text-center">
+                <div class="flex items-center justify-center">${buttons}</div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// ── Gestión de imágenes en el modal ───────────────────────────────────────────
+function agregarImagenModal() {
+    const urlInput = document.getElementById('nuevaImagenUrl');
+    const url = urlInput.value.trim();
+    if (!url) {
+        UI.showNotification('Ingresa una URL de imagen válida', 'error');
+        return;
+    }
+    // Validar URL básica
+    try { new URL(url); } catch {
+        UI.showNotification('La URL ingresada no es válida', 'error');
+        return;
+    }
+    const isDefault = imagenesModal.length === 0; // Primera imagen será default
+    imagenesModal.push({ url, isDefault });
+    urlInput.value = '';
+    renderizarImagenesModal();
+}
+
+function renderizarImagenesModal() {
+    const container = document.getElementById('imagenesContainer');
+    const sinMsg = document.getElementById('sinImagenesMsg');
+    container.innerHTML = '';
+
+    if (imagenesModal.length === 0) {
+        sinMsg.classList.remove('hidden');
+        return;
+    }
+    sinMsg.classList.add('hidden');
+
+    imagenesModal.forEach((img, idx) => {
+        const item = document.createElement('div');
+        item.className = 'imagen-item';
+        item.innerHTML = `
+            <img src="${img.url}" alt="Preview" onerror="this.src='https://via.placeholder.com/40'" loading="lazy">
+            <label class="flex items-center gap-1 cursor-pointer" title="Marcar como imagen por defecto">
+                <input type="radio" name="imgDefault" value="${idx}" ${img.isDefault ? 'checked' : ''}
+                    onchange="window.setImagenDefault(${idx})">
+                <span class="text-xs text-yellow-600">⭐</span>
+            </label>
+            <span class="flex-1 text-xs text-gray-500 truncate" title="${img.url}">${img.url}</span>
+            <button type="button" onclick="window.eliminarImagenModal(${idx})"
+                class="text-red-400 hover:text-red-600 text-sm" title="Eliminar imagen">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(item);
+    });
+}
+
+window.setImagenDefault = (idx) => {
+    imagenesModal.forEach((img, i) => { img.isDefault = (i === idx); });
+    renderizarImagenesModal();
+};
+
+window.eliminarImagenModal = (idx) => {
+    const wasDefault = imagenesModal[idx].isDefault;
+    imagenesModal.splice(idx, 1);
+    if (wasDefault && imagenesModal.length > 0) {
+        imagenesModal[0].isDefault = true;
+    }
+    renderizarImagenesModal();
+};
+
+// ── Modal abrir/cerrar ─────────────────────────────────────────────────────────
+function abrirModal(producto = null) {
+    const form = document.getElementById('formProducto');
+    const user = Auth.getCurrentUser();
+    const role = user ? user.role : '';
+
+    form.reset();
+    imagenesModal = [];
+    document.getElementById('productoId').value = '';
+    document.getElementById('contadorDescripcion').textContent = '0 / 250';
+    document.getElementById('contadorProveedor').textContent = '0 / 150';
+    document.getElementById('modalTitle').textContent = 'Nuevo Producto';
+
+    // Visibilidad campo proveedor por rol
+    const campoProveedor = document.getElementById('campoProveedor');
+    campoProveedor.classList.toggle('hidden', role !== 'ADMIN');
+
+    if (producto) {
+        document.getElementById('modalTitle').textContent = 'Editar Producto';
+        document.getElementById('productoId').value = producto.id;
+        document.getElementById('nombre').value = producto.nombre || '';
+        document.getElementById('precio').value = producto.precio || '';
+        document.getElementById('descripcion').value = producto.descripcion || '';
+        actualizarContador('descripcion', 'contadorDescripcion', 250);
+
+        if (role === 'ADMIN') {
+            document.getElementById('proveedor').value = producto.proveedor || '';
+            actualizarContador('proveedor', 'contadorProveedor', 150);
+        }
+
+        const esFisico = producto.tipo === 'Fisico';
+        document.getElementById('tipo').value = esFisico ? 'Fisico' : 'Digital';
+        toggleCamposTipo();
+
+        if (esFisico) {
+            document.getElementById('stock').value = producto.stock || 0;
+            document.getElementById('peso').value = producto.peso || 0;
+        } else {
+            document.getElementById('urlDescarga').value = producto.urlDescarga || '';
+        }
+
+        // Cargar imágenes existentes
+        if (producto.imagenes && producto.imagenes.length > 0) {
+            imagenesModal = producto.imagenes.map(img => ({
+                url: img.imagenUrl,
+                isDefault: img.isDefault
+            }));
+        }
+    } else {
+        toggleCamposTipo();
+    }
+
+    renderizarImagenesModal();
+    UI.toggleModal('modalProducto', true);
+}
+
+// ── Guardar producto (POST / PUT) ──────────────────────────────────────────────
+async function guardarProducto(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('productoId').value;
+    const user = Auth.getCurrentUser();
+    const role = user ? user.role : '';
+    const tipo = document.getElementById('tipo').value;
+
+    // Validar al menos una imagen
+    if (imagenesModal.length === 0) {
+        UI.showNotification('El producto debe tener al menos una imagen', 'error');
+        return;
+    }
+
+    // Asegurar que haya exactamente un default
+    const hayDefault = imagenesModal.some(i => i.isDefault);
+    if (!hayDefault) imagenesModal[0].isDefault = true;
+
+    const defaultIndex = imagenesModal.findIndex(i => i.isDefault);
+
+    const body = {
+        nombre: document.getElementById('nombre').value.trim(),
+        precio: parseFloat(document.getElementById('precio').value),
+        tipo,
+        descripcion: document.getElementById('descripcion').value.trim() || null,
+        imagenesUrls: imagenesModal.map(i => i.url),
+        defaultImageIndex: defaultIndex
+    };
+
+    // Proveedor — solo ADMIN lo envía
+    if (role === 'ADMIN') {
+        body.proveedor = document.getElementById('proveedor').value.trim() || null;
+    }
+
+    if (tipo === 'Fisico') {
+        body.stock = parseInt(document.getElementById('stock').value) || 0;
+        body.peso = parseFloat(document.getElementById('peso').value) || 0;
+    } else {
+        body.urlDescarga = document.getElementById('urlDescarga').value.trim() || null;
+    }
+
+    try {
+        if (id) {
+            await Api.put(`/productos/${id}`, body);
+            UI.showNotification('Producto actualizado correctamente');
+        } else {
+            await Api.post('/productos', body);
+            UI.showNotification('Producto creado correctamente');
+        }
+        UI.toggleModal('modalProducto', false);
+        cargarProductos();
+    } catch (error) {
+        UI.showNotification('Error al guardar producto: ' + error.message, 'error');
+    }
+}
+
+// ── Funciones globales (onclick inline) ───────────────────────────────────────
+window.editarProducto = async (id) => {
+    try {
+        const producto = await Api.get(`/productos/${id}`);
+        abrirModal(producto);
+    } catch (error) {
+        UI.showNotification('Error al obtener producto', 'error');
+    }
+};
+
+window.eliminarProducto = async (id) => {
+    if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+    try {
+        await Api.delete(`/productos/${id}`);
+        UI.showNotification('Producto eliminado');
+        cargarProductos();
+    } catch (error) {
+        UI.showNotification('Error al eliminar producto', 'error');
+    }
+};
+
+window.agregarAlCarrito = async (productoId) => {
+    try {
+        await Api.post(`/carrito/productos/${productoId}`);
+        UI.showNotification('Producto agregado al carrito');
+    } catch (error) {
+        UI.showNotification('Error al agregar al carrito: ' + error.message, 'error');
+    }
+};
+
+
+================ frontend\js\ui.js ================
+
+export const UI = {
+
+    renderNavBar({ containerId, context }) {
+        const navContainer = document.getElementById(containerId);
+        if (!navContainer) return;
+
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+
+        navContainer.innerHTML = '';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
+
+        // === LOGO ===
+        const left = document.createElement('div');
+        left.innerHTML = `
+            <a class="text-2xl font-bold text-blue-600">
+                E-Shop
+            </a>
+        `;
+
+        // === LINKS ===
+        const right = document.createElement('div');
+        right.className = 'flex items-center gap-6';
+
+        if (!user) {
+            right.innerHTML = `
+                <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">Iniciar Sesión</a>
+                <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                    Registrarse
+                </a>
+            `;
+        } else {
+            const links = this.getLinksByRoleAndContext(user.role, context);
+            links.forEach(l => {
+                if (l.isDropdown) {
+                    const dropdownId = 'dropdown-' + Math.random().toString(36).substr(2, 9);
+                    let dropdownHtml = `
+                    <div class="relative">
+                        <button onclick="document.getElementById('${dropdownId}').classList.toggle('hidden')" class="text-gray-700 font-medium hover:text-blue-600 focus:outline-none flex items-center">
+                            ${l.label} <i class="fas fa-chevron-down text-xs ml-1"></i>
+                        </button>
+                        <div id="${dropdownId}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-100 z-50">
+                            <div class="py-1">`;
+                    l.items.forEach(sub => {
+                        dropdownHtml += `<a href="${sub.href}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">${sub.label}</a>`;
+                    });
+                    dropdownHtml += `</div></div></div>`;
+                    right.innerHTML += dropdownHtml;
+                } else if (l.isBadgeCart) {
+                    // Enlace especial del Carrito con ID para badge dinámico
+                    right.innerHTML += `
+                        <a id="cartNavLink" href="${l.href}" class="text-gray-700 hover:text-blue-600 font-medium">
+                            ${l.label}
+                        </a>
+                    `;
+                } else {
+                    right.innerHTML += `
+                        <a href="${l.href}" class="text-gray-700 hover:text-blue-600 font-medium">
+                            ${l.label}
+                        </a>
+                    `;
+                }
+            });
+
+            right.innerHTML += `
+                <span class="text-sm text-gray-500">
+                    Hola, ${user.nombre}
+                </span>
+                <button onclick="window.logout()" class="text-red-500 hover:text-red-700 font-medium">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            `;
+
+            // Auto-actualizar badge del carrito solo para CUSTOMER
+            if (user.role === 'CUSTOMER') {
+                this.updateCartBadge();
+            }
+        }
+
+        wrapper.appendChild(left);
+        wrapper.appendChild(right);
+        navContainer.appendChild(wrapper);
+    },
+
+    getLinksByRoleAndContext(role, context) {
+        const config = {
+            CUSTOMER: {
+                products: [
+                    { label: 'Carrito', href: 'carrito.html', isBadgeCart: true },
+                    { label: 'Mis Órdenes', href: 'ordenes.html' },
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
+                ],
+                cart: [
+                    { label: 'Productos', href: 'productoscustomer.html' },
+                    { label: 'Mis Órdenes', href: 'ordenes.html' },
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
+                ],
+                orders: [
+                    { label: 'Productos', href: 'productoscustomer.html' },
+                    { label: 'Carrito', href: 'carrito.html', isBadgeCart: true },
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
+                ],
+                addresses: [
+                    { label: 'Productos', href: 'productoscustomer.html' },
+                    { label: 'Carrito', href: 'carrito.html', isBadgeCart: true },
+                    { label: 'Mis Órdenes', href: 'ordenes.html' }
+                ]
+            },
+            ADMIN: {
+                products: [
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    { 
+                        isDropdown: true, 
+                        label: '<i class="fas fa-cog"></i> Configuración', 
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ] 
+                    }
+                ],
+                users: [
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    { 
+                        isDropdown: true, 
+                        label: '<i class="fas fa-cog"></i> Configuración', 
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ] 
+                    }
+                ],
+                orders: [
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    { 
+                        isDropdown: true, 
+                        label: '<i class="fas fa-cog"></i> Configuración', 
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ] 
+                    }
+                ],
+                'config-auth': [
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    { 
+                        isDropdown: true, 
+                        label: '<i class="fas fa-cog"></i> Configuración', 
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ] 
+                    }
+                ],
+                'config-sistema': [
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    { 
+                        isDropdown: true, 
+                        label: '<i class="fas fa-cog"></i> Configuración', 
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ] 
+                    }
+                ]
+            },
+            SUPPLIER: {
+                products: [
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
+                ],
+                addresses: [
+                    { label: 'Mis Productos', href: 'productos.html' }
+                ]
+            }
+        };
+
+        return config[role]?.[context] || [];
+    },
+
+    // === Helpers existentes (SIN CAMBIOS) ===
+    showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-5 right-5 px-6 py-3 rounded shadow-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.classList.add('opacity-0');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    },
+
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('es-MX', {
+            style: 'currency',
+            currency: 'MXN'
+        }).format(amount);
+    },
+
+    toggleModal(modalId, show = true) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            if (show) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+    },
+
+    setupModalCloser(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.toggleModal(modalId, false);
+                }
+            });
+        }
+    },
+
+    /**
+     * Actualiza el badge del carrito en el enlace con id="cartNavLink".
+     * Obtiene la cantidad de productos via GET /api/carrito.
+     * Muestra "Carrito (N)" si hay productos, o "Carrito" si vacío.
+     * Solo actúa si el enlace existe en el DOM (solo páginas CUSTOMER).
+     */
+    async updateCartBadge() {
+        const link = document.getElementById('cartNavLink');
+        if (!link) return; // No es una página de CUSTOMER o no aplica
+
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const response = await fetch('http://localhost:8080/api/carrito', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                link.textContent = 'Carrito';
+                return;
+            }
+
+            const carrito = await response.json();
+            const count = carrito?.productos?.length ?? 0;
+            link.textContent = count > 0 ? `Carrito (${count})` : 'Carrito';
+
+        } catch {
+            // En caso de error de red, se muestra el label base sin badge
+            link.textContent = 'Carrito';
+        }
+    },
+};
+
+
+================ frontend\js\usuarios.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+// ── Estado admin address panel ────────────────────────────────────────────────
+let adminTargetUserId = null;
+let adirTelefonos = [];  // teléfonos en el sub-form de dirección
+let usuariosGlobal = []; // Stores all users for filtering
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    if (!Auth.requireAuth(["ADMIN"])) return;
+
+    const user = Auth.getCurrentUser();
+    if (user.role !== 'ADMIN') {
+        window.location.href = 'productos.html';
+        return;
+    }
+
+    document.getElementById('btnNuevoUsuario').classList.remove('hidden');
+    document.getElementById('btnNuevoUsuario').classList.add('flex');
+
+    UI.renderNavBar({ containerId: 'mainNav', context: 'users' });
+    cargarUsuarios();
+    setupEventListeners();
+});
+
+// ── Event Listeners ────────────────────────────────────────────────────────────
+function setupEventListeners() {
+    // Modal usuario
+    document.getElementById('btnNuevoUsuario').addEventListener('click', () => abrirModal());
+    document.getElementById('btnCerrarModal').addEventListener('click', cerrarModal);
+    document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
+    document.getElementById('formUsuario').addEventListener('submit', guardarUsuario);
+    document.getElementById('role').addEventListener('change', window.toggleUserTypeFields);
+    document.getElementById('filtroRol').addEventListener('change', renderizarUsuarios);
+    UI.setupModalCloser('modalUsuario');
+
+    // Modal direcciones (admin)
+    document.getElementById('btnCerrarDirModal').addEventListener('click', cerrarModalDirecciones);
+    UI.setupModalCloser('modalDirecciones');
+    document.getElementById('btnNuevaDirAdmin').addEventListener('click', () => abrirFormDir());
+    document.getElementById('btnCancelarDirAdmin').addEventListener('click', cerrarFormDir);
+    document.getElementById('formDirAdmin').addEventListener('submit', guardarDireccionAdmin);
+
+    // Teléfonos en form dir admin
+    document.getElementById('adirBtnAgregarTel').addEventListener('click', agregarTelAdmin);
+    document.getElementById('adirNuevoTel').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); agregarTelAdmin(); }
+    });
+}
+
+// ── Usuarios ──────────────────────────────────────────────────────────────────
+async function cargarUsuarios() {
+    try {
+        usuariosGlobal = await Api.get('/usuarios');
+        renderizarUsuarios();
+    } catch (error) {
+        UI.showNotification('Error al cargar usuarios: ' + error.message, 'error');
+    }
+}
+
+function renderizarUsuarios() {
+    const filtro = document.getElementById('filtroRol').value;
+    
+    let filtrados = usuariosGlobal;
+    if (filtro && filtro !== 'Todos') {
+        filtrados = usuariosGlobal.filter(u => u.role === filtro);
+    }
+
+    const tbody = document.getElementById('listaUsuarios');
+    tbody.innerHTML = '';
+
+    if (!filtrados || filtrados.length === 0) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        return;
+    }
+    document.getElementById('emptyState').classList.add('hidden');
+
+    const roleNames = { ADMIN: 'Administrador', SUPPLIER: 'Proveedor', CUSTOMER: 'Cliente' };
+    const roleColors = {
+        ADMIN: 'bg-red-100 text-red-800',
+        SUPPLIER: 'bg-blue-100 text-blue-800',
+        CUSTOMER: 'bg-green-100 text-green-800'
+    };
+
+    filtrados.forEach(usuario => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-200 hover:bg-gray-50';
+        const roleDisplay = roleNames[usuario.role] || usuario.role;
+        const roleColor = roleColors[usuario.role] || 'bg-gray-100 text-gray-800';
+
+        row.innerHTML = `
+            <td class="py-3 px-6 font-medium">#${usuario.id}</td>
+            <td class="py-3 px-6">${usuario.nombre}</td>
+            <td class="py-3 px-6">${usuario.email}</td>
+            <td class="py-3 px-6">
+                <span class="px-2 py-1 rounded text-xs font-semibold ${roleColor}">${roleDisplay}</span>
+            </td>
+            <td class="py-3 px-6 text-center">
+                <!-- Editar usuario -->
+                <button onclick="window.editarUsuario(${usuario.id})"
+                    class="text-yellow-500 hover:text-yellow-700 mx-1" title="Editar usuario">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <!-- Gestionar direcciones (icono engrane) -->
+                <button onclick="window.gestionarDirecciones(${usuario.id}, '${usuario.nombre}')"
+                    class="text-gray-500 hover:text-blue-600 mx-1" title="Gestionar direcciones">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <!-- Eliminar usuario -->
+                <button onclick="window.eliminarUsuario(${usuario.id})"
+                    class="text-red-500 hover:text-red-700 mx-1" title="Eliminar usuario">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// ── Modal Usuario ─────────────────────────────────────────────────────────────
+function abrirModal(usuario = null) {
+    const form = document.getElementById('formUsuario');
+    const passwordField = document.getElementById('password');
+    form.reset();
+    document.getElementById('error-rfcCurp').classList.add('hidden');
+    document.getElementById('rfcCurpContainer').classList.add('hidden');
+    document.getElementById('empresaContainer').classList.add('hidden');
+    document.getElementById('vigenciaContainer').classList.add('hidden');
+
+    if (usuario) {
+        document.getElementById('modalTitle').textContent = 'Editar Usuario';
+        document.getElementById('usuarioId').value = usuario.id;
+        document.getElementById('nombre').value = usuario.nombre;
+        document.getElementById('email').value = usuario.email;
+        document.getElementById('role').value = usuario.role;
+        if (usuario.fechaNacimiento) document.getElementById('fechaNacimiento').value = usuario.fechaNacimiento;
+        if (usuario.rfcCurp) document.getElementById('rfcCurp').value = usuario.rfcCurp;
+        if (usuario.empresa) document.getElementById('empresa').value = usuario.empresa;
+        if (usuario.validUntil) document.getElementById('validUntil').value = usuario.validUntil;
+        passwordField.removeAttribute('required');
+        window.toggleUserTypeFields();
+    } else {
+        document.getElementById('modalTitle').textContent = 'Nuevo Usuario';
+        document.getElementById('usuarioId').value = '';
+        passwordField.setAttribute('required', 'required');
+    }
+    UI.toggleModal('modalUsuario', true);
+}
+
+function cerrarModal() { UI.toggleModal('modalUsuario', false); }
+
+async function guardarUsuario(e) {
+    e.preventDefault();
+    const usuarioId = document.getElementById('usuarioId').value;
+    const datos = {
+        nombre: document.getElementById('nombre').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        role: document.getElementById('role').value,
+        fechaNacimiento: document.getElementById('fechaNacimiento').value || null
+    };
+    // Add role-specific details
+    if (datos.role === 'CUSTOMER') {
+        const rfcCurp = document.getElementById('rfcCurp').value.trim();
+        const regexRfc = /^[A-Za-z]{4}[0-9]{6}[A-Za-z0-9]{3}$/;
+        const regexCurp = /^[A-Za-z]{4}[0-9]{6}[HM][A-Za-z]{5}[0-9]{2}$/;
+        
+        if (!regexRfc.test(rfcCurp) && !regexCurp.test(rfcCurp)) {
+            document.getElementById('error-rfcCurp').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('error-rfcCurp').classList.add('hidden');
+        datos.rfcCurp = rfcCurp;
+    } else if (datos.role === 'SUPPLIER') {
+        datos.empresa = document.getElementById('empresa').value.trim();
+    } else if (datos.role === 'ADMIN') {
+        datos.validUntil = document.getElementById('validUntil').value;
+    }
+
+    if (usuarioId && !datos.password) delete datos.password;
+
+    try {
+        if (usuarioId) {
+            await Api.put(`/usuarios/${usuarioId}`, datos);
+            UI.showNotification('Usuario actualizado exitosamente');
+        } else {
+            const endpointMap = { ADMIN: '/usuarios/admin', SUPPLIER: '/usuarios/proveedor', CUSTOMER: '/usuarios/cliente' };
+            const endpoint = endpointMap[datos.role] || '/usuarios/cliente';
+            await Api.post(endpoint, datos);
+            UI.showNotification('Usuario creado exitosamente');
+        }
+        cerrarModal();
+        cargarUsuarios();
+    } catch (error) {
+        UI.showNotification('Error al guardar usuario: ' + error.message, 'error');
+    }
+}
+
+// ── Modal Direcciones (Admin) ──────────────────────────────────────────────────
+window.gestionarDirecciones = async (usuarioId, nombre) => {
+    adminTargetUserId = usuarioId;
+    document.getElementById('modalDirTitle').textContent = `Direcciones de ${nombre}`;
+    cerrarFormDir();
+    await cargarDireccionesDeUsuario(usuarioId);
+    UI.toggleModal('modalDirecciones', true);
+};
+
+async function cargarDireccionesDeUsuario(usuarioId) {
+    try {
+        const dirs = await Api.get(`/direcciones/usuario/${usuarioId}`);
+        renderizarListaAdmin(dirs);
+    } catch (err) {
+        UI.showNotification('Error al cargar direcciones: ' + err.message, 'error');
+    }
+}
+
+function renderizarListaAdmin(dirs) {
+    const lista = document.getElementById('listaDireccionesAdmin');
+    const empty = document.getElementById('emptyDirAdmin');
+    lista.innerHTML = '';
+
+    if (!dirs || dirs.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+    }
+    empty.classList.add('hidden');
+
+    dirs.forEach(dir => {
+        const tels = (dir.telefonos || []).map(t =>
+            `<span class="tel-item"><i class="fas fa-phone text-blue-400 mr-1 text-xs"></i>${t}</span>`
+        ).join('');
+
+        const card = document.createElement('div');
+        card.className = `addr-card${dir.preferida ? ' preferida' : ''}`;
+        card.innerHTML = `
+            <div class="flex justify-between items-start">
+                <div>
+                    ${dir.alias ? `<span class="font-medium text-gray-800 text-sm">${dir.alias}</span> ` : ''}
+                    ${dir.preferida ? '<span class="badge-preferida">⭐ Preferida</span>' : ''}
+                    <div class="text-xs text-gray-600 mt-1">
+                        ${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ', Int. ' + dir.numeroInterior : ''},
+                        ${dir.colonia}, ${dir.municipio}, ${dir.estado} – C.P. ${dir.codigoPostal}
+                    </div>
+                    ${tels ? `<div class="flex flex-wrap gap-1 mt-1.5">${tels}</div>` : ''}
+                </div>
+                <div class="flex gap-1 shrink-0 ml-2">
+                    <button onclick="window.editarDirAdmin(${dir.id})"
+                        class="text-yellow-500 hover:text-yellow-700 text-sm" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="window.eliminarDirAdmin(${dir.id})"
+                        class="text-red-400 hover:text-red-600 text-sm" title="Eliminar">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        lista.appendChild(card);
+    });
+}
+
+// Sub-form crear / editar
+function abrirFormDir(dir = null) {
+    const wrapper = document.getElementById('formDirAdminWrapper');
+    document.getElementById('formDirAdmin').reset();
+    adirTelefonos = [];
+    document.getElementById('adirId').value = '';
+    document.getElementById('formDirAdminTitle').textContent = dir ? 'Editar Dirección' : 'Nueva Dirección';
+
+    if (dir) {
+        document.getElementById('adirId').value = dir.id;
+        document.getElementById('adirAlias').value = dir.alias || '';
+        document.getElementById('adirPreferida').checked = !!dir.preferida;
+        document.getElementById('adirCalle').value = dir.calle || '';
+        document.getElementById('adirNumExt').value = dir.numeroExterior || '';
+        document.getElementById('adirNumInt').value = dir.numeroInterior || '';
+        document.getElementById('adirRef').value = dir.referencia || '';
+        document.getElementById('adirColonia').value = dir.colonia || '';
+        document.getElementById('adirMunicipio').value = dir.municipio || '';
+        document.getElementById('adirEstado').value = dir.estado || '';
+        document.getElementById('adirCP').value = dir.codigoPostal || '';
+        adirTelefonos = [...(dir.telefonos || [])];
+    }
+    renderizarTelAdmin();
+    wrapper.classList.remove('hidden');
+    wrapper.scrollIntoView({ behavior: 'smooth' });
+}
+
+function cerrarFormDir() {
+    document.getElementById('formDirAdminWrapper').classList.add('hidden');
+    adirTelefonos = [];
+}
+
+function cerrarModalDirecciones() {
+    UI.toggleModal('modalDirecciones', false);
+    adminTargetUserId = null;
+    cerrarFormDir();
+}
+
+// Teléfonos en form admin
+function agregarTelAdmin() {
+    const input = document.getElementById('adirNuevoTel');
+    const val = input.value.trim();
+    if (!/^\d{10}$/.test(val)) {
+        UI.showNotification('Teléfono: exactamente 10 dígitos', 'error');
+        return;
+    }
+    if (adirTelefonos.includes(val)) { UI.showNotification('Ese número ya está en la lista', 'error'); return; }
+    adirTelefonos.push(val);
+    input.value = '';
+    renderizarTelAdmin();
+}
+
+function renderizarTelAdmin() {
+    const container = document.getElementById('adirTelContainer');
+    container.innerHTML = '';
+    adirTelefonos.forEach((tel, idx) => {
+        const item = document.createElement('div');
+        item.className = 'tel-item';
+        item.innerHTML = `
+            <i class="fas fa-phone text-blue-400 text-xs"></i>
+            <span class="flex-1 text-xs">${tel}</span>
+            <button type="button" onclick="window.adminQuitarTel(${idx})" class="text-red-400 hover:text-red-600 text-xs">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(item);
+    });
+}
+
+window.adminQuitarTel = (idx) => {
+    adirTelefonos.splice(idx, 1);
+    renderizarTelAdmin();
+};
+
+async function guardarDireccionAdmin(e) {
+    e.preventDefault();
+    if (!adminTargetUserId) return;
+
+    const cp = document.getElementById('adirCP').value.trim();
+    if (!/^\d{5}$/.test(cp)) { UI.showNotification('C.P.: exactamente 5 dígitos', 'error'); return; }
+    if (adirTelefonos.length === 0) { UI.showNotification('Agrega al menos un teléfono', 'error'); return; }
+
+    const id = document.getElementById('adirId').value;
+    const body = {
+        preferida: document.getElementById('adirPreferida').checked,
+        alias: document.getElementById('adirAlias').value.trim(),
+        calle: document.getElementById('adirCalle').value.trim(),
+        numeroExterior: document.getElementById('adirNumExt').value.trim(),
+        numeroInterior: document.getElementById('adirNumInt').value.trim() || null,
+        referencia: document.getElementById('adirRef').value.trim() || null,
+        colonia: document.getElementById('adirColonia').value.trim(),
+        municipio: document.getElementById('adirMunicipio').value.trim(),
+        estado: document.getElementById('adirEstado').value.trim(),
+        codigoPostal: cp,
+        telefonos: [...adirTelefonos]
+    };
+
+    try {
+        if (id) {
+            await Api.put(`/direcciones/${id}`, body);
+            UI.showNotification('Dirección actualizada');
+        } else {
+            await Api.post(`/direcciones/usuario/${adminTargetUserId}`, body);
+            UI.showNotification('Dirección creada');
+        }
+        cerrarFormDir();
+        await cargarDireccionesDeUsuario(adminTargetUserId);
+    } catch (err) {
+        UI.showNotification('Error al guardar dirección: ' + err.message, 'error');
+    }
+}
+
+window.editarDirAdmin = async (id) => {
+    try {
+        const dir = await Api.get(`/direcciones/${id}`);
+        abrirFormDir(dir);
+    } catch (err) {
+        UI.showNotification('Error al cargar dirección', 'error');
+    }
+};
+
+window.eliminarDirAdmin = async (id) => {
+    if (!confirm('¿Eliminar esta dirección? Esta acción no se puede deshacer.')) return;
+    try {
+        await Api.delete(`/direcciones/${id}`);
+        UI.showNotification('Dirección eliminada');
+        await cargarDireccionesDeUsuario(adminTargetUserId);
+    } catch (err) {
+        UI.showNotification('Error al eliminar dirección: ' + err.message, 'error');
+    }
+};
+
+// ── Funciones globales usuario ────────────────────────────────────────────────
+window.editarUsuario = async (id) => {
+    try { const u = await Api.get(`/usuarios/${id}`); abrirModal(u); }
+    catch (error) { UI.showNotification('Error al cargar usuario', 'error'); }
+};
+
+window.eliminarUsuario = async (id) => {
+    if (!confirm('¿Eliminar este usuario?\n\nEsta acción no se puede deshacer.')) return;
+    try {
+        await Api.delete(`/usuarios/${id}`);
+        UI.showNotification('Usuario eliminado exitosamente');
+        cargarUsuarios();
+    } catch (error) {
+        UI.showNotification('Error al eliminar usuario: ' + error.message, 'error');
+    }
+};
+
+window.toggleUserTypeFields = () => {
+    const role = document.getElementById('role').value;
+    
+    const rfcCurpC = document.getElementById('rfcCurpContainer');
+    const empresaC = document.getElementById('empresaContainer');
+    const vigenciaC = document.getElementById('vigenciaContainer');
+    
+    const rfcCurpI = document.getElementById('rfcCurp');
+    const empresaI = document.getElementById('empresa');
+    const validUntilI = document.getElementById('validUntil');
+    
+    // Reset presentation and required attributes
+    rfcCurpC.classList.add('hidden');
+    empresaC.classList.add('hidden');
+    vigenciaC.classList.add('hidden');
+    
+    rfcCurpI.removeAttribute('required');
+    empresaI.removeAttribute('required');
+    validUntilI.removeAttribute('required');
+    
+    if (role === 'CUSTOMER') {
+        rfcCurpC.classList.remove('hidden');
+        rfcCurpI.setAttribute('required', 'required');
+    } else if (role === 'SUPPLIER') {
+        empresaC.classList.remove('hidden');
+        empresaI.setAttribute('required', 'required');
+    } else if (role === 'ADMIN') {
+        vigenciaC.classList.remove('hidden');
+        validUntilI.setAttribute('required', 'required');
+    }
+};
+
+
+================ frontend\js\validation.js ================
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Both forms
+    const registerForm = document.getElementById("registerForm");
+    const adminForm = document.getElementById("formUsuario");
+
+    const state = {};
+
+    const REGEX = {
+        email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        password: /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/,
+        rfc: /^[A-Za-z]{4}[0-9]{6}[A-Za-z0-9]{3}$/,
+        curp: /^[A-Za-z]{4}[0-9]{6}[HM][A-Za-z]{5}[0-9]{2}$/
+    };
+
+    const RULES = {
+        common: {
+            nombre: ["required", "minLength:3"],
+            email: ["required", "email"]
+        },
+        cliente: {
+            fechaNacimiento: ["required", "adult"],
+            rfcCurp: ["required", "rfcOrCurp"],
+        },
+        CUSTOMER: {
+            fechaNacimiento: ["required", "adult"],
+            rfcCurp: ["required", "rfcOrCurp"],
+        },
+        proveedor: {
+            empresa: ["required", "minLength:3"],
+        },
+        SUPPLIER: {
+            empresa: ["required", "minLength:3"],
+        },
+        ADMIN: {
+            validUntil: ["required"]
+        }
+    };
+
+    const validators = {
+        required(value) { return value.trim().length > 0; },
+        email(value) { return REGEX.email.test(value); },
+        minLength(value, length) { return value.length >= parseInt(length); },
+        passwordStrength(value) {
+            updatePasswordStrength(value);
+            return REGEX.password.test(value);
+        },
+        passwordMatch(value) {
+            const p = document.getElementById("password");
+            if(!p) return true;
+            return value === p.value;
+        },
+        adult(value) {
+            if(!value) return false;
+            const birth = new Date(value);
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+            return age >= 18;
+        },
+        rfcOrCurp(value) {
+            const fnInput = document.getElementById("fechaNacimiento");
+            if(!fnInput) return false;
+            const fechaNacimiento = fnInput.value;
+            if (!fechaNacimiento) return false;
+            const rfc = REGEX.rfc.test(value);
+            const curp = REGEX.curp.test(value);
+            if (!rfc && !curp) return false;
+            const fechaDoc = value.substring(4, 10);
+            const fecha = fechaNacimiento.replaceAll("-", "").substring(2);
+            return fechaDoc === fecha;
+        }
+    };
+
+    function getActiveRules(formEl) {
+        let type = "";
+        let baseRules = { ...RULES.common };
+
+        if (formEl.id === "registerForm") {
+            const ut = document.getElementById("userType");
+            if(ut) type = ut.value;
+            baseRules.password = ["required", "passwordStrength"];
+            baseRules.confirmPassword = ["required", "passwordMatch"];
+        } else if (formEl.id === "formUsuario") {
+            const rl = document.getElementById("role");
+            if(rl) type = rl.value;
+            
+            const pInput = document.getElementById("password");
+            if (pInput && pInput.hasAttribute("required")) {
+                baseRules.password = ["required", "passwordStrength"];
+            } else if (pInput && pInput.value) {
+                baseRules.password = ["passwordStrength"];
+            }
+        }
+
+        return {
+            ...baseRules,
+            ...(RULES[type] || {})
+        };
+    }
+
+    function validateField(field, formEl) {
+        const rules = getActiveRules(formEl);
+        const name = field.id;
+        if (!rules[name]) return true;
+
+        const value = field.value.trim();
+        const ruleSet = rules[name];
+
+        for (const rule of ruleSet) {
+            const [validator, param] = rule.split(":");
+            const valid = validators[validator](value, param);
+            if (!valid) {
+                updateUI(field, false);
+                state[name] = false;
+                evaluateForm(formEl);
+                return false;
+            }
+        }
+
+        updateUI(field, true);
+        state[name] = true;
+        evaluateForm(formEl);
+        return true;
+    }
+
+    function updateUI(field, valid) {
+        const error = document.getElementById(`error-${field.id}`);
+        if (valid) {
+            field.classList.remove("invalid");
+            field.classList.add("valid");
+            if (error) error.style.display = "none";
+        } else {
+            field.classList.remove("valid");
+            field.classList.add("invalid");
+            if (error) error.style.display = "block";
+        }
+    }
+
+    function updatePasswordStrength(password) {
+        const passwordBar = document.getElementById("password-strength-bar");
+        if(!passwordBar) return;
+        if (!password) {
+            passwordBar.style.width = "0%";
+            return;
+        }
+        let score = 0;
+        if (password.length >= 8) score++;
+        if (/[A-Z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+
+        const percent = (score / 4) * 100;
+        passwordBar.style.width = percent + "%";
+        if (score <= 1) passwordBar.className = "h-1 bg-red-500";
+        else if (score === 2) passwordBar.className = "h-1 bg-yellow-500";
+        else passwordBar.className = "h-1 bg-green-500";
+    }
+
+    function evaluateForm(formEl) {
+        const rules = getActiveRules(formEl);
+        const fields = Object.keys(rules);
+        const valid = fields.every(f => state[f] === true);
+
+        let btn = null;
+        if(formEl.id === "registerForm") btn = document.getElementById("submitBtn");
+        if(formEl.id === "formUsuario") btn = document.getElementById("submitBtnUsuario");
+        
+        if (btn) btn.disabled = !valid;
+    }
+
+    // Attach to Register
+    if (registerForm) {
+        const userTypeSelect = document.getElementById("userType");
+        const extraFieldsContainer = document.getElementById("extraFields");
+        const message = document.getElementById("form-message");
+
+        function renderExtraFields(type) {
+            extraFieldsContainer.innerHTML = "";
+            if (type === "cliente") {
+                extraFieldsContainer.innerHTML = `
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">RFC / CURP</label>
+                        <input id="rfcCurp" type="text" maxlength="18" class="w-full px-4 py-2 border rounded-lg">
+                        <p id="error-rfcCurp" class="error-msg">RFC/CURP inválido</p>
+                    </div>`;
+            }
+            if (type === "proveedor") {
+                extraFieldsContainer.innerHTML = `
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">Empresa</label>
+                        <input id="empresa" type="text" class="w-full px-4 py-2 border rounded-lg">
+                        <p id="error-empresa" class="error-msg">Empresa obligatoria</p>
+                    </div>`;
+            }
+        }
+
+        userTypeSelect.addEventListener("change", () => {
+            renderExtraFields(userTypeSelect.value);
+            evaluateForm(registerForm);
+        });
+        userTypeSelect.dispatchEvent(new Event("change"));
+
+        registerForm.addEventListener("input", e => {
+            if (e.target.matches("input")) validateField(e.target, registerForm);
+        });
+        registerForm.addEventListener("blur", e => {
+            if (e.target.matches("input")) validateField(e.target, registerForm);
+        }, true);
+
+        registerForm.addEventListener("submit", async e => {
+            e.preventDefault();
+            const type = userTypeSelect.value;
+            const payload = {
+                nombre: document.getElementById("nombre").value,
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value,
+                fechaNacimiento: document.getElementById("fechaNacimiento").value
+            };
+            if (type === "cliente") payload.rfcCurp = document.getElementById("rfcCurp").value;
+            if (type === "proveedor") payload.empresa = document.getElementById("empresa").value;
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/usuarios/${type}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    message.textContent = "Registro exitoso";
+                    message.className = "text-green-600 text-center mt-4";
+                    registerForm.reset();
+                    setTimeout(() => { window.location.href = "login.html"; }, 2000);
+                } else {
+                    message.textContent = "Error en registro";
+                    message.className = "text-red-600 text-center mt-4";
+                }
+            } catch (err) {
+                console.error(err);
+                message.textContent = "Error de conexión";
+                message.className = "text-red-600 text-center mt-4";
+            }
+        });
+    }
+
+    // Attach to Admin Form
+    if (adminForm) {
+        adminForm.addEventListener("input", e => {
+            if (e.target.matches("input, select")) validateField(e.target, adminForm);
+        });
+        adminForm.addEventListener("blur", e => {
+            if (e.target.matches("input, select")) validateField(e.target, adminForm);
+        }, true);
+        const roleSel = document.getElementById("role");
+        if(roleSel) {
+            roleSel.addEventListener("change", () => {
+                evaluateForm(adminForm);
+            });
+        }
+    }
+});

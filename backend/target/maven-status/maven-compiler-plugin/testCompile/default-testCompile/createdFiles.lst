@@ -1,3 +1,5 @@
-com\ecommerce\ObserverEventosTest.class
+com\ecommerce\SystemConfigRepositoryTest.class
 com\ecommerce\ConfiguracionSistemaTest.class
+com\ecommerce\ObserverEventosTest.class
+com\ecommerce\ConfiguracionSistemaServiceTest.class
 com\ecommerce\FabricaEntidadesTest.class

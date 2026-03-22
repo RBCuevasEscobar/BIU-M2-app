@@ -18,7 +18,19 @@
 		<spring-security.version>6.3.3</spring-security.version>
 		<tomcat.version>10.1.49</tomcat.version>
 		<logback.version>1.5.12</logback.version>
+		<spring-boot-starter-web.version>3.5.11</spring-boot-starter-web.version>
 	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.ai</groupId>
+				<artifactId>spring-ai-bom</artifactId>
+				<version>1.0.3</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -71,6 +83,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-model-openai</artifactId>
+			<version>1.0.0-RC1</version>
 		</dependency>
 	</dependencies>
 

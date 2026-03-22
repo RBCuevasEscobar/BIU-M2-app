@@ -48,6 +48,13 @@ export const UI = {
                     });
                     dropdownHtml += `</div></div></div>`;
                     right.innerHTML += dropdownHtml;
+                } else if (l.isBadgeCart) {
+                    // Enlace especial del Carrito con ID para badge dinámico
+                    right.innerHTML += `
+                        <a id="cartNavLink" href="${l.href}" class="text-gray-700 hover:text-blue-600 font-medium">
+                            ${l.label}
+                        </a>
+                    `;
                 } else {
                     right.innerHTML += `
                         <a href="${l.href}" class="text-gray-700 hover:text-blue-600 font-medium">
@@ -65,6 +72,11 @@ export const UI = {
                     <i class="fas fa-sign-out-alt"></i> Salir
                 </button>
             `;
+
+            // Auto-actualizar badge del carrito solo para CUSTOMER
+            if (user.role === 'CUSTOMER') {
+                this.updateCartBadge();
+            }
         }
 
         wrapper.appendChild(left);
@@ -76,7 +88,7 @@ export const UI = {
         const config = {
             CUSTOMER: {
                 products: [
-                    { label: 'Carrito', href: 'carrito.html' },
+                    { label: 'Carrito', href: 'carrito.html', isBadgeCart: true },
                     { label: 'Mis Órdenes', href: 'ordenes.html' },
                     { label: 'Mis Direcciones', href: 'direcciones.html' }
                 ],
@@ -87,12 +99,12 @@ export const UI = {
                 ],
                 orders: [
                     { label: 'Productos', href: 'productoscustomer.html' },
-                    { label: 'Carrito', href: 'carrito.html' },
+                    { label: 'Carrito', href: 'carrito.html', isBadgeCart: true },
                     { label: 'Mis Direcciones', href: 'direcciones.html' }
                 ],
                 addresses: [
                     { label: 'Productos', href: 'productoscustomer.html' },
-                    { label: 'Carrito', href: 'carrito.html' },
+                    { label: 'Carrito', href: 'carrito.html', isBadgeCart: true },
                     { label: 'Mis Órdenes', href: 'ordenes.html' }
                 ]
             },
@@ -216,6 +228,39 @@ export const UI = {
                     this.toggleModal(modalId, false);
                 }
             });
+        }
+    },
+
+    /**
+     * Actualiza el badge del carrito en el enlace con id="cartNavLink".
+     * Obtiene la cantidad de productos via GET /api/carrito.
+     * Muestra "Carrito (N)" si hay productos, o "Carrito" si vacío.
+     * Solo actúa si el enlace existe en el DOM (solo páginas CUSTOMER).
+     */
+    async updateCartBadge() {
+        const link = document.getElementById('cartNavLink');
+        if (!link) return; // No es una página de CUSTOMER o no aplica
+
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const response = await fetch('http://localhost:8080/api/carrito', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                link.textContent = 'Carrito';
+                return;
+            }
+
+            const carrito = await response.json();
+            const count = carrito?.productos?.length ?? 0;
+            link.textContent = count > 0 ? `Carrito (${count})` : 'Carrito';
+
+        } catch {
+            // En caso de error de red, se muestra el label base sin badge
+            link.textContent = 'Carrito';
         }
     },
 };

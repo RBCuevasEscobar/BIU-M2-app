@@ -41,10 +41,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/api/usuarios/cliente").permitAll()
-                        .requestMatchers("/api/usuarios/proveedor").permitAll()
-                        .requestMatchers("/api/usuarios/admin").permitAll()
                         .requestMatchers("/api/productos").permitAll()
+                        .requestMatchers("/api/chat/**").permitAll()
 
                         // 🔐 CUALQUIER OTRA SOLICITUD ESTA PROTEGIDA
                         .requestMatchers("/api/usuarios").authenticated()

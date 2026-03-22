@@ -58,6 +58,7 @@ public class OrdenService {
     private Usuario getUsuarioActual() {
         String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()
                 .getName();
+        System.out.println("Email: " + email);
         return usuarioRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
@@ -108,7 +109,7 @@ public class OrdenService {
         // Limpiar carrito
         carrito.getProductos().clear();
         carritoRepository.save(carrito);
-        
+
         Orden guardada = ordenRepository.save(orden);
         eventPublisher.publishEvent(new com.ecommerce.observer.events.OrdenCreadaEvent(this, guardada));
 
@@ -220,9 +221,9 @@ public class OrdenService {
 
         orden.setEstado(EstadoOrden.CANCELLED);
         Orden guardada = ordenRepository.save(orden);
-        
+
         eventPublisher.publishEvent(new com.ecommerce.observer.events.OrdenCanceladaEvent(this, guardada));
-        
+
         return toDTO(guardada);
     }
 
