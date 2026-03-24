@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/productos").permitAll()
                         .requestMatchers("/api/chat/**").permitAll()
+                        .requestMatchers("/api/config/sistema/publica").permitAll()
 
                         // 🔐 CUALQUIER OTRA SOLICITUD ESTA PROTEGIDA
                         .requestMatchers("/api/usuarios").authenticated()

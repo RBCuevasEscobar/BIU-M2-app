@@ -19,6 +19,18 @@ public class OrdenDTO {
 
     private Double total;
 
+    /** Subtotal de productos sin IVA */
+    private Double subtotalProductos;
+
+    /** Tasa de IVA aplicada a esta orden (ej. 0.16) */
+    private Double ivaTasa;
+
+    /** Monto de impuestos = subtotalProductos × ivaTasa */
+    private Double montoImpuestos;
+
+    /** RFC del cliente capturado al momento del pago */
+    private String rfcCliente;
+
     private List<OrdenDetalleDTO> detalles;
 
     private PaymentTransactionDTO paymentTransaction;

@@ -9,8 +9,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!Auth.requireAuth(['CUSTOMER', 'ADMIN', 'SUPPLIER'])) return;
 
+    let userActual = Auth.getCurrentUser();
+    let roleActual = userActual.role;
+
     UI.renderNavBar({ containerId: 'mainNav', context: 'addresses' });
     cargarDirecciones();
+    if (roleActual === 'CUSTOMER') UI.updateCartBadge();
     setupEventListeners();
 });
 

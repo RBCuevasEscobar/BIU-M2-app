@@ -10,7 +10,8 @@ import java.util.Map;
 
 /**
  * Controlador de Gestión Administrativa del Singleton Central.
- * Ahora incluye persistencia transparente en DB via ConfiguracionSistemaService.
+ * Ahora incluye persistencia transparente en DB via
+ * ConfiguracionSistemaService.
  */
 @RestController
 @RequestMapping("/api/config/sistema")
@@ -31,8 +32,24 @@ public class ConfigSistemaController {
                 "monedaSistema", cs.getMonedaSistema(),
                 "stockMinimo", cs.getStockMinimo(),
                 "modoDebug", cs.isModoDebug(),
-                "maxProductosOrden", cs.getMaxProductosOrden()
-        ));
+                "maxProductosOrden", cs.getMaxProductosOrden()));
+    }
+
+    /**
+     * Endpoint público sin autenticación: expone solo iva, monedaSistema y
+     * maxProductosOrden
+     * para que los componentes frontend (carrito, checkout) los consuman sin ser
+     * ADMIN.
+     */
+    @GetMapping("/publica")
+    public ResponseEntity<Map<String, Object>> getConfiguracionPublica() {
+        ConfiguracionSistema cs = ConfiguracionSistema.getInstance();
+        return ResponseEntity.ok(Map.of(
+                "iva", cs.getIva(),
+                "monedaSistema", cs.getMonedaSistema(),
+                "stockMinimo", cs.getStockMinimo(),
+                "modoDebug", cs.isModoDebug(),
+                "maxProductosOrden", cs.getMaxProductosOrden()));
     }
 
     @PutMapping

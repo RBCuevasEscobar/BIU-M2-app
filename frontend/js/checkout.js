@@ -7,10 +7,21 @@ const Checkout = {
     orden: null,
     direccion: null,
     metodoPago: "Tarjeta",
+    ivaSistema: 0.16,
+    monedaSistema: 'MXN',
 
     async init() {
 
         if (!Auth.requireAuth(["CUSTOMER", "ADMIN"])) return
+
+        // Cargar configuración del sistema (IVA + moneda) antes de renderizar
+        try {
+            const cfg = await Api.get('/config/sistema/publica');
+            this.ivaSistema = cfg.iva ?? 0.16;
+            this.monedaSistema = cfg.monedaSistema ?? 'MXN';
+        } catch (e) {
+            console.warn('[checkout] config del sistema no disponible, usando valores por defecto');
+        }
 
         UI.renderNavBar({
             containerId: "mainNav",
@@ -173,17 +184,20 @@ const Checkout = {
             li.className = "flex justify-between text-sm"
             li.innerHTML = `
                 <span>${d.cantidad}x ${nombre}</span>
-                <span>${UI.formatCurrency(sub)}</span>
+                <span>${this.monedaSistema}</span>
             `
             ul.appendChild(li)
         })
 
-        const tax = subtotal * 0.16
+        const tax = subtotal * this.ivaSistema
         const total = subtotal + tax
 
         document.getElementById("resumenSubtotal").textContent = UI.formatCurrency(subtotal)
         document.getElementById("resumenImpuestos").textContent = UI.formatCurrency(tax)
         document.getElementById("resumenTotal").textContent = UI.formatCurrency(total)
+
+        // Actualizar labels con moneda y tasa IVA
+        this._actualizarLabels(this.ivaSistema);
     },
 
     renderResumenFromCarrito() {
@@ -195,7 +209,7 @@ const Checkout = {
 
         document.getElementById("loadingResumen").classList.add("hidden");
         document.getElementById("resumenContent").classList.remove("hidden");
-        
+
         if (this.usuarioRfc) {
             const container = document.getElementById("rfcContainer");
             if (container) {
@@ -203,7 +217,7 @@ const Checkout = {
                 document.getElementById("checkoutRfcDisplay").textContent = this.usuarioRfc;
             }
         }
-        
+
         document.getElementById("ordenIdDisplay").textContent = "Nueva";
         document.getElementById("ordenEstadoDisplay").textContent = "PENDING";
 
@@ -230,12 +244,27 @@ const Checkout = {
             ul.appendChild(li);
         });
 
-        const tax = subtotal * 0.16;
+        const tax = subtotal * this.ivaSistema;
         const total = subtotal + tax;
 
         document.getElementById("resumenSubtotal").textContent = UI.formatCurrency(subtotal);
         document.getElementById("resumenImpuestos").textContent = UI.formatCurrency(tax);
         document.getElementById("resumenTotal").textContent = UI.formatCurrency(total);
+
+        // Actualizar labels con moneda y tasa IVA
+        this._actualizarLabels(this.ivaSistema);
+    },
+
+    /** Actualiza los labels de Subtotal, IVA y Total con moneda y porcentaje dinámico */
+    _actualizarLabels(ivaTasa) {
+        const mon = this.monedaSistema;
+        const pct = Math.round(ivaTasa * 100);
+        const lbSub = document.getElementById('labelResumenSubtotal');
+        const lbIva = document.getElementById('labelResumenImpuestos');
+        const lbTot = document.getElementById('labelResumenTotal');
+        if (lbSub) lbSub.textContent = `Subtotal (${mon})`;
+        if (lbIva) lbIva.textContent = `IVA (${pct}%)`;
+        if (lbTot) lbTot.textContent = `Total (${mon})`;
     },
 
     updateMetodoPago() {

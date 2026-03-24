@@ -4,13 +4,30 @@ import Auth from './auth.js';
 
 // ── Estado local de imágenes en el modal ──────────────────────────────────────
 let imagenesModal = []; // [{ url: String, isDefault: Boolean }]
+let ivaSistema = 0.16;
+let monedaSistema = 'MXN';
+let maxProductosOrden = 999;
+let stockMinimo = 0;
 
-document.addEventListener('DOMContentLoaded', () => {
+async function cargarConfigSistema() {
+    try {
+        const cfg = await Api.get('/config/sistema/publica');
+        ivaSistema = cfg.iva ?? 0.16;
+        monedaSistema = cfg.monedaSistema ?? 'MXN';
+        maxProductosOrden = cfg.maxProductosOrden ?? 999;
+        stockMinimo = Number(cfg.stockMinimo ?? 0);
+    } catch (e) {
+        console.warn('[productos] No se pudo cargar config del sistema, usando valores por defecto.');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
 
     if (!Auth.requireAuth(["ADMIN", "SUPPLIER"])) return;
 
     UI.renderNavBar({ containerId: 'mainNav', context: 'products' });
     setupRoleBasedUI();
+    await cargarConfigSistema();
     cargarProductos();
     setupEventListeners();
 });
@@ -58,7 +75,7 @@ function setupEventListeners() {
     const txtDescripcion = document.getElementById('descripcion');
     if (txtDescripcion) {
         txtDescripcion.addEventListener('input', () => {
-            actualizarContador('descripcion', 'contadorDescripcion', 250);
+            actualizarContador('descripcion', 'contadorDescripcion', 500);
         });
     }
 
@@ -167,11 +184,19 @@ function renderizarTabla(productos, filtro) {
 
         // Lógica de Stock (Visible solo para ADMIN / SUPPLIER)
         let stockDisplay = '';
+
         if (role !== 'CUSTOMER') {
             if (esFisico) {
-                const isLow = p.stock > 0 && p.stock <= 5;
-                const isOut = p.stock === 0;
-                const cssClass = isOut ? 'text-red-600 font-bold' : (isLow ? 'text-orange-500 font-bold' : 'text-green-600');
+                const stock = Number(p.stock ?? 0);
+                const min = Number(stockMinimo ?? 0);
+                const isOut = stock === 0;
+                const isLow = stock > 0 && stock <= min;
+                let cssClass = 'text-green-600';
+                if (isOut) {
+                    cssClass = 'text-red-600 font-bold';
+                } else if (isLow) {
+                    cssClass = 'text-orange-500 font-bold';
+                }
                 stockDisplay = `<td class="py-3 px-4"><span class="${cssClass}">${p.stock}</span></td>`;
             } else {
                 stockDisplay = `<td class="py-3 px-4"><span class="text-gray-400 text-xs italic">∞ (Digital)</span></td>`;
@@ -272,7 +297,7 @@ function abrirModal(producto = null) {
     form.reset();
     imagenesModal = [];
     document.getElementById('productoId').value = '';
-    document.getElementById('contadorDescripcion').textContent = '0 / 250';
+    document.getElementById('contadorDescripcion').textContent = '0 / 500';
     document.getElementById('contadorProveedor').textContent = '0 / 150';
     document.getElementById('modalTitle').textContent = 'Nuevo Producto';
 
@@ -286,7 +311,7 @@ function abrirModal(producto = null) {
         document.getElementById('nombre').value = producto.nombre || '';
         document.getElementById('precio').value = producto.precio || '';
         document.getElementById('descripcion').value = producto.descripcion || '';
-        actualizarContador('descripcion', 'contadorDescripcion', 250);
+        actualizarContador('descripcion', 'contadorDescripcion', 500);
 
         if (role === 'ADMIN') {
             document.getElementById('proveedor').value = producto.proveedor || '';

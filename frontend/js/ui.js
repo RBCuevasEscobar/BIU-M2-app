@@ -112,63 +112,63 @@ export const UI = {
                 products: [
                     { label: 'Gestion Órdenes', href: 'ordenes.html' },
                     { label: 'Gestion Usuarios', href: 'usuarios.html' },
-                    { 
-                        isDropdown: true, 
-                        label: '<i class="fas fa-cog"></i> Configuración', 
+                    {
+                        isDropdown: true,
+                        label: '<i class="fas fa-cog"></i> Configuración',
                         items: [
                             { label: 'Opciones JWT', href: 'config-auth.html' },
                             { label: 'Variables Sistema', href: 'config-sistema.html' }
-                        ] 
+                        ]
                     }
                 ],
                 users: [
                     { label: 'Gestion Productos', href: 'productos.html' },
                     { label: 'Gestion Órdenes', href: 'ordenes.html' },
-                    { 
-                        isDropdown: true, 
-                        label: '<i class="fas fa-cog"></i> Configuración', 
+                    {
+                        isDropdown: true,
+                        label: '<i class="fas fa-cog"></i> Configuración',
                         items: [
                             { label: 'Opciones JWT', href: 'config-auth.html' },
                             { label: 'Variables Sistema', href: 'config-sistema.html' }
-                        ] 
+                        ]
                     }
                 ],
                 orders: [
                     { label: 'Gestion Usuarios', href: 'usuarios.html' },
                     { label: 'Gestion Productos', href: 'productos.html' },
-                    { 
-                        isDropdown: true, 
-                        label: '<i class="fas fa-cog"></i> Configuración', 
+                    {
+                        isDropdown: true,
+                        label: '<i class="fas fa-cog"></i> Configuración',
                         items: [
                             { label: 'Opciones JWT', href: 'config-auth.html' },
                             { label: 'Variables Sistema', href: 'config-sistema.html' }
-                        ] 
+                        ]
                     }
                 ],
                 'config-auth': [
                     { label: 'Gestion Usuarios', href: 'usuarios.html' },
                     { label: 'Gestion Productos', href: 'productos.html' },
                     { label: 'Gestion Órdenes', href: 'ordenes.html' },
-                    { 
-                        isDropdown: true, 
-                        label: '<i class="fas fa-cog"></i> Configuración', 
+                    {
+                        isDropdown: true,
+                        label: '<i class="fas fa-cog"></i> Configuración',
                         items: [
                             { label: 'Opciones JWT', href: 'config-auth.html' },
                             { label: 'Variables Sistema', href: 'config-sistema.html' }
-                        ] 
+                        ]
                     }
                 ],
                 'config-sistema': [
                     { label: 'Gestion Usuarios', href: 'usuarios.html' },
                     { label: 'Gestion Productos', href: 'productos.html' },
                     { label: 'Gestion Órdenes', href: 'ordenes.html' },
-                    { 
-                        isDropdown: true, 
-                        label: '<i class="fas fa-cog"></i> Configuración', 
+                    {
+                        isDropdown: true,
+                        label: '<i class="fas fa-cog"></i> Configuración',
                         items: [
                             { label: 'Opciones JWT', href: 'config-auth.html' },
                             { label: 'Variables Sistema', href: 'config-sistema.html' }
-                        ] 
+                        ]
                     }
                 ]
             },

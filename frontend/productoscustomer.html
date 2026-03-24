@@ -17,28 +17,36 @@
     <nav id="mainNav" class="bg-white shadow"></nav>
 
     <!-- Contenedor Principal Chatbot (Marco Gris Claro con Borde Gris Oscuro) -->
+    <!-- Agregamos 'z-[9999]' para que esté sobre todo -->
     <div id="chatbox"
-        class="fixed top-8 right-4 w-[40ch] bg-gray-200 border-2 border-gray-500 rounded-xl shadow-lg cursor-move overflow-hidden">
+        class="fixed top-20 right-4 min-w-[250px] max-w-[95vw] w-[40ch] bg-gray-200 border-2 border-gray-500 rounded-xl shadow-2xl flex flex-col overflow-hidden z-[999]">
 
-        <!-- Frame Superior (Título Azul) -->
-        <div id="chat-header" class="p-2 bg-blue-600 text-white font-bold text-center">
-            Chat
+        <div id="chat-header"
+            class="p-2 bg-blue-600 text-white font-bold flex justify-between items-center cursor-move select-none">
+            <span class="ml-2 text-sm md:text-base">Chat Agente IA</span>
+            <button id="minimize-btn" class="hover:bg-blue-700 px-3 rounded font-bold transition-colors">+</button>
         </div>
 
-        <!-- Frame Inferior (Área de Diálogo Blanca) -->
-        <div class="p-3">
+        <div id="chat-content" class="p-3 flex flex-col flex-grow overflow-hidden hidden" style="height: 350px;">
             <div id="messages"
-                class="h-64 overflow-y-auto bg-white border-2 border-black rounded-lg p-2 mb-2 flex flex-col">
-                <!-- Aquí aparecerán los mensajes -->
-                <span class="text-gray-400 italic">Bienvenido al chat...</span>
+                class="flex-grow overflow-y-auto bg-white border-2 border-black rounded-lg p-2 mb-2 text-sm md:text-base">
+                <span class="text-gray-400 italic">Chat activo...</span>
             </div>
-
-            <!-- Input con Placeholder -->
-            <input id="input"
-                class="w-full border-2 border-gray-400 p-2 rounded-md focus:outline-none focus:border-blue-500"
-                placeholder="Pregunta: " />
+            <input id="input" class="w-full border-2 border-gray-400 p-2 rounded-md text-sm" placeholder="Pregunta: " />
         </div>
     </div>
+
+    <style>
+        /* Responsividad: En pantallas pequeñas el chat se ajusta */
+        @media (max-width: 640px) {
+            #chatbox {
+                width: 90% !important;
+                right: 5% !important;
+                left: 5% !important;
+                max-height: 80vh;
+            }
+        }
+    </style>
 
     <main class="w-full px-6 py-12">
         <div class="text-center mb-12">

@@ -7,6 +7,20 @@ let usuariosGlobal = [];
 let roleActual = '';
 let userActual = {};
 
+// Configuración del sistema (IVA + moneda)
+let ivaSistema = 0.16;
+let monedaSistema = 'MXN';
+
+async function cargarConfigSistema() {
+    try {
+        const cfg = await Api.get('/config/sistema/publica'); // Obtiene valores de configuracion del sistema
+        ivaSistema = cfg.iva ?? 0.16;
+        monedaSistema = cfg.monedaSistema ?? 'MXN';
+    } catch (e) {
+        console.warn('[ordenes] No se pudo cargar config del sistema');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
 
     if (!Auth.requireAuth(["CUSTOMER", "ADMIN"])) return;
@@ -19,15 +33,72 @@ document.addEventListener('DOMContentLoaded', async () => {
         context: 'orders'
     });
 
+    await cargarConfigSistema();
+
     if (roleActual === 'ADMIN') {
         document.getElementById('thUsuario').classList.remove('hidden');
         document.getElementById('filtroUsuario').classList.remove('hidden');
         cargarFiltroUsuarios();
+        // Verificar notificaciones pendientes para el ADMIN (Req. 9)
+        verificarNotificacionesPendientes();
     }
 
     setupEventListeners();
     await cargarOrdenes();
 });
+
+/**
+ * Verifica si hay notificaciones pendientes para el ADMIN y muestra un diálogo ACK por cada una.
+ */
+async function verificarNotificacionesPendientes() {
+    try {
+        const pendientes = await Api.get('/notificaciones/pendientes');
+        if (!pendientes || pendientes.length === 0) return;
+
+        // Mostrar cada notificación una por una en un diálogo modal
+        for (const notif of pendientes) {
+            await mostrarDialogoNotificacion(notif);
+        }
+
+        // ACK — marcar todas como leídas
+        const ids = pendientes.map(n => n.id);
+        await Api.post('/notificaciones/ack', { ids });
+    } catch (e) {
+        console.error('[ordenes] Error al verificar notificaciones pendientes:', e);
+    }
+}
+
+/**
+ * Muestra un diálogo modal con el mensaje de notificación y espera a que el ADMIN lo confirme.
+ */
+function mostrarDialogoNotificacion(notif) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+        overlay.innerHTML = `
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+                <div class="bg-yellow-50 border-b border-yellow-100 px-6 py-4 flex items-center gap-3">
+                    <i class="fas fa-bell text-yellow-500 text-xl"></i>
+                    <h3 class="text-lg font-bold text-gray-800">Notificación del Sistema</h3>
+                </div>
+                <div class="px-6 py-5">
+                    <p class="text-sm text-gray-600 mb-1">${new Date(notif.fecha).toLocaleString('es-ES')}</p>
+                    <p class="text-gray-800 font-medium">${notif.mensaje}</p>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 flex justify-end">
+                    <button id="btnAckNotif_${notif.id}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg transition">
+                        OK
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        document.getElementById(`btnAckNotif_${notif.id}`).addEventListener('click', () => {
+            overlay.remove();
+            resolve();
+        });
+    });
+}
 
 async function cargarFiltroUsuarios() {
     try {
@@ -166,6 +237,7 @@ function getActionHTML(orden) {
     const estado = orden.estado;
 
     if (roleActual === 'CUSTOMER') {
+        UI.updateCartBadge();
         const puedePagar = estado === 'CREATED' || estado === 'PAYMENT_PENDING' || estado === 'OUT_OF_STOCK';
         if (puedePagar) {
             html += `<button onclick="window.iniciarPago(${orden.id})" class="text-green-500 hover:text-green-700 p-1" title="Pagar">
@@ -272,11 +344,28 @@ window.verDetalles = (id) => {
 
     html += `</div>`;
 
-    if (orden.usuarioRfcCurp) {
+    // ------- RFC: usar el guardado en la orden (post-PAID) o el del usuario -------
+    const estadosPagados = ['PAID', 'SHIPPED', 'DELIVERED'];
+    const esPagada = estadosPagados.includes(orden.estado);
+
+    const ivaTasa = esPagada && orden.ivaTasa != null ? orden.ivaTasa : ivaSistema;
+    const ivaPct = Math.round(ivaTasa * 100);
+    const subtotalProductos = orden.subtotalProductos != null
+        ? orden.subtotalProductos
+        : orden.detalles.reduce((s, d) => s + (d.subtotal || 0), 0);
+    const montoIva = subtotalProductos * ivaTasa;
+    const totalCalculado = subtotalProductos + montoIva;
+
+    // RFC mostrado
+    const rfcMostrar = esPagada && orden.rfcCliente ? orden.rfcCliente : orden.usuarioRfcCurp;
+    if (rfcMostrar) {
         html += `
             <div class="bg-blue-50 p-3 rounded-lg mb-4 text-sm border border-blue-200">
                 <h4 class="font-bold text-blue-800 mb-1"><i class="fas fa-id-card mr-1"></i> RFC/CURP: </h4>
-                <p class="font-mono text-gray-700 font-semibold">${orden.usuarioRfcCurp}</p>
+                <p class="font-mono text-gray-700 font-semibold">${rfcMostrar}</p>
+                ${esPagada && orden.rfcCliente
+                ? '<p class="text-xs text-green-600 mt-1"><i class="fas fa-lock mr-1"></i>Capturado al momento del pago</p>'
+                : ''}
             </div>
         `;
     }
@@ -341,9 +430,19 @@ window.verDetalles = (id) => {
     });
 
     html += `</ul></div></div>
-            <div>
-                <p class="text-gray-500 mb-1">Total</p>
-                <p class="font-bold text-lg text-blue-600">${UI.formatCurrency(orden.total)}</p>
+            <div class="mt-4 bg-gray-50 rounded-lg border border-gray-200 p-3 text-sm">
+                <div class="flex justify-between mb-1">
+                    <span class="text-gray-600">Subtotal (${monedaSistema})</span>
+                    <span class="font-medium">${UI.formatCurrency(subtotalProductos)}</span>
+                </div>
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">IVA (${ivaPct}%)${esPagada ? ' <span class="text-xs text-green-600 ml-1">(tasa al pago)</span>' : ''}</span>
+                    <span class="font-medium">${UI.formatCurrency(montoIva)}</span>
+                </div>
+                <div class="flex justify-between font-bold border-t pt-2">
+                    <span class="text-gray-800">Total (${monedaSistema})</span>
+                    <span class="text-blue-600 text-base">${UI.formatCurrency(totalCalculado)}</span>
+                </div>
             </div>`;
 
     cont.innerHTML = html;

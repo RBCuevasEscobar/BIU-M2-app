@@ -48,7 +48,7 @@ public abstract class Producto {
     @Column(nullable = false)
     private Double precio;
 
-    @Column(length = 250)
+    @Column(length = 500)
     private String descripcion;
 
     @Column(length = 150)

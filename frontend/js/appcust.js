@@ -5,6 +5,7 @@ import Auth from './auth.js';
 document.addEventListener('DOMContentLoaded', async () => {
 
     UI.renderNavBar({ containerId: 'mainNav', context: 'products' });
+    UI.updateCartBadge();
 
     const productList = document.getElementById('product-list-customer');
 
@@ -58,6 +59,119 @@ document.addEventListener('DOMContentLoaded', async () => {
         abrirGaleria(urls, 0);
 
     });
+
+    const chatbox = document.getElementById("chatbox");
+    const header = document.getElementById("chat-header");
+    const content = document.getElementById("chat-content");
+    const minimizeBtn = document.getElementById("minimize-btn");
+
+    let isDragging = false;
+    let offset = { x: 0, y: 0 };
+
+    // --- 1. Guardar Posición, Estado e Historial ---
+    function saveChatState() {
+        localStorage.setItem("chatState", JSON.stringify({
+            left: chatbox.style.left,
+            top: chatbox.style.top,
+            isMinimized: content.classList.contains("hidden"),
+            // Guardamos todo el HTML interno del contenedor de mensajes
+            chatHistory: document.getElementById("messages").innerHTML
+        }));
+    }
+
+
+    // --- 2. Función de Minimizar/Maximizar ---
+    function toggleChat(forceOpen = false) {
+        if (forceOpen) {
+            content.classList.remove('hidden');
+            minimizeBtn.innerText = "−";
+        } else {
+            content.classList.toggle('hidden');
+            const isNowHidden = content.classList.contains('hidden');
+            minimizeBtn.innerText = isNowHidden ? "+" : "−";
+        }
+        saveChatState();
+    }
+
+    // --- 3. Cargar Estado Inmediatamente ---
+    const saved = JSON.parse(localStorage.getItem("chatState"));
+    if (saved) {
+        chatbox.style.left = saved.left;
+        chatbox.style.top = saved.top;
+
+        // Restaurar el diálogo si existe
+        if (saved.chatHistory) {
+            document.getElementById("messages").innerHTML = saved.chatHistory;
+            // Hacer scroll al final para ver el último mensaje
+            const msgContainer = document.getElementById("messages");
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        }
+
+        if (saved.isMinimized === false) {
+            toggleChat(true);
+        }
+    }
+
+    // --- 4. Eventos de Arrastre (Sin cambios, mantiene límites) ---
+    header.onmousedown = (e) => {
+        isDragging = true;
+        offset.x = e.clientX - chatbox.offsetLeft;
+        offset.y = e.clientY - chatbox.offsetTop;
+        header.style.cursor = "grabbing";
+    };
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        let newX = Math.max(0, Math.min(e.clientX - offset.x, window.innerWidth - chatbox.offsetWidth));
+        let newY = Math.max(0, Math.min(e.clientY - offset.y, window.innerHeight - chatbox.offsetHeight));
+        chatbox.style.left = newX + "px";
+        chatbox.style.top = newY + "px";
+        chatbox.style.bottom = "auto";
+        chatbox.style.right = "auto";
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isDragging) {
+            isDragging = false;
+            header.style.cursor = "move";
+            saveChatState();
+        }
+    });
+
+    // --- 5. Lógica del Chatbot (Integración con API) ---
+
+    const input = document.getElementById("input");
+    const messages = document.getElementById("messages");
+
+    input.addEventListener("keypress", async (e) => {
+        if (e.key === "Enter") {
+            const text = input.value;
+            input.value = "";
+
+            messages.innerHTML += `<div class="text-sm md:text-base"><div><b>Tú:</b> ${text}</div>`;
+
+            saveChatState();
+
+            const res = await fetch("http://localhost:8080/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: text })
+            }
+            );
+
+            const data = await res.json();
+
+            messages.innerHTML += `<div class="text-sm md:text-base"><b>Bot:</b> ${data.response}</div>`;
+
+            saveChatState();
+        }
+    }
+    );
+
+    minimizeBtn.onclick = (e) => {
+        e.stopPropagation();
+        toggleChat();
+    };
 
     // Logout global
     window.logout = () => Auth.logout();
@@ -147,30 +261,6 @@ function buildProductCard(product) {
 
     return card;
 }
-
-const input = document.getElementById("input");
-const messages = document.getElementById("messages");
-
-input.addEventListener("keypress", async (e) => {
-    if (e.key === "Enter") {
-        const text = input.value;
-        input.value = "";
-
-        messages.innerHTML += `<div><b>Tú:</b> ${text}</div>`;
-
-        const res = await fetch("http://localhost:8080/api/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: text })
-        }
-        );
-
-        const data = await res.json();
-
-        messages.innerHTML += `<div><b>Bot:</b> ${data.response}</div>`;
-    }
-}
-);
 
 // ── Galería / Popup de imágenes ────────────────────────────────────────────────
 let galeriaActual = [];

@@ -1,5 +1,6 @@
 package com.ecommerce.service;
 
+import com.ecommerce.config.ConfiguracionSistema;
 import com.ecommerce.dto.OrdenDTO;
 import com.ecommerce.dto.OrdenDetalleDTO;
 import com.ecommerce.dto.PaymentTransactionDTO;
@@ -7,6 +8,7 @@ import com.ecommerce.dto.ShipmentDTO;
 import com.ecommerce.inventory.GestorInventario;
 import com.ecommerce.inventory.GestorInventarioFactory;
 import com.ecommerce.model.*;
+import com.ecommerce.observer.events.MaxItemsExcedidoEvent;
 import com.ecommerce.payment.ProcesoPago;
 import com.ecommerce.payment.ProcesoPagoFactory;
 import com.ecommerce.repository.CarritoRepository;
@@ -77,6 +79,16 @@ public class OrdenService {
             throw new RuntimeException("El carrito está vacío");
         }
 
+        // Validar máximo de ítems por orden (Req. 10)
+        ConfiguracionSistema config = ConfiguracionSistema.getInstance();
+        int maxItems = config.getMaxProductosOrden();
+        int totalItems = carrito.getProductos().size();
+        if (totalItems >= maxItems) {
+            // Publicar evento para notificación al ADMIN
+            eventPublisher.publishEvent(new MaxItemsExcedidoEvent(this, usuario, totalItems, maxItems));
+            throw new RuntimeException("MAX_ITEMS_EXCEDIDO:" + totalItems + ":" + maxItems);
+        }
+
         Orden orden = new Orden();
         orden.setUsuario(usuario);
         orden.setEstado(EstadoOrden.CREATED);
@@ -93,7 +105,7 @@ public class OrdenService {
         Map<Producto, Long> conteoProductos = carrito.getProductos().stream()
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
-        double total = 0.0;
+        double subtotalProductos = 0.0;
         for (Map.Entry<Producto, Long> entry : conteoProductos.entrySet()) {
             Producto producto = entry.getKey();
             Integer cantidad = entry.getValue().intValue();
@@ -101,9 +113,15 @@ public class OrdenService {
 
             OrdenDetalle detalle = new OrdenDetalle(cantidad, subtotal, producto);
             orden.agregarDetalle(detalle);
-            total += subtotal;
+            subtotalProductos += subtotal;
         }
 
+        // Persistir IVA del sistema al momento de la creación (Req. 2)
+        double ivaTasa = config.getIva();
+        double total = subtotalProductos * (1.0 + ivaTasa);
+
+        orden.setSubtotalProductos(subtotalProductos);
+        orden.setIvaTasa(ivaTasa);
         orden.setTotal(total);
 
         // Limpiar carrito
@@ -160,7 +178,20 @@ public class OrdenService {
         // Transición a Payment Pending si hay stock
         orden.setEstado(EstadoOrden.PAYMENT_PENDING);
 
-        // 2. Procesar Pago (OOP Interface)
+        // 2. Actualizar ivaTasa si cambió desde la creación de la orden (Req. 2, 6)
+        ConfiguracionSistema configActual = ConfiguracionSistema.getInstance();
+        double ivaTasaActual = configActual.getIva();
+        if (orden.getIvaTasa() == null || Double.compare(orden.getIvaTasa(), ivaTasaActual) != 0) {
+            // La tasa cambió — recalcular total con nueva tasa
+            double subtotal = orden.getSubtotalProductos() != null
+                    ? orden.getSubtotalProductos()
+                    : calcularSubtotalProductos(orden);
+            orden.setSubtotalProductos(subtotal);
+            orden.setIvaTasa(ivaTasaActual);
+            orden.setTotal(subtotal * (1.0 + ivaTasaActual));
+        }
+
+        // 3. Procesar Pago (OOP Interface)
         ProcesoPago procesoPago = pagoFactory.obtenerMetodo(metodoPago);
         procesoPago.iniciarPago(orden);
 
@@ -174,11 +205,15 @@ public class OrdenService {
             }
             orden.setEstado(EstadoOrden.PAID);
 
-            // 3. Descontar Stock definitivo y Auditorias delegadas a Observadores
+            // Persistir RFC del cliente al momento del pago exitoso (Req. 11)
+            if (orden.getUsuario() instanceof Cliente cliente) {
+                orden.setRfcCliente(cliente.getRfcCurp());
+            }
+
+            // 4. Descontar Stock definitivo y Auditorias delegadas a Observadores
             eventPublisher.publishEvent(new com.ecommerce.observer.events.OrdenPagadaEvent(this, orden));
         } else {
-            // Se queda en pending si falla (el prompt indica: "Si un intento de pago falla,
-            // el estado permanece PAYMENT_PENDING")
+            // Se queda en pending si falla
             orden.setEstado(EstadoOrden.PAYMENT_PENDING);
         }
 
@@ -293,6 +328,16 @@ public class OrdenService {
         return ordenRepository.findByUsuario(getUsuarioActual()).stream().map(this::toDTO).toList();
     }
 
+    /**
+     * Calcula el subtotal de productos desde los detalles (fallback para órdenes antiguas
+     * que no tienen subtotalProductos persistido).
+     */
+    private double calcularSubtotalProductos(Orden orden) {
+        return orden.getDetalles().stream()
+                .mapToDouble(d -> d.getSubtotal())
+                .sum();
+    }
+
     private OrdenDTO toDTO(Orden orden) {
 
         OrdenDTO dto = new OrdenDTO();
@@ -309,11 +354,26 @@ public class OrdenService {
             dto.setUsuarioRfcCurp(cliente.getRfcCurp());
         }
 
-        dto.setTotal(
-                orden.getDetalles()
-                        .stream()
-                        .mapToDouble(d -> d.getSubtotal() * d.getCantidad())
-                        .sum());
+        // Subtotal de productos (sin IVA) — calcula desde detalles si aún no está persistido
+        double subtotalProductos = orden.getSubtotalProductos() != null
+                ? orden.getSubtotalProductos()
+                : calcularSubtotalProductos(orden);
+        dto.setSubtotalProductos(subtotalProductos);
+
+        // IVA: usa la guardada en la orden; si no existe (órdenes antiguas) usa la del sistema
+        double ivaTasa = orden.getIvaTasa() != null
+                ? orden.getIvaTasa()
+                : ConfiguracionSistema.getInstance().getIva();
+        dto.setIvaTasa(ivaTasa);
+        dto.setMontoImpuestos(subtotalProductos * ivaTasa);
+
+        // Total: usa el total guardado en la orden (ya incluye IVA)
+        dto.setTotal(orden.getTotal() != null ? orden.getTotal() : subtotalProductos * (1.0 + ivaTasa));
+
+        // RFC del cliente: usa el RFC guardado en la orden (post-PAID) o el del usuario
+        if (orden.getRfcCliente() != null) {
+            dto.setRfcCliente(orden.getRfcCliente());
+        }
 
         dto.setDetalles(
                 orden.getDetalles().stream().map(d -> {

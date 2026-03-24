@@ -1,14 +1,21 @@
 package com.ecommerce.observer;
 
+import com.ecommerce.model.NotificacionPendiente;
 import com.ecommerce.observer.events.*;
+import com.ecommerce.repository.NotificacionPendienteRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 /**
  * Observador pasivo que actua como Sender de e-mails y notificaciones SMS al Cliente.
+ * También persiste notificaciones para el ADMIN en la cola de pendientes.
  */
 @Component
 public class NotificacionObserver {
+
+    @Autowired
+    private NotificacionPendienteRepository notificacionRepo;
 
     @EventListener
     public void handleOrdenCreada(OrdenCreadaEvent event) {
@@ -37,6 +44,20 @@ public class NotificacionObserver {
 
     @EventListener
     public void handleStockBajo(StockBajoEvent event) {
-        System.out.println("[NotificacionObserver] ALERTA ADMINISTRADOR: El producto '" + event.getProducto().getNombre() + "' tiene un nivel crítico de stock (" + event.getSaldoActual() + " restantes).");
+        String msg = "[ALERTA STOCK] El producto '" + event.getProducto().getNombre()
+                + "' ha alcanzado el nivel mínimo de stock (" + event.getSaldoActual() + " unidades restantes).";
+        System.out.println("[NotificacionObserver] ALERTA ADMINISTRADOR: " + msg);
+        // Persistir en cola de notificaciones pendientes para ADMIN
+        notificacionRepo.save(new NotificacionPendiente(msg));
+    }
+
+    @EventListener
+    public void handleMaxItemsExcedido(MaxItemsExcedidoEvent event) {
+        String msg = "[ALERTA PEDIDO] El usuario '" + event.getUsuario().getNombre()
+                + "' intentó crear una orden con " + event.getCantidadIntentada()
+                + " ítems, superando el límite configurado de " + event.getMaxPermitido() + ".";
+        System.out.println("[NotificacionObserver] ALERTA ADMINISTRADOR: " + msg);
+        // Persistir en cola de notificaciones pendientes para ADMIN
+        notificacionRepo.save(new NotificacionPendiente(msg));
     }
 }

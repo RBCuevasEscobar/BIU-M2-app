@@ -14,7 +14,7 @@ public class ProductoRequestDTO {
     @NotNull
     private Double precio;
 
-    @Size(max = 250)
+    @Size(max = 500)
     private String descripcion;
 
     @Size(max = 150)

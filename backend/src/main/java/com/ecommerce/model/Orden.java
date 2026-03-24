@@ -31,6 +31,28 @@ public class Orden {
     @Column(nullable = false)
     private Double total;
 
+    /**
+     * Subtotal puro de productos (precio × cantidad, sin IVA).
+     * Se establece al crear la orden y no cambia.
+     */
+    @Column(name = "subtotal_productos")
+    private Double subtotalProductos;
+
+    /**
+     * Tasa de IVA vigente al momento de creación de la orden.
+     * Se actualiza al momento del pago si la tasa cambió.
+     * Después de PAID, ya no se modifica nunca más.
+     */
+    @Column(name = "iva_tasa")
+    private Double ivaTasa;
+
+    /**
+     * RFC/CURP del cliente al momento del pago exitoso (PAID).
+     * Se captura una sola vez y no se modifica.
+     */
+    @Column(name = "rfc_cliente", length = 18)
+    private String rfcCliente;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
