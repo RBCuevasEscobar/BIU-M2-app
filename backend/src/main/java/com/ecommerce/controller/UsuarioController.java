@@ -7,7 +7,9 @@ import com.ecommerce.dto.UsuarioUpdateRequest;
 import com.ecommerce.model.Administrador;
 import com.ecommerce.service.UsuarioService;
 import com.ecommerce.service.AdministradorService;
+import com.ecommerce.security.UsuarioSecurity;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -50,9 +52,33 @@ public class UsuarioController {
         return usuarioService.listarUsuarios();
     }
 
+    /**
+     * Obtener usuario por ID.
+     * - ADMIN: puede ver cualquier usuario.
+     * - CUSTOMER / SUPPLIER: solo puede ver su propio perfil.
+     *
+     * NOTA: El @PreAuthorize anterior usaba @usuarioSecurity.isOwner(#id),
+     * que dependía de un bean Spring que ya no existe. Ahora la lógica de
+     * propiedad se valida directamente con el principal del SecurityContext.
+     */
     @GetMapping("/{id}")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @usuarioSecurity.isOwner(#id)")
-    public ResponseEntity<Usuario> listarUsuario(@PathVariable Long id) {
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER', 'SUPPLIER')")
+    public ResponseEntity<Usuario> listarUsuario(@PathVariable Long id, Authentication auth) {
+
+        boolean esAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!esAdmin) {
+            // Para roles no-ADMIN, validar que el usuario solo pueda ver su propio perfil
+            if (auth.getPrincipal() instanceof UsuarioSecurity principal) {
+                if (!principal.getId().equals(id)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+            } else {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
+
         return usuarioService.listarUsuario(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

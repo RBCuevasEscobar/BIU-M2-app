@@ -16,6 +16,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 
+/**
+ * Filtro JWT: valida el token y establece un objeto UsuarioSecurity como
+ * principal del SecurityContext para que cualquier controller pueda acceder
+ * al userId, email y rol del usuario autenticado sin tocar la BD.
+ */
 @Component
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
@@ -40,19 +45,30 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             String token = authHeader.substring(7);
 
             if (jwtProvider.validateToken(token)) {
-                String email = jwtProvider.extractEmail(token);
-                Long userId = jwtProvider.extractUserId(token);
-                String role = jwtProvider.extractClaims(token).get("role", String.class);
-                
-                // Add an explicit call to DB to ensure user is active (optional depending on rigorousness)
+                String email  = jwtProvider.extractEmail(token);
+                Long   userId = jwtProvider.extractUserId(token);
+                String role   = jwtProvider.extractClaims(token).get("role", String.class);
+
+                // Verificar que el usuario siga activo en BD
                 Usuario usuario = usuarioRepository.findById(userId).orElse(null);
 
                 if (usuario != null && email.equals(usuario.getEmail())) {
+
                     SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+
+                    // Construir UsuarioSecurity como principal, así los controllers
+                    // pueden acceder a userId sin hacer un cast incorrecto.
+                    UsuarioSecurity usuarioSecurity = new UsuarioSecurity(
+                            userId,
                             email,
-                            null,
+                            null,          // password no necesaria post-auth
                             Collections.singletonList(authority));
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    usuarioSecurity,
+                                    null,
+                                    Collections.singletonList(authority));
 
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);

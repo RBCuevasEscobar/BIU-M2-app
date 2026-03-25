@@ -145,28 +145,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     input.addEventListener("keypress", async (e) => {
         if (e.key === "Enter") {
-            const text = input.value;
+            const text = input.value.trim();
+            if (!text) return;
             input.value = "";
+            let botReply = "";
 
             messages.innerHTML += `<div class="text-sm md:text-base"><div><b>Tú:</b> ${text}</div>`;
-
             saveChatState();
 
-            const res = await fetch("http://localhost:8080/api/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: text })
+            try {
+                const data = await Api.post('/chat', { message: text });
+                // ChatResponse.java expone el campo `response`
+                botReply = data.response || 'Sin respuesta del asistente';
+            } catch (error) {
+                console.error('Error en chatbot:', error);
+                botReply = 'Error al conectar con el asistente. Intenta de nuevo.';
             }
-            );
 
-            const data = await res.json();
-
-            messages.innerHTML += `<div class="text-sm md:text-base"><b>Bot:</b> ${data.response}</div>`;
-
+            messages.innerHTML += `<div class="text-sm md:text-base"><b>Bot:</b> ${botReply}</div>`;
+            // Scroll al último mensaje
+            messages.scrollTop = messages.scrollHeight;
             saveChatState();
         }
-    }
-    );
+    });
 
     minimizeBtn.onclick = (e) => {
         e.stopPropagation();

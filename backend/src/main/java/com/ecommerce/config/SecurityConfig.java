@@ -42,13 +42,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/productos").permitAll()
-                        .requestMatchers("/api/chat/**").permitAll()
                         .requestMatchers("/api/config/sistema/publica").permitAll()
 
                         // 🔐 CUALQUIER OTRA SOLICITUD ESTA PROTEGIDA
                         .requestMatchers("/api/usuarios").authenticated()
                         .requestMatchers("/api/usuarios/**").authenticated()
                         .requestMatchers("/api/carrito").authenticated()
+                        .requestMatchers("/api/chat/**").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(AbstractHttpConfigurer::disable)

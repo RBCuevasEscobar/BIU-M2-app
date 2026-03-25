@@ -1,6 +1,7 @@
 import Api from './api.js';
 import { UI } from './ui.js';
 import Auth from './auth.js';
+import ConfigService from './config.service.js';
 
 let ordenesGlobal = [];
 let usuariosGlobal = [];
@@ -10,16 +11,6 @@ let userActual = {};
 // Configuración del sistema (IVA + moneda)
 let ivaSistema = 0.16;
 let monedaSistema = 'MXN';
-
-async function cargarConfigSistema() {
-    try {
-        const cfg = await Api.get('/config/sistema/publica'); // Obtiene valores de configuracion del sistema
-        ivaSistema = cfg.iva ?? 0.16;
-        monedaSistema = cfg.monedaSistema ?? 'MXN';
-    } catch (e) {
-        console.warn('[ordenes] No se pudo cargar config del sistema');
-    }
-}
 
 document.addEventListener('DOMContentLoaded', async () => {
 
@@ -33,7 +24,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         context: 'orders'
     });
 
-    await cargarConfigSistema();
+    const cfg = await ConfigService.load();
+
+    ivaSistema = cfg.iva;
+    monedaSistema = cfg.monedaSistema;
 
     if (roleActual === 'ADMIN') {
         document.getElementById('thUsuario').classList.remove('hidden');
@@ -421,7 +415,7 @@ window.verDetalles = (id) => {
         html += `
             <li class="flex justify-between items-center text-sm p-2 hover:bg-gray-50 rounded">
                 <div>
-                    <span class="font-bold text-gray-800 mr-2">${d.cantidad}x</span> 
+                    <span class="font-bold text-gray-800 mr-2">${d.cantidad} x</span> 
                     <span>${getNombreProducto(d)}</span>
                 </div>
                 <span class="font-medium">${UI.formatCurrency(subtotal)}</span>

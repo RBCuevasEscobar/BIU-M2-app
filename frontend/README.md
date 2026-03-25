@@ -1,4 +1,4 @@
-# E-Commerce Frontend v3.0
+# E-Commerce Frontend v4.0
 
 ## 🎯 Propósito del Proyecto
 
@@ -575,7 +575,7 @@ Se actualizó la lógica de la UI para garantizar que las órdenes retengan un `
 
 ---
 
-## 🔒 JWT Authentication Lifecycle (Fase 9)
+## 🔒 JWT Authentication Lifecycle (Fase 4)
 
 La Fase 9 reemplaza radicalmente los Mock Tokens inyectables estáticos (`mock-jwt-token-{id}`) instalando el motor criptográfico completo **JSON Web Tokens (JWT)** empleando la biblioteca `io.jsonwebtoken`. 
 
@@ -624,9 +624,107 @@ sequenceDiagram
 
 ---
 
-## 🏛 Supernova Enterprise Architecture (Fase 10)
+## 🏛 Enterprise Architecture (Fase 4)
 
 El esqueleto dinámico de esta plataforma Frontend es alimentado por un **Spring Boot Backend** recientemente extendido transaccionalmente que cuenta con:
 - **Patrón Singleton**: El estado unificado global de tarifas e IVA (`ConfiguracionSistema.java`) previene el desajuste de montos.
 - **Patrón Factory**: Los usuarios del Panel de Admin (`FabricaEntidades.java`) abstrae lógicamente a Clientes, Proveedores y Tipos de Productos por polimorfismo, sin depender de constructores crudos.
 - **Event-Driven Observer**: Las liquidaciones del eCommerce no estancan el flujo cliente (frontend) buscando descontar Base de Datos o enviar e-mails; Todo corre delegadamente con hilos `@Async` (`InventarioObserver`, `NotificacionObserver`, `AuditoriaObserver` e interfaz transaccional `ApplicationEventPublisher`).
+
+---
+
+## 🤖 Asistente Virtual (Chatbot) — Implementación y Funcionamiento
+
+### Propósito
+El chatbot es un **asistente inteligente embebido en la página de productos del CUSTOMER** (`productoscustomer.html`). Su objetivo es responder preguntas sobre productos disponibles, precios y procesos de compra. Rechaza explícitamente preguntas sobre temas no relacionados con la tienda.
+
+### Arquitectura
+
+```
+FRONTEND (appcust.js)                BACKEND
+──────────────────────               ──────────────────────────────
+ Widget HTML flotante                ChatController
+   └── input (Enter)   ──POST──────► POST /api/chat
+   └── messages div    ◄─────────── { response: "..." }
+   └── localStorage                  └── ChatService
+       (chatState)                        └── ChatMemoryService (in-memory, per userId)
+                                          └── Spring AI ChatClient (LLM)
+```
+
+### Componentes
+
+| Componente | Ubicación | Responsabilidad |
+|---|---|---|
+| `ChatController.java` | `controller/` | Endpoints REST del chat |
+| `ChatService.java` | `service/` | Lógica de prompt + integración LLM |
+| `ChatMemoryService.java` | `service/` | Historial en memoria por `userId` (Map) |
+| `ChatRequest.java` | `dto/` | DTO de entrada: `{ message: String }` |
+| `ChatResponse.java` | `dto/` | DTO de salida: `{ response: String }` |
+| `appcust.js` | `frontend/js/` | Widget de chat, drag, persistencia localStorage |
+| `auth.js` | `frontend/js/` | Limpieza de `chatState` en logout |
+
+### Endpoints
+
+| Método | URL | Auth | Descripción |
+|---|---|---|---|
+| `POST` | `/api/chat` | `permitAll` (publico con token opcional) | Enviar mensaje al bot |
+| `DELETE` | `/api/chat/historial` | JWT requerido | Limpiar historial en memoria del usuario |
+
+### Persistencia del Diálogo (localStorage)
+
+El diálogo se persiste en el navegador mediante `localStorage` bajo la clave `chatState`:
+
+```json
+{
+  "left": "50px",
+  "top": "100px",
+  "isMinimized": false,
+  "chatHistory": "<HTML del div #messages>"
+}
+```
+
+- **¿Cuándo se guarda?** En cada mensaje enviado/recibido y al mover/minimizar el widget.
+- **¿Cuándo se restaura?** Al cargar `productoscustomer.html` → `DOMContentLoaded` lee `chatState` y reconstruye el HTML del historial.
+- **¿Cuándo se limpia?** Al hacer **logout** — `auth.js` borra `chatState` de localStorage Y envía `DELETE /api/chat/historial` al backend.
+
+### Aislamiento por Usuario
+
+El historial en el **servidor** está aislado por `userId` extraído del JWT:
+
+```java
+// TokenAuthenticationFilter establece UsuarioSecurity como principal
+// ChatController lee el userId sin tocar la BD:
+Long userId = ((UsuarioSecurity) auth.getPrincipal()).getId();
+
+// ChatMemoryService mantiene un Map<Long, List<String>>
+// donde Long = userId → historial de mensajes de esa sesión
+```
+
+- Cada usuario tiene su propio historial de hasta **10 mensajes** (configurable con `MAX_HISTORY`).
+- El historial del servidor se limpia cuando el usuario hace logout.
+- El historial del navegador (`chatState`) se limpia en `auth.js → logout()`.
+
+### Flujo de Logout — Limpieza del Chat
+
+```
+Usuario hace click en "Logout"
+  └── auth.js logout()
+        1. Captura tokenParaLimpieza = localStorage.getItem('token')
+        2. localStorage.removeItem('user')
+        3. localStorage.removeItem('token')
+        4. localStorage.removeItem('chatState')   ← limpia UI del chat
+        5. fetch DELETE /api/chat/historial         ← limpia memoria servidor
+             (fire-and-forget, no bloquea el redirect)
+        6. window.location.href = 'index.html'
+```
+
+### Decisiones de Diseño
+
+| Decisión | Justificación |
+|---|---|
+| `localStorage` para persistencia UI | Sin dependencia de BD; funciona offline; preserva posición del widget |
+| `Map<Long, List<String>>` en servidor | Simple, en memoria, sin BD; tiempo de vida ligado a la sesión del servidor |
+| `MAX_HISTORY = 10` mensajes | Limita el tamaño del prompt enviado al LLM; mejora coherencia y tiempo de respuesta |
+| fire-and-forget en logout | El redirect no espera la confirmación del servidor; UX fluida |
+| `UsuarioSecurity` como principal JWT | Permite acceder al `userId` en cualquier controller sin hacer un query adicional a BD |
+

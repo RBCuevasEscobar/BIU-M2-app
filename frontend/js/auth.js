@@ -22,9 +22,24 @@ const Auth = {
     },
 
     logout: () => {
-        // Limpiar sesión
+        // Capturar el token ANTES de eliminarlo para el request de limpieza al servidor
+        const tokenParaLimpieza = localStorage.getItem('token');
+
+        // Limpiar sesión JWT
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+
+        // Limpiar historial del chatbot del localStorage (chat limpio en nuevo login)
+        localStorage.removeItem('chatState');
+
+        // Notificar al servidor para limpiar el historial en memoria del ChatMemoryService
+        // (fire-and-forget: no bloqueamos el redirect si falla)
+        if (tokenParaLimpieza) {
+            fetch('http://localhost:8080/api/chat/historial', {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${tokenParaLimpieza}` }
+            }).catch(() => { /* silencio si falla */ });
+        }
 
         window.location.href = 'index.html';
     },

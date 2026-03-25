@@ -1,6 +1,7 @@
 import Api from './api.js';
 import { UI } from './ui.js';
 import Auth from './auth.js';
+import ConfigService from './config.service.js';
 
 // ── Estado local de imágenes en el modal ──────────────────────────────────────
 let imagenesModal = []; // [{ url: String, isDefault: Boolean }]
@@ -9,25 +10,20 @@ let monedaSistema = 'MXN';
 let maxProductosOrden = 999;
 let stockMinimo = 0;
 
-async function cargarConfigSistema() {
-    try {
-        const cfg = await Api.get('/config/sistema/publica');
-        ivaSistema = cfg.iva ?? 0.16;
-        monedaSistema = cfg.monedaSistema ?? 'MXN';
-        maxProductosOrden = cfg.maxProductosOrden ?? 999;
-        stockMinimo = Number(cfg.stockMinimo ?? 0);
-    } catch (e) {
-        console.warn('[productos] No se pudo cargar config del sistema, usando valores por defecto.');
-    }
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
 
     if (!Auth.requireAuth(["ADMIN", "SUPPLIER"])) return;
 
     UI.renderNavBar({ containerId: 'mainNav', context: 'products' });
     setupRoleBasedUI();
-    await cargarConfigSistema();
+
+    const cfg = await ConfigService.load();
+
+    ivaSistema = cfg.iva;
+    monedaSistema = cfg.monedaSistema;
+    maxProductosOrden = cfg.maxProductosOrden;
+    stockMinimo = cfg.stockMinimo;
+
     cargarProductos();
     setupEventListeners();
 });

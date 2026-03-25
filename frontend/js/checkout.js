@@ -1,6 +1,7 @@
 import Api from './api.js'
 import { UI } from './ui.js'
 import Auth from './auth.js'
+import ConfigService from './config.service.js';
 
 const Checkout = {
 
@@ -14,14 +15,10 @@ const Checkout = {
 
         if (!Auth.requireAuth(["CUSTOMER", "ADMIN"])) return
 
-        // Cargar configuración del sistema (IVA + moneda) antes de renderizar
-        try {
-            const cfg = await Api.get('/config/sistema/publica');
-            this.ivaSistema = cfg.iva ?? 0.16;
-            this.monedaSistema = cfg.monedaSistema ?? 'MXN';
-        } catch (e) {
-            console.warn('[checkout] config del sistema no disponible, usando valores por defecto');
-        }
+        const cfg = await ConfigService.load();
+
+        this.ivaSistema = cfg.iva;
+        this.monedaSistema = cfg.monedaSistema;
 
         UI.renderNavBar({
             containerId: "mainNav",
@@ -173,6 +170,7 @@ const Checkout = {
         ul.innerHTML = ""
 
         let subtotal = 0
+        let subtotdisp = ""
 
         orden.detalles.forEach(d => {
             const nombre = d.productoNombre || (d.producto?.nombre) || "Producto"
@@ -180,11 +178,13 @@ const Checkout = {
 
             subtotal += sub
 
+            subtotdisp = UI.formatCurrency(d.subtotal)
+
             const li = document.createElement("li")
             li.className = "flex justify-between text-sm"
             li.innerHTML = `
-                <span>${d.cantidad}x ${nombre}</span>
-                <span>${this.monedaSistema}</span>
+                <span>${d.cantidad} x ${nombre}</span>
+                <span>${subtotdisp}</span>
             `
             ul.appendChild(li)
         })

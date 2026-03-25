@@ -1,0 +1,982 @@
+
+
+================ frontend\js\ui.js ================
+
+export const UI = {
+
+    renderNavBar({ containerId, context }) {
+        const navContainer = document.getElementById(containerId);
+        if (!navContainer) return;
+
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+
+        navContainer.innerHTML = '';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'container mx-auto px-6 py-4 flex justify-between items-center';
+
+        // === LOGO ===
+        const left = document.createElement('div');
+        left.innerHTML = `
+            <a class="text-2xl font-bold text-blue-600">
+                E-Shop
+            </a>
+        `;
+
+        // === LINKS ===
+        const right = document.createElement('div');
+        right.className = 'flex items-center gap-6';
+
+        if (!user) {
+            right.innerHTML = `
+                <a href="login.html" class="text-gray-700 hover:text-blue-600 font-medium">Iniciar Sesión</a>
+                <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                    Registrarse
+                </a>
+            `;
+        } else {
+            const links = this.getLinksByRoleAndContext(user.role, context);
+            links.forEach(l => {
+                if (l.isDropdown) {
+                    const dropdownId = 'dropdown-' + Math.random().toString(36).substr(2, 9);
+                    let dropdownHtml = `
+                    <div class="relative">
+                        <button onclick="document.getElementById('${dropdownId}').classList.toggle('hidden')" class="text-gray-700 font-medium hover:text-blue-600 focus:outline-none flex items-center">
+                            ${l.label} <i class="fas fa-chevron-down text-xs ml-1"></i>
+                        </button>
+                        <div id="${dropdownId}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-100 z-50">
+                            <div class="py-1">`;
+                    l.items.forEach(sub => {
+                        dropdownHtml += `<a href="${sub.href}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">${sub.label}</a>`;
+                    });
+                    dropdownHtml += `</div></div></div>`;
+                    right.innerHTML += dropdownHtml;
+                } else if (l.isBadgeCart) {
+                    // Enlace especial del Carrito con ID para badge dinámico
+                    right.innerHTML += `
+                        <a id="cartNavLink" href="${l.href}" class="text-gray-700 hover:text-blue-600 font-medium">
+                            ${l.label}
+                        </a>
+                    `;
+                } else {
+                    right.innerHTML += `
+                        <a href="${l.href}" class="text-gray-700 hover:text-blue-600 font-medium">
+                            ${l.label}
+                        </a>
+                    `;
+                }
+            });
+
+            right.innerHTML += `
+                <span class="text-sm text-gray-500">
+                    Hola, ${user.nombre}
+                </span>
+                <button onclick="window.logout()" class="text-red-500 hover:text-red-700 font-medium">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            `;
+
+            // Auto-actualizar badge del carrito solo para CUSTOMER
+            if (user.role === 'CUSTOMER') {
+                this.updateCartBadge();
+            }
+        }
+
+        wrapper.appendChild(left);
+        wrapper.appendChild(right);
+        navContainer.appendChild(wrapper);
+    },
+
+    getLinksByRoleAndContext(role, context) {
+        const config = {
+            CUSTOMER: {
+                products: [
+                    { label: 'Carrito', href: 'carrito.html', isBadgeCart: true },
+                    { label: 'Mis Órdenes', href: 'ordenes.html' },
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
+                ],
+                cart: [
+                    { label: 'Productos', href: 'productoscustomer.html' },
+                    { label: 'Mis Órdenes', href: 'ordenes.html' },
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
+                ],
+                orders: [
+                    { label: 'Productos', href: 'productoscustomer.html' },
+                    { label: 'Carrito', href: 'carrito.html', isBadgeCart: true },
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
+                ],
+                addresses: [
+                    { label: 'Productos', href: 'productoscustomer.html' },
+                    { label: 'Carrito', href: 'carrito.html', isBadgeCart: true },
+                    { label: 'Mis Órdenes', href: 'ordenes.html' }
+                ]
+            },
+            ADMIN: {
+                products: [
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    {
+                        isDropdown: true,
+                        label: '<i class="fas fa-cog"></i> Configuración',
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ]
+                    }
+                ],
+                users: [
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    {
+                        isDropdown: true,
+                        label: '<i class="fas fa-cog"></i> Configuración',
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ]
+                    }
+                ],
+                orders: [
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    {
+                        isDropdown: true,
+                        label: '<i class="fas fa-cog"></i> Configuración',
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ]
+                    }
+                ],
+                'config-auth': [
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    {
+                        isDropdown: true,
+                        label: '<i class="fas fa-cog"></i> Configuración',
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ]
+                    }
+                ],
+                'config-sistema': [
+                    { label: 'Gestion Usuarios', href: 'usuarios.html' },
+                    { label: 'Gestion Productos', href: 'productos.html' },
+                    { label: 'Gestion Órdenes', href: 'ordenes.html' },
+                    {
+                        isDropdown: true,
+                        label: '<i class="fas fa-cog"></i> Configuración',
+                        items: [
+                            { label: 'Opciones JWT', href: 'config-auth.html' },
+                            { label: 'Variables Sistema', href: 'config-sistema.html' }
+                        ]
+                    }
+                ]
+            },
+            SUPPLIER: {
+                products: [
+                    { label: 'Mis Direcciones', href: 'direcciones.html' }
+                ],
+                addresses: [
+                    { label: 'Mis Productos', href: 'productos.html' }
+                ]
+            }
+        };
+
+        return config[role]?.[context] || [];
+    },
+
+    // === Helpers existentes (SIN CAMBIOS) ===
+    showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-5 right-5 px-6 py-3 rounded shadow-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.classList.add('opacity-0');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    },
+
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('es-MX', {
+            style: 'currency',
+            currency: 'MXN'
+        }).format(amount);
+    },
+
+    toggleModal(modalId, show = true) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            if (show) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+    },
+
+    setupModalCloser(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.toggleModal(modalId, false);
+                }
+            });
+        }
+    },
+
+    /**
+     * Actualiza el badge del carrito en el enlace con id="cartNavLink".
+     * Obtiene la cantidad de productos via GET /api/carrito.
+     * Muestra "Carrito (N)" si hay productos, o "Carrito" si vacío.
+     * Solo actúa si el enlace existe en el DOM (solo páginas CUSTOMER).
+     */
+    async updateCartBadge() {
+        const link = document.getElementById('cartNavLink');
+        if (!link) return; // No es una página de CUSTOMER o no aplica
+
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const response = await fetch('http://localhost:8080/api/carrito', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                link.textContent = 'Carrito';
+                return;
+            }
+
+            const carrito = await response.json();
+            const count = carrito?.productos?.length ?? 0;
+            link.textContent = count > 0 ? `Carrito (${count})` : 'Carrito';
+
+        } catch {
+            // En caso de error de red, se muestra el label base sin badge
+            link.textContent = 'Carrito';
+        }
+    },
+};
+
+
+================ frontend\js\usuarios.js ================
+
+import Api from './api.js';
+import { UI } from './ui.js';
+import Auth from './auth.js';
+
+// ── Estado admin address panel ────────────────────────────────────────────────
+let adminTargetUserId = null;
+let adirTelefonos = [];  // teléfonos en el sub-form de dirección
+let usuariosGlobal = []; // Stores all users for filtering
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    if (!Auth.requireAuth(["ADMIN"])) return;
+
+    const user = Auth.getCurrentUser();
+    if (user.role !== 'ADMIN') {
+        window.location.href = 'productos.html';
+        return;
+    }
+
+    document.getElementById('btnNuevoUsuario').classList.remove('hidden');
+    document.getElementById('btnNuevoUsuario').classList.add('flex');
+
+    UI.renderNavBar({ containerId: 'mainNav', context: 'users' });
+    cargarUsuarios();
+    setupEventListeners();
+});
+
+// ── Event Listeners ────────────────────────────────────────────────────────────
+function setupEventListeners() {
+    // Modal usuario
+    document.getElementById('btnNuevoUsuario').addEventListener('click', () => abrirModal());
+    document.getElementById('btnCerrarModal').addEventListener('click', cerrarModal);
+    document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
+    document.getElementById('formUsuario').addEventListener('submit', guardarUsuario);
+    document.getElementById('role').addEventListener('change', window.toggleUserTypeFields);
+    document.getElementById('filtroRol').addEventListener('change', renderizarUsuarios);
+    UI.setupModalCloser('modalUsuario');
+
+    // Modal direcciones (admin)
+    document.getElementById('btnCerrarDirModal').addEventListener('click', cerrarModalDirecciones);
+    UI.setupModalCloser('modalDirecciones');
+    document.getElementById('btnNuevaDirAdmin').addEventListener('click', () => abrirFormDir());
+    document.getElementById('btnCancelarDirAdmin').addEventListener('click', cerrarFormDir);
+    document.getElementById('formDirAdmin').addEventListener('submit', guardarDireccionAdmin);
+
+    // Teléfonos en form dir admin
+    document.getElementById('adirBtnAgregarTel').addEventListener('click', agregarTelAdmin);
+    document.getElementById('adirNuevoTel').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); agregarTelAdmin(); }
+    });
+}
+
+// ── Usuarios ──────────────────────────────────────────────────────────────────
+async function cargarUsuarios() {
+    try {
+        usuariosGlobal = await Api.get('/usuarios');
+        renderizarUsuarios();
+    } catch (error) {
+        UI.showNotification('Error al cargar usuarios: ' + error.message, 'error');
+    }
+}
+
+function renderizarUsuarios() {
+    const filtro = document.getElementById('filtroRol').value;
+    
+    let filtrados = usuariosGlobal;
+    if (filtro && filtro !== 'Todos') {
+        filtrados = usuariosGlobal.filter(u => u.role === filtro);
+    }
+
+    const tbody = document.getElementById('listaUsuarios');
+    tbody.innerHTML = '';
+
+    if (!filtrados || filtrados.length === 0) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        return;
+    }
+    document.getElementById('emptyState').classList.add('hidden');
+
+    const roleNames = { ADMIN: 'Administrador', SUPPLIER: 'Proveedor', CUSTOMER: 'Cliente' };
+    const roleColors = {
+        ADMIN: 'bg-red-100 text-red-800',
+        SUPPLIER: 'bg-blue-100 text-blue-800',
+        CUSTOMER: 'bg-green-100 text-green-800'
+    };
+
+    filtrados.forEach(usuario => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-200 hover:bg-gray-50';
+        const roleDisplay = roleNames[usuario.role] || usuario.role;
+        const roleColor = roleColors[usuario.role] || 'bg-gray-100 text-gray-800';
+
+        row.innerHTML = `
+            <td class="py-3 px-6 font-medium">#${usuario.id}</td>
+            <td class="py-3 px-6">${usuario.nombre}</td>
+            <td class="py-3 px-6">${usuario.email}</td>
+            <td class="py-3 px-6">
+                <span class="px-2 py-1 rounded text-xs font-semibold ${roleColor}">${roleDisplay}</span>
+            </td>
+            <td class="py-3 px-6 text-center">
+                <!-- Editar usuario -->
+                <button onclick="window.editarUsuario(${usuario.id})"
+                    class="text-yellow-500 hover:text-yellow-700 mx-1" title="Editar usuario">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <!-- Gestionar direcciones (icono engrane) -->
+                <button onclick="window.gestionarDirecciones(${usuario.id}, '${usuario.nombre}')"
+                    class="text-gray-500 hover:text-blue-600 mx-1" title="Gestionar direcciones">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <!-- Eliminar usuario -->
+                <button onclick="window.eliminarUsuario(${usuario.id})"
+                    class="text-red-500 hover:text-red-700 mx-1" title="Eliminar usuario">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// ── Modal Usuario ─────────────────────────────────────────────────────────────
+function abrirModal(usuario = null) {
+    const form = document.getElementById('formUsuario');
+    const passwordField = document.getElementById('password');
+    form.reset();
+    document.getElementById('error-rfcCurp').classList.add('hidden');
+    document.getElementById('rfcCurpContainer').classList.add('hidden');
+    document.getElementById('empresaContainer').classList.add('hidden');
+    document.getElementById('vigenciaContainer').classList.add('hidden');
+
+    if (usuario) {
+        document.getElementById('modalTitle').textContent = 'Editar Usuario';
+        document.getElementById('usuarioId').value = usuario.id;
+        document.getElementById('nombre').value = usuario.nombre;
+        document.getElementById('email').value = usuario.email;
+        document.getElementById('role').value = usuario.role;
+        if (usuario.fechaNacimiento) document.getElementById('fechaNacimiento').value = usuario.fechaNacimiento;
+        if (usuario.rfcCurp) document.getElementById('rfcCurp').value = usuario.rfcCurp;
+        if (usuario.empresa) document.getElementById('empresa').value = usuario.empresa;
+        if (usuario.validUntil) document.getElementById('validUntil').value = usuario.validUntil;
+        passwordField.removeAttribute('required');
+        window.toggleUserTypeFields();
+    } else {
+        document.getElementById('modalTitle').textContent = 'Nuevo Usuario';
+        document.getElementById('usuarioId').value = '';
+        passwordField.setAttribute('required', 'required');
+    }
+    UI.toggleModal('modalUsuario', true);
+}
+
+function cerrarModal() { UI.toggleModal('modalUsuario', false); }
+
+async function guardarUsuario(e) {
+    e.preventDefault();
+    const usuarioId = document.getElementById('usuarioId').value;
+    const datos = {
+        nombre: document.getElementById('nombre').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        role: document.getElementById('role').value,
+        fechaNacimiento: document.getElementById('fechaNacimiento').value || null
+    };
+    // Add role-specific details
+    if (datos.role === 'CUSTOMER') {
+        const rfcCurp = document.getElementById('rfcCurp').value.trim();
+        const regexRfc = /^[A-Za-z]{4}[0-9]{6}[A-Za-z0-9]{3}$/;
+        const regexCurp = /^[A-Za-z]{4}[0-9]{6}[HM][A-Za-z]{5}[0-9]{2}$/;
+        
+        if (!regexRfc.test(rfcCurp) && !regexCurp.test(rfcCurp)) {
+            document.getElementById('error-rfcCurp').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('error-rfcCurp').classList.add('hidden');
+        datos.rfcCurp = rfcCurp;
+    } else if (datos.role === 'SUPPLIER') {
+        datos.empresa = document.getElementById('empresa').value.trim();
+    } else if (datos.role === 'ADMIN') {
+        datos.validUntil = document.getElementById('validUntil').value;
+    }
+
+    if (usuarioId && !datos.password) delete datos.password;
+
+    try {
+        if (usuarioId) {
+            await Api.put(`/usuarios/${usuarioId}`, datos);
+            UI.showNotification('Usuario actualizado exitosamente');
+        } else {
+            const endpointMap = { ADMIN: '/usuarios/admin', SUPPLIER: '/usuarios/proveedor', CUSTOMER: '/usuarios/cliente' };
+            const endpoint = endpointMap[datos.role] || '/usuarios/cliente';
+            await Api.post(endpoint, datos);
+            UI.showNotification('Usuario creado exitosamente');
+        }
+        cerrarModal();
+        cargarUsuarios();
+    } catch (error) {
+        UI.showNotification('Error al guardar usuario: ' + error.message, 'error');
+    }
+}
+
+// ── Modal Direcciones (Admin) ──────────────────────────────────────────────────
+window.gestionarDirecciones = async (usuarioId, nombre) => {
+    adminTargetUserId = usuarioId;
+    document.getElementById('modalDirTitle').textContent = `Direcciones de ${nombre}`;
+    cerrarFormDir();
+    await cargarDireccionesDeUsuario(usuarioId);
+    UI.toggleModal('modalDirecciones', true);
+};
+
+async function cargarDireccionesDeUsuario(usuarioId) {
+    try {
+        const dirs = await Api.get(`/direcciones/usuario/${usuarioId}`);
+        renderizarListaAdmin(dirs);
+    } catch (err) {
+        UI.showNotification('Error al cargar direcciones: ' + err.message, 'error');
+    }
+}
+
+function renderizarListaAdmin(dirs) {
+    const lista = document.getElementById('listaDireccionesAdmin');
+    const empty = document.getElementById('emptyDirAdmin');
+    lista.innerHTML = '';
+
+    if (!dirs || dirs.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+    }
+    empty.classList.add('hidden');
+
+    dirs.forEach(dir => {
+        const tels = (dir.telefonos || []).map(t =>
+            `<span class="tel-item"><i class="fas fa-phone text-blue-400 mr-1 text-xs"></i>${t}</span>`
+        ).join('');
+
+        const card = document.createElement('div');
+        card.className = `addr-card${dir.preferida ? ' preferida' : ''}`;
+        card.innerHTML = `
+            <div class="flex justify-between items-start">
+                <div>
+                    ${dir.alias ? `<span class="font-medium text-gray-800 text-sm">${dir.alias}</span> ` : ''}
+                    ${dir.preferida ? '<span class="badge-preferida">⭐ Preferida</span>' : ''}
+                    <div class="text-xs text-gray-600 mt-1">
+                        ${dir.calle} ${dir.numeroExterior}${dir.numeroInterior ? ', Int. ' + dir.numeroInterior : ''},
+                        ${dir.colonia}, ${dir.municipio}, ${dir.estado} – C.P. ${dir.codigoPostal}
+                    </div>
+                    ${tels ? `<div class="flex flex-wrap gap-1 mt-1.5">${tels}</div>` : ''}
+                </div>
+                <div class="flex gap-1 shrink-0 ml-2">
+                    <button onclick="window.editarDirAdmin(${dir.id})"
+                        class="text-yellow-500 hover:text-yellow-700 text-sm" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="window.eliminarDirAdmin(${dir.id})"
+                        class="text-red-400 hover:text-red-600 text-sm" title="Eliminar">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        lista.appendChild(card);
+    });
+}
+
+// Sub-form crear / editar
+function abrirFormDir(dir = null) {
+    const wrapper = document.getElementById('formDirAdminWrapper');
+    document.getElementById('formDirAdmin').reset();
+    adirTelefonos = [];
+    document.getElementById('adirId').value = '';
+    document.getElementById('formDirAdminTitle').textContent = dir ? 'Editar Dirección' : 'Nueva Dirección';
+
+    if (dir) {
+        document.getElementById('adirId').value = dir.id;
+        document.getElementById('adirAlias').value = dir.alias || '';
+        document.getElementById('adirPreferida').checked = !!dir.preferida;
+        document.getElementById('adirCalle').value = dir.calle || '';
+        document.getElementById('adirNumExt').value = dir.numeroExterior || '';
+        document.getElementById('adirNumInt').value = dir.numeroInterior || '';
+        document.getElementById('adirRef').value = dir.referencia || '';
+        document.getElementById('adirColonia').value = dir.colonia || '';
+        document.getElementById('adirMunicipio').value = dir.municipio || '';
+        document.getElementById('adirEstado').value = dir.estado || '';
+        document.getElementById('adirCP').value = dir.codigoPostal || '';
+        adirTelefonos = [...(dir.telefonos || [])];
+    }
+    renderizarTelAdmin();
+    wrapper.classList.remove('hidden');
+    wrapper.scrollIntoView({ behavior: 'smooth' });
+}
+
+function cerrarFormDir() {
+    document.getElementById('formDirAdminWrapper').classList.add('hidden');
+    adirTelefonos = [];
+}
+
+function cerrarModalDirecciones() {
+    UI.toggleModal('modalDirecciones', false);
+    adminTargetUserId = null;
+    cerrarFormDir();
+}
+
+// Teléfonos en form admin
+function agregarTelAdmin() {
+    const input = document.getElementById('adirNuevoTel');
+    const val = input.value.trim();
+    if (!/^\d{10}$/.test(val)) {
+        UI.showNotification('Teléfono: exactamente 10 dígitos', 'error');
+        return;
+    }
+    if (adirTelefonos.includes(val)) { UI.showNotification('Ese número ya está en la lista', 'error'); return; }
+    adirTelefonos.push(val);
+    input.value = '';
+    renderizarTelAdmin();
+}
+
+function renderizarTelAdmin() {
+    const container = document.getElementById('adirTelContainer');
+    container.innerHTML = '';
+    adirTelefonos.forEach((tel, idx) => {
+        const item = document.createElement('div');
+        item.className = 'tel-item';
+        item.innerHTML = `
+            <i class="fas fa-phone text-blue-400 text-xs"></i>
+            <span class="flex-1 text-xs">${tel}</span>
+            <button type="button" onclick="window.adminQuitarTel(${idx})" class="text-red-400 hover:text-red-600 text-xs">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(item);
+    });
+}
+
+window.adminQuitarTel = (idx) => {
+    adirTelefonos.splice(idx, 1);
+    renderizarTelAdmin();
+};
+
+async function guardarDireccionAdmin(e) {
+    e.preventDefault();
+    if (!adminTargetUserId) return;
+
+    const cp = document.getElementById('adirCP').value.trim();
+    if (!/^\d{5}$/.test(cp)) { UI.showNotification('C.P.: exactamente 5 dígitos', 'error'); return; }
+    if (adirTelefonos.length === 0) { UI.showNotification('Agrega al menos un teléfono', 'error'); return; }
+
+    const id = document.getElementById('adirId').value;
+    const body = {
+        preferida: document.getElementById('adirPreferida').checked,
+        alias: document.getElementById('adirAlias').value.trim(),
+        calle: document.getElementById('adirCalle').value.trim(),
+        numeroExterior: document.getElementById('adirNumExt').value.trim(),
+        numeroInterior: document.getElementById('adirNumInt').value.trim() || null,
+        referencia: document.getElementById('adirRef').value.trim() || null,
+        colonia: document.getElementById('adirColonia').value.trim(),
+        municipio: document.getElementById('adirMunicipio').value.trim(),
+        estado: document.getElementById('adirEstado').value.trim(),
+        codigoPostal: cp,
+        telefonos: [...adirTelefonos]
+    };
+
+    try {
+        if (id) {
+            await Api.put(`/direcciones/${id}`, body);
+            UI.showNotification('Dirección actualizada');
+        } else {
+            await Api.post(`/direcciones/usuario/${adminTargetUserId}`, body);
+            UI.showNotification('Dirección creada');
+        }
+        cerrarFormDir();
+        await cargarDireccionesDeUsuario(adminTargetUserId);
+    } catch (err) {
+        UI.showNotification('Error al guardar dirección: ' + err.message, 'error');
+    }
+}
+
+window.editarDirAdmin = async (id) => {
+    try {
+        const dir = await Api.get(`/direcciones/${id}`);
+        abrirFormDir(dir);
+    } catch (err) {
+        UI.showNotification('Error al cargar dirección', 'error');
+    }
+};
+
+window.eliminarDirAdmin = async (id) => {
+    if (!confirm('¿Eliminar esta dirección? Esta acción no se puede deshacer.')) return;
+    try {
+        await Api.delete(`/direcciones/${id}`);
+        UI.showNotification('Dirección eliminada');
+        await cargarDireccionesDeUsuario(adminTargetUserId);
+    } catch (err) {
+        UI.showNotification('Error al eliminar dirección: ' + err.message, 'error');
+    }
+};
+
+// ── Funciones globales usuario ────────────────────────────────────────────────
+window.editarUsuario = async (id) => {
+    try { const u = await Api.get(`/usuarios/${id}`); abrirModal(u); }
+    catch (error) { UI.showNotification('Error al cargar usuario', 'error'); }
+};
+
+window.eliminarUsuario = async (id) => {
+    if (!confirm('¿Eliminar este usuario?\n\nEsta acción no se puede deshacer.')) return;
+    try {
+        await Api.delete(`/usuarios/${id}`);
+        UI.showNotification('Usuario eliminado exitosamente');
+        cargarUsuarios();
+    } catch (error) {
+        UI.showNotification('Error al eliminar usuario: ' + error.message, 'error');
+    }
+};
+
+window.toggleUserTypeFields = () => {
+    const role = document.getElementById('role').value;
+    
+    const rfcCurpC = document.getElementById('rfcCurpContainer');
+    const empresaC = document.getElementById('empresaContainer');
+    const vigenciaC = document.getElementById('vigenciaContainer');
+    
+    const rfcCurpI = document.getElementById('rfcCurp');
+    const empresaI = document.getElementById('empresa');
+    const validUntilI = document.getElementById('validUntil');
+    
+    // Reset presentation and required attributes
+    rfcCurpC.classList.add('hidden');
+    empresaC.classList.add('hidden');
+    vigenciaC.classList.add('hidden');
+    
+    rfcCurpI.removeAttribute('required');
+    empresaI.removeAttribute('required');
+    validUntilI.removeAttribute('required');
+    
+    if (role === 'CUSTOMER') {
+        rfcCurpC.classList.remove('hidden');
+        rfcCurpI.setAttribute('required', 'required');
+    } else if (role === 'SUPPLIER') {
+        empresaC.classList.remove('hidden');
+        empresaI.setAttribute('required', 'required');
+    } else if (role === 'ADMIN') {
+        vigenciaC.classList.remove('hidden');
+        validUntilI.setAttribute('required', 'required');
+    }
+};
+
+
+================ frontend\js\validation.js ================
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Both forms
+    const registerForm = document.getElementById("registerForm");
+    const adminForm = document.getElementById("formUsuario");
+
+    const state = {};
+
+    const REGEX = {
+        email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        password: /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/,
+        rfc: /^[A-Za-z]{4}[0-9]{6}[A-Za-z0-9]{3}$/,
+        curp: /^[A-Za-z]{4}[0-9]{6}[HM][A-Za-z]{5}[0-9]{2}$/
+    };
+
+    const RULES = {
+        common: {
+            nombre: ["required", "minLength:3"],
+            email: ["required", "email"]
+        },
+        cliente: {
+            fechaNacimiento: ["required", "adult"],
+            rfcCurp: ["required", "rfcOrCurp"],
+        },
+        CUSTOMER: {
+            fechaNacimiento: ["required", "adult"],
+            rfcCurp: ["required", "rfcOrCurp"],
+        },
+        proveedor: {
+            empresa: ["required", "minLength:3"],
+        },
+        SUPPLIER: {
+            empresa: ["required", "minLength:3"],
+        },
+        ADMIN: {
+            validUntil: ["required"]
+        }
+    };
+
+    const validators = {
+        required(value) { return value.trim().length > 0; },
+        email(value) { return REGEX.email.test(value); },
+        minLength(value, length) { return value.length >= parseInt(length); },
+        passwordStrength(value) {
+            updatePasswordStrength(value);
+            return REGEX.password.test(value);
+        },
+        passwordMatch(value) {
+            const p = document.getElementById("password");
+            if(!p) return true;
+            return value === p.value;
+        },
+        adult(value) {
+            if(!value) return false;
+            const birth = new Date(value);
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+            return age >= 18;
+        },
+        rfcOrCurp(value) {
+            const fnInput = document.getElementById("fechaNacimiento");
+            if(!fnInput) return false;
+            const fechaNacimiento = fnInput.value;
+            if (!fechaNacimiento) return false;
+            const rfc = REGEX.rfc.test(value);
+            const curp = REGEX.curp.test(value);
+            if (!rfc && !curp) return false;
+            const fechaDoc = value.substring(4, 10);
+            const fecha = fechaNacimiento.replaceAll("-", "").substring(2);
+            return fechaDoc === fecha;
+        }
+    };
+
+    function getActiveRules(formEl) {
+        let type = "";
+        let baseRules = { ...RULES.common };
+
+        if (formEl.id === "registerForm") {
+            const ut = document.getElementById("userType");
+            if(ut) type = ut.value;
+            baseRules.password = ["required", "passwordStrength"];
+            baseRules.confirmPassword = ["required", "passwordMatch"];
+        } else if (formEl.id === "formUsuario") {
+            const rl = document.getElementById("role");
+            if(rl) type = rl.value;
+            
+            const pInput = document.getElementById("password");
+            if (pInput && pInput.hasAttribute("required")) {
+                baseRules.password = ["required", "passwordStrength"];
+            } else if (pInput && pInput.value) {
+                baseRules.password = ["passwordStrength"];
+            }
+        }
+
+        return {
+            ...baseRules,
+            ...(RULES[type] || {})
+        };
+    }
+
+    function validateField(field, formEl) {
+        const rules = getActiveRules(formEl);
+        const name = field.id;
+        if (!rules[name]) return true;
+
+        const value = field.value.trim();
+        const ruleSet = rules[name];
+
+        for (const rule of ruleSet) {
+            const [validator, param] = rule.split(":");
+            const valid = validators[validator](value, param);
+            if (!valid) {
+                updateUI(field, false);
+                state[name] = false;
+                evaluateForm(formEl);
+                return false;
+            }
+        }
+
+        updateUI(field, true);
+        state[name] = true;
+        evaluateForm(formEl);
+        return true;
+    }
+
+    function updateUI(field, valid) {
+        const error = document.getElementById(`error-${field.id}`);
+        if (valid) {
+            field.classList.remove("invalid");
+            field.classList.add("valid");
+            if (error) error.style.display = "none";
+        } else {
+            field.classList.remove("valid");
+            field.classList.add("invalid");
+            if (error) error.style.display = "block";
+        }
+    }
+
+    function updatePasswordStrength(password) {
+        const passwordBar = document.getElementById("password-strength-bar");
+        if(!passwordBar) return;
+        if (!password) {
+            passwordBar.style.width = "0%";
+            return;
+        }
+        let score = 0;
+        if (password.length >= 8) score++;
+        if (/[A-Z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+
+        const percent = (score / 4) * 100;
+        passwordBar.style.width = percent + "%";
+        if (score <= 1) passwordBar.className = "h-1 bg-red-500";
+        else if (score === 2) passwordBar.className = "h-1 bg-yellow-500";
+        else passwordBar.className = "h-1 bg-green-500";
+    }
+
+    function evaluateForm(formEl) {
+        const rules = getActiveRules(formEl);
+        const fields = Object.keys(rules);
+        const valid = fields.every(f => state[f] === true);
+
+        let btn = null;
+        if(formEl.id === "registerForm") btn = document.getElementById("submitBtn");
+        if(formEl.id === "formUsuario") btn = document.getElementById("submitBtnUsuario");
+        
+        if (btn) btn.disabled = !valid;
+    }
+
+    // Attach to Register
+    if (registerForm) {
+        const userTypeSelect = document.getElementById("userType");
+        const extraFieldsContainer = document.getElementById("extraFields");
+        const message = document.getElementById("form-message");
+
+        function renderExtraFields(type) {
+            extraFieldsContainer.innerHTML = "";
+            if (type === "cliente") {
+                extraFieldsContainer.innerHTML = `
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">RFC / CURP</label>
+                        <input id="rfcCurp" type="text" maxlength="18" class="w-full px-4 py-2 border rounded-lg">
+                        <p id="error-rfcCurp" class="error-msg">RFC/CURP inválido</p>
+                    </div>`;
+            }
+            if (type === "proveedor") {
+                extraFieldsContainer.innerHTML = `
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">Empresa</label>
+                        <input id="empresa" type="text" class="w-full px-4 py-2 border rounded-lg">
+                        <p id="error-empresa" class="error-msg">Empresa obligatoria</p>
+                    </div>`;
+            }
+        }
+
+        userTypeSelect.addEventListener("change", () => {
+            renderExtraFields(userTypeSelect.value);
+            evaluateForm(registerForm);
+        });
+        userTypeSelect.dispatchEvent(new Event("change"));
+
+        registerForm.addEventListener("input", e => {
+            if (e.target.matches("input")) validateField(e.target, registerForm);
+        });
+        registerForm.addEventListener("blur", e => {
+            if (e.target.matches("input")) validateField(e.target, registerForm);
+        }, true);
+
+        registerForm.addEventListener("submit", async e => {
+            e.preventDefault();
+            const type = userTypeSelect.value;
+            const payload = {
+                nombre: document.getElementById("nombre").value,
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value,
+                fechaNacimiento: document.getElementById("fechaNacimiento").value
+            };
+            if (type === "cliente") payload.rfcCurp = document.getElementById("rfcCurp").value;
+            if (type === "proveedor") payload.empresa = document.getElementById("empresa").value;
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/usuarios/${type}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    message.textContent = "Registro exitoso";
+                    message.className = "text-green-600 text-center mt-4";
+                    registerForm.reset();
+                    setTimeout(() => { window.location.href = "login.html"; }, 2000);
+                } else {
+                    message.textContent = "Error en registro";
+                    message.className = "text-red-600 text-center mt-4";
+                }
+            } catch (err) {
+                console.error(err);
+                message.textContent = "Error de conexión";
+                message.className = "text-red-600 text-center mt-4";
+            }
+        });
+    }
+
+    // Attach to Admin Form
+    if (adminForm) {
+        adminForm.addEventListener("input", e => {
+            if (e.target.matches("input, select")) validateField(e.target, adminForm);
+        });
+        adminForm.addEventListener("blur", e => {
+            if (e.target.matches("input, select")) validateField(e.target, adminForm);
+        }, true);
+        const roleSel = document.getElementById("role");
+        if(roleSel) {
+            roleSel.addEventListener("change", () => {
+                evaluateForm(adminForm);
+            });
+        }
+    }
+});

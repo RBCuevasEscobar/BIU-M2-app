@@ -11,20 +11,31 @@ public class ChatService {
 
     private final ProductoService productoService;
     private final ChatClient chatClient;
+    private final ChatMemoryService memoryService;
 
-    public ChatService(ProductoService productoService, ChatClient.Builder builder) {
+    public ChatService(
+            ProductoService productoService,
+            ChatClient.Builder builder,
+            ChatMemoryService memoryService) {
+
         this.productoService = productoService;
         this.chatClient = builder.build();
+        this.memoryService = memoryService;
     }
 
-    public String procesarPregunta(String pregunta) {
+    public String procesarPregunta(Long userId, String pregunta) {
 
         List<ProductoDTO> productos = productoService.listarProductosPublicos();
 
-        String contexto = productos.stream()
+        String contextoProductos = productos.stream()
                 .limit(15)
                 .map(p -> p.getNombre() + " - $" + p.getPrecio() + " " + p.getDescripcion())
                 .reduce("", (a, b) -> a + "\n" + b);
+
+        // 🔥 HISTORIAL
+        List<String> historial = memoryService.obtenerHistorial(userId);
+
+        String historialTexto = String.join("\n", historial);
 
         String prompt = """
                 Eres un asistente inteligente exclusivamente de una tienda eCommerce.
@@ -43,16 +54,25 @@ public class ChatService {
                 manera mas concreta posible, es decir, proporcionar la respuesta a la pregunta sin agregar
                 detalles adicionales, a menos que el usuario lo solicite expresamente.
 
+                Historial de conversación:
+                %s
+
                 Productos disponibles:
                 %s
 
                 Pregunta del usuario:
                 %s
-                """.formatted(contexto, pregunta);
+                """.formatted(historialTexto, contextoProductos, pregunta);
 
-        return chatClient.prompt()
+        String respuesta = chatClient.prompt()
                 .user(prompt)
                 .call()
                 .content();
+
+        // 🔥 Guardar conversación
+        memoryService.agregarMensaje(userId, "Usuario: " + pregunta);
+        memoryService.agregarMensaje(userId, "ChatBot: " + respuesta);
+
+        return respuesta;
     }
 }

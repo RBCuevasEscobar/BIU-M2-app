@@ -1,4 +1,4 @@
-# E-Commerce Backend v3.0
+# E-Commerce Backend v4.0
 
 ## 🎯 Propósito del Backend
 
@@ -1031,7 +1031,7 @@ C4Component
 ```
 * **Nivel 4 (Código)**: *(Revisar sección 5. Modelo de Clases UML detallado arriba para implementaciones locales)*.
 
-### 7. Patrones de Diseño Enterprise Estructurales y de Comportamiento (Supernova Mode)
+### 7. Patrones de Diseño Enterprise Estructurales y de Comportamiento
 
 Para solidificar la integridad y escalabilidad de los servicios C4 declarados anteriormente, se implementó una serie de Patrones de Diseño formales orientados a transacciones seguras bajo concurrencia Spring Boot:
 

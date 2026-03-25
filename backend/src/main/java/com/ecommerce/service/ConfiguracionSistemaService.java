@@ -14,8 +14,8 @@ import java.util.Optional;
  * Servicio responsable de la persistencia y carga de configuración del sistema.
  *
  * Gestiona dos conjuntos de parámetros:
- *  1. Parámetros del Singleton ConfiguracionSistema (iva, monedaSistema, etc.)
- *  2. Parámetros JWT (jwt.expirationTime)
+ * 1. Parámetros del Singleton ConfiguracionSistema (iva, monedaSistema, etc.)
+ * 2. Parámetros JWT (jwt.expirationTime)
  *
  * La lógica interna del Singleton y de JwtConfig NO se modifica.
  * Este servicio actúa como capa de persistencia transparente.
@@ -24,12 +24,12 @@ import java.util.Optional;
 public class ConfiguracionSistemaService {
 
     // Claves de la tabla system_config
-    private static final String KEY_IVA               = "iva";
-    private static final String KEY_MONEDA             = "monedaSistema";
-    private static final String KEY_STOCK_MINIMO       = "stockMinimo";
-    private static final String KEY_MODO_DEBUG         = "modoDebug";
-    private static final String KEY_MAX_PRODUCTOS      = "maxProductosOrden";
-    private static final String KEY_JWT_EXPIRATION     = "jwt.expirationTime";
+    private static final String KEY_IVA = "iva";
+    private static final String KEY_MONEDA = "monedaSistema";
+    private static final String KEY_STOCK_MINIMO = "stockMinimo";
+    private static final String KEY_MODO_DEBUG = "modoDebug";
+    private static final String KEY_MAX_PRODUCTOS = "maxProductosOrden";
+    private static final String KEY_JWT_EXPIRATION = "jwt.expirationTime";
 
     private final SystemConfigRepository repo;
     private final JwtConfig jwtConfig;
@@ -57,6 +57,9 @@ public class ConfiguracionSistemaService {
 
         System.out.println("[CONFIG-LOADER] Configuración cargada desde DB. IVA=" + cs.getIva()
                 + " Moneda=" + cs.getMonedaSistema()
+                + " Stock Minimo=" + cs.getStockMinimo()
+                + " Max Productos Orden=" + cs.getMaxProductosOrden()
+                + " Modo Debug=" + cs.isModoDebug()
                 + " JWT.exp=" + jwtConfig.getExpirationTime() + "ms");
     }
 
@@ -94,8 +97,11 @@ public class ConfiguracionSistemaService {
 
     private Optional<Double> leerDouble(String key) {
         return repo.findById(key).map(sc -> {
-            try { return Double.parseDouble(sc.getValue()); }
-            catch (NumberFormatException e) { return null; }
+            try {
+                return Double.parseDouble(sc.getValue());
+            } catch (NumberFormatException e) {
+                return null;
+            }
         });
     }
 
@@ -105,15 +111,21 @@ public class ConfiguracionSistemaService {
 
     private Optional<Integer> leerInt(String key) {
         return repo.findById(key).map(sc -> {
-            try { return Integer.parseInt(sc.getValue()); }
-            catch (NumberFormatException e) { return null; }
+            try {
+                return Integer.parseInt(sc.getValue());
+            } catch (NumberFormatException e) {
+                return null;
+            }
         });
     }
 
     private Optional<Long> leerLong(String key) {
         return repo.findById(key).map(sc -> {
-            try { return Long.parseLong(sc.getValue()); }
-            catch (NumberFormatException e) { return null; }
+            try {
+                return Long.parseLong(sc.getValue());
+            } catch (NumberFormatException e) {
+                return null;
+            }
         });
     }
 

@@ -1,33 +1,15 @@
 import Api from './api.js';
 import { UI } from './ui.js';
 import Auth from './auth.js';
+import ConfigService from './config.service.js';
 
 // ---- Configuración del sistema (IVA + moneda) ----
 let ivaSistema = 0.16; // valor por defecto hasta que se cargue el API
 let monedaSistema = 'MXN';
 let maxProductosOrden = 999; // sin límite hasta que se cargue
 
-async function cargarConfigSistema() {
-    try {
-        const cfg = await Api.get('/config/sistema/publica');
-        ivaSistema = cfg.iva ?? 0.16;
-        monedaSistema = cfg.monedaSistema ?? 'MXN';
-        maxProductosOrden = cfg.maxProductosOrden ?? 999;
-
-        // Actualizar labels con la moneda configurada
-        const lbSub = document.getElementById('subtotalLabel');
-        const lbIva = document.getElementById('ivaLabel');
-        const lbTot = document.getElementById('totalLabel');
-        if (lbSub) lbSub.textContent = `Subtotal (${monedaSistema})`;
-        if (lbIva) lbIva.textContent = `IVA (${Math.round(ivaSistema * 100)}%)`;
-        if (lbTot) lbTot.textContent = `Total (${monedaSistema})`;
-    } catch (e) {
-        console.warn('[carrito] No se pudo cargar config del sistema, usando valores por defecto.');
-    }
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
-    // Auth Check
+
     if (!Auth.isAuthenticated()) {
         window.location.href = 'login.html';
         return;
@@ -38,10 +20,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         context: 'cart'
     });
 
-    await cargarConfigSistema();
+    const cfg = await ConfigService.load();
+
+    ivaSistema = cfg.iva;
+    monedaSistema = cfg.monedaSistema;
+    maxProductosOrden = cfg.maxProductosOrden;
+
+    actualizarLabels();
+
     cargarCarrito();
     setupEventListeners();
 });
+
+function actualizarLabels() {
+    const lbSub = document.getElementById('subtotalLabel');
+    const lbIva = document.getElementById('ivaLabel');
+    const lbTot = document.getElementById('totalLabel');
+
+    if (lbSub) lbSub.textContent = `Subtotal (${monedaSistema})`;
+    if (lbIva) lbIva.textContent = `IVA (${Math.round(ivaSistema * 100)}%)`;
+    if (lbTot) lbTot.textContent = `Total (${monedaSistema})`;
+}
 
 function setupEventListeners() {
     // Phase 2: Order implementation
