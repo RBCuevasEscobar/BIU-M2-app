@@ -1037,7 +1037,9 @@ Para solidificar la integridad y escalabilidad de los servicios C4 declarados an
 
 #### A. Patrón Singleton (Configuración Hilo-Seguro)
 - **Objetivo**: Garantizar que exista una sola fuente de verdad en la memoria de la JVM para parámetros variables del negocio (como IVA, Stock Mínimo o Moneda).
-- **Implementación**: Clase `ConfiguracionSistema.java`.
+- **Definición y Propósito**: En términos sencillos, el Singleton garantiza que una clase tenga una única instancia y proporciona un punto de acceso global a dicha instancia.
+Su propósito principal es controlar el acceso a un recurso compartido. Imagina que tienes un objeto que gestiona la conexión a una base de datos o un sistema de registro de errores (logger); no tendría sentido tener diez instancias diferentes haciendo lo mismo, ya que podrían entrar en conflicto o consumir memoria innecesariamente.
+- **Implementación**: La clase `ConfiguracionSistema.java` actúa como un Singleton central que gestiona parámetros core como la tasa de IVA, la moneda del sistema y el stock mínimo. En el código, se implementa mediante un constructor privado y el método getInstance() con Double-Checked Locking para garantizar que sea thread-safe en entornos de alta concurrencia.
 - **Funcionamiento**: Emplea el algoritmo *Double-Checked Locking* en su constructor privado. Sus propiedades mutables (`AtomicReference`, `AtomicInteger`) previenen condiciones de carrera (*Race Conditions*) permitiendo que miles de hilos HTTP consulten la misma instancia sin bloqueos severos.
 
 ```java
@@ -1061,7 +1063,12 @@ public class ConfiguracionSistema {
 
 #### B. Patrón Factory (Desacoplamiento Polimórfico)
 - **Objetivo**: Abstraer la compleja ramificación de objetos que heredan de `Usuario` y `Producto`, salvaguardando el Principio de Responsabilidad Única (SRP) en los servicios de negocio.
-- **Implementación**: Componente `FabricaEntidades.java`.
+- **Definición y Motivación**: El Factory Method (Método de Fábrica) es uno de los patrones de diseño creacionales más potentes y utilizados en la programación orientada a objetos. Su esencia es la delegación: en lugar de que una clase instancie objetos directamente, define una interfaz para crearlos, pero deja que las subclases decidan qué clase concreta instanciar. Según la definición clásica de Gamma et al. (1994), este patrón permite que una clase delegue la responsabilidad de la instanciación a sus subclases.
+- **Implementación**: En el componente `FabricaEntidades.java`, el patrón se aplica para gestionar la diversidad del catálogo:
+
+  - **Productos**: El sistema pide un "Producto". La fábrica evalúa si es un ProductoFisico (con lógica de envío) o un ProductoDigital (con lógica de descarga).
+
+  - **Usuarios**: Dependiendo del registro, la fábrica crea un Cliente, Administrador o Proveedor. El sistema de autenticación trata a todos como Usuario, pero la fábrica inyecta el comportamiento específico de cada rol.
 - **Funcionamiento**: En lugar de ensuciar el `ProductoService` con condicionales `new ProductoFisico()` o `new ProductoDigital()`, la Fábrica recibe el rol o tipo y genera la concreción adecuada. Esto centraliza la inicialización de estado per-entidad.
 
 ```java
@@ -1426,8 +1433,8 @@ public class Direccion {
 
 ---
 
-###- `GestorInventario`: Interfaz para la gestión de inventario físico vs. digital.
-- `ProcesoPago`: Interfaz para múltiples proveedores de pago (Tarjeta, PayPal, Transferencia).
+- `GestorInventario`: Interfaz para la gestión de inventario físico vs. digital.
+- `ProcesoPago`: Interfaz para múltiples proveedores de pago (Tarjeta, PayPal, Transferenci a).
 - **Comprobación de seguridad**: Implementada mediante Spring Security (`@PreAuthorize`).
 - **Adiciones de la Fase 3**: Gestión del ciclo de vida de pedidos (`EstadoOrden`), Checkout unificado, Transacciones de pago y Envíos.
 
@@ -1447,12 +1454,7 @@ public class Direccion {
 
 Para obtener una lista completa de los puntos finales, importe la colección de Postman proporcionada (..\backend\ECommerce_Collection.json) o revise los controladores subyacentes.
 
-###- `GestorInventario`: Interface for physical vs digital inventory handling.
-- `ProcesoPago`: Interface for multiple payment providers (Tarjeta, PayPal, Transfer).
-- **Security Check**: Enforced via Spring Security (`@PreAuthorize`).
-- **Phase 3 additions**: Order lifecycle management (`EstadoOrden`), unified Checkout, Payment Transactions, and Shipments.
-
-### Nuevos Endpoints API
+### Nuevos Endpoints API (Fase 3)
 
 #### Direcciones (`/api/direcciones`)
 | Método | Endpoint | Rol Requerido | Descripción |
