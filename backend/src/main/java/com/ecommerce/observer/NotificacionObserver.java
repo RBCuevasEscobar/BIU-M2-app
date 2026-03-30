@@ -28,6 +28,16 @@ public class NotificacionObserver {
     }
 
     @EventListener
+    public void handleOrdenPagoPendiente(OrdenPagoPendienteEvent event) {
+        System.out.println("[NotificacionObserver] EMAIL ENVIADO: Tu orden #" + event.getOrden().getId() + " se encuentra pendiente de pago.");
+    }
+
+    @EventListener
+    public void handleOrdenSinStock(OrdenSinStockEvent event) {
+        System.out.println("[NotificacionObserver] EMAIL ENVIADO: Reembolso efectuado. Tu orden #" + event.getOrden().getId() + " ha sido cancelada por escasez de stock.");
+    }
+
+    @EventListener
     public void handleOrdenCancelada(OrdenCanceladaEvent event) {
         System.out.println("[NotificacionObserver] EMAIL ENVIADO: Aviso de cancelación para la orden #" + event.getOrden().getId() + ".");
     }

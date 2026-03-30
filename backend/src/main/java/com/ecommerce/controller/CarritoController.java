@@ -28,6 +28,11 @@ public class CarritoController {
         return ResponseEntity.ok(carritoService.eliminarProducto(productoId));
     }
 
+    @DeleteMapping("/productos/{productoId}/todos")
+    public ResponseEntity<Carrito> eliminarProductoCompleto(@PathVariable Long productoId) {
+        return ResponseEntity.ok(carritoService.eliminarProductoCompleto(productoId));
+    }
+
     // 🔥 NUEVO ENDPOINT
     @DeleteMapping
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('CUSTOMER')")

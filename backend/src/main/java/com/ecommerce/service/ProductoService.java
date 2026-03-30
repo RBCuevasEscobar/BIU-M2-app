@@ -1,5 +1,8 @@
 package com.ecommerce.service;
 
+import com.ecommerce.exception.AccesoDenegadoException;
+import com.ecommerce.exception.ProductoNoEncontradoException;
+import com.ecommerce.exception.UsuarioNoEncontradoException;
 import com.ecommerce.dto.ProductoDTO;
 import com.ecommerce.dto.ProductoRequestDTO;
 import com.ecommerce.model.Producto;
@@ -65,7 +68,7 @@ public class ProductoService {
     public List<ProductoDTO> listarProductos(String emailUsuario) {
 
         Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new UsuarioNoEncontradoException(emailUsuario));
 
         List<Producto> productos;
 
@@ -105,10 +108,10 @@ public class ProductoService {
     @Transactional
     public ProductoDTO actualizarProducto(Long id, ProductoRequestDTO request, String username) {
         Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado con id: " + id));
+                .orElseThrow(() -> new ProductoNoEncontradoException(id));
 
         Usuario accionUsuario = usuarioService.buscarPorEmail(username)
-                .orElseThrow(() -> new RuntimeException("Usuario accion no encontrado"));
+                .orElseThrow(() -> new UsuarioNoEncontradoException(username));
 
         boolean isAdmin = accionUsuario.getRole().name().equals("ADMIN");
         boolean isSupplier = accionUsuario.getRole().name().equals("SUPPLIER");
@@ -124,14 +127,14 @@ public class ProductoService {
             // Si el supplier no es el dueño, se rechaza la petición.
             if (producto.getProveedor() == null || (!producto.getProveedor().equals(accionUsuario.getEmail())
                     && !producto.getProveedor().equals(((com.ecommerce.model.Proveedor) accionUsuario).getEmpresa()))) {
-                throw new RuntimeException("Solo puedes editar productos que te pertenecen");
+                throw new AccesoDenegadoException("Solo puedes editar productos que te pertenecen");
             }
             // Supplier can't alter proveedor name
         } else if (isAdmin) {
             // Admin can override proveedor
             producto.setProveedor(request.getProveedor());
         } else {
-            throw new RuntimeException("Not Authorized");
+            throw new AccesoDenegadoException("Solo ADMIN y SUPPLIER pueden editar productos");
         }
 
         producto.setNombre(request.getNombre());

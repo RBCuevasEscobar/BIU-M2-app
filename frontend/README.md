@@ -1,4 +1,4 @@
-# E-Commerce Frontend v4.0
+# E-Commerce Frontend v5.0
 
 ## 🎯 Propósito del Proyecto
 
@@ -624,7 +624,7 @@ sequenceDiagram
 
 ---
 
-## 🏛 Enterprise Architecture (Fase 4)
+## 🏛 Fase 4 - Enterprise Architecture
 
 El esqueleto dinámico de esta plataforma Frontend es alimentado por un **Spring Boot Backend** recientemente extendido transaccionalmente que cuenta con:
 - **Patrón Singleton**: El estado unificado global de tarifas e IVA (`ConfiguracionSistema.java`) previene el desajuste de montos.
@@ -633,7 +633,7 @@ El esqueleto dinámico de esta plataforma Frontend es alimentado por un **Spring
 
 ---
 
-## 🤖 Asistente Virtual (Chatbot) — Implementación y Funcionamiento
+## 🤖 Fase 4 — Asistente Virtual IA (Chatbot) - Implementación y Funcionamiento
 
 ### Propósito
 El chatbot es un **asistente inteligente embebido en la página de productos del CUSTOMER** (`productoscustomer.html`). Su objetivo es responder preguntas sobre productos disponibles, precios y procesos de compra. Rechaza explícitamente preguntas sobre temas no relacionados con la tienda.
@@ -728,3 +728,135 @@ Usuario hace click en "Logout"
 | fire-and-forget en logout | El redirect no espera la confirmación del servidor; UX fluida |
 | `UsuarioSecurity` como principal JWT | Permite acceder al `userId` en cualquier controller sin hacer un query adicional a BD |
 
+---
+
+## ☁️ Fase 5 - Arquitectura y Despliegue en Nube (MS Azure)
+
+Esta sección documenta la estrategia integral de diseño, despliegue y operatividad de la solución eCommerce en la infraestructura Cloud Pública de **Microsoft Azure**, habilitando capacidades elásticas y tolerancia a fallos.
+
+### Mapeo de Componentes a Servicios Azure
+
+La modernización de la plataforma se apoya en servicios administrados (*PaaS*) para minimizar la sobrecarga operativa y potenciar la escalabilidad automatizada:
+
+#### 1. Azure App Service (Capa de Cómputo)
+El backend construido en Spring Boot y el frontend (servido estáticamente o empacado de manera nativa) se acoplan como contenedores/aplicaciones sobre **Azure App Service**.
+- **Beneficio Principal**: Absorbe automáticamente picos transaccionales mediante *Scale-Out* (escalabilidad horizontal dinámica) basados en el consumo de CPU o memoria.
+- **Aislamiento**: Permite implementar perfiles y variables de entorno ocultas. Mediante inyección directa del `.env` como perfiles de configuración de Azure, el código no requiere cambios duros.
+- **TLS/SSL Offloading**: La criptografía HTTPS de los clientes es gestionada transparentemente por los ruteadores *Front-Door* de Azure App Service, protegiendo las credenciales JWT.
+
+#### 2. Azure Database for MySQL - Flexible Server
+El persistente estado transaccional (Usuarios, Órdenes, Productos, Configuración) está respaldado por el motor *MySQL* totalmente manejado por Azure.
+- **Alta Disponibilidad**: Arquitectura multi-zona donde un servidor *Standby* en otro centro de datos toma control en menos de 60 segundos si el máster falla (Failover automático).
+- **Copias de Seguridad Reutilizables**: Monitoreo ininterrumpido con Point-In-Time Restore (PITR) hasta por 35 días.
+
+#### 3. Azure Key Vault (Gestión de Secretos)
+Ninguna clave está inyectada en texto plano (`application.properties` está completamente esterilizado).
+- Las contraseñas base de datos (`SPRING_DATASOURCE_PASSWORD`), la API Key de OpenAI (`OPENAI_API_KEY`) y el Token HMAC para nuestro proveedor JWT (`APP_JWT_SECRET`) residen cifradas militarmente en el Vault.
+- Azure App Service inyecta identidades administradas (*Managed Identities*) para leer los secretos durante el arranque del contenedor de Spring Boot sin intervención humana.
+
+#### 4. Azure Virtual Network (VNet) - Conectividad Privada
+Se suprime todo puerto público para salvaguardar la Base de Datos.
+- **VNet Integration**: La conexión entre el App Service HTTP y el `MySQL Flexible Server` ocurre exclusivamente a través de túneles oscuros por red privada en Azure.
+- **Firewall Activo**: Rechazo incondicional a cualquier IP que provenga del exterior; la base de datos es puramente ciega al internet, aceptando únicamente al servicio web matriz.
+
+---
+
+### Diagramas Arquitectónicos (Mermaid)
+
+A continuación se despliega la topología operativa bajo el formato visual de estándares en nube.
+
+#### Modelo C4 - Nivel de Contenedores
+
+```mermaid
+C4Container
+    title Modelo C4 (Contenedores) - Arquitectura Azure Cloud
+    Person(customer, "App Customer", "Navega y consume el eCommerce")
+    Person(admin, "Administrador", "Gestiona inventario, órdenes e IVA")
+    
+    System_Boundary(azure_cloud, "Microsoft Azure") {
+        Container(app_service_frontend, "Frontend SPA", "HTML/CSS/VanillaJS", "Inyecta GUI reactiva al navegador mediante CDN/App Service.")
+        
+        System_Boundary(app_service_plan, "Azure App Service (Spring Boot)") {
+            Container(api_gateway, "Spring MVC / Security Filter", "Java", "Recibe JWT, autentica y enruta peticiones")
+            Container(backend_logic, "Business Services Core", "Java", "Maneja Checkout, Factorys e Inventario")
+        }
+        
+        ContainerDb(mysql_flexible, "Azure DB for MySQL", "Relational Database", "Persiste todo estado transaccional, configuración de sistema e historial Chat", "database")
+        Container(key_vault, "Azure Key Vault", "Secrets Engine", "Aloja RSA/HMAC keys y passwords DB de forma encriptada")
+        Container(storage_blob, "Azure Blob Storage", "Object Storage", "Futura retención de Imágenes / Assets estáticos")
+    }
+    
+    Rel(customer, app_service_frontend, "Solicita páginas (HTTPS)")
+    Rel(admin, app_service_frontend, "Accede Panel Admin (HTTPS)")
+    
+    Rel_Right(app_service_frontend, api_gateway, "Consume Rest API (JWT)")
+    Rel(api_gateway, backend_logic, "Delega")
+    
+    Rel(backend_logic, mysql_flexible, "JDBC Read/Write por VNet Privada")
+    Rel(backend_logic, key_vault, "Fetch Secrets (Managed Identity)")
+    Rel(backend_logic, storage_blob, "Sube URLs directos de imágenes")
+```
+
+#### Diagrama de Secuencia - Resolución e-Commerce Transaccional
+
+```mermaid
+sequenceDiagram
+    participant Cliente (SPA)
+    participant Azure App Service (Spring)
+    participant Azure Key Vault
+    participant Azure MySQL DB
+    participant Open AI (Chat)
+
+    Azure App Service (Spring)->>Azure Key Vault: Inicia sistema. Extrae DB Password & Secret JWT.
+    Azure Key Vault-->>Azure App Service (Spring): Secretos Inyectados
+    
+    Cliente (SPA)->>Azure App Service (Spring): Login (Email/Pass)
+    Azure App Service (Spring)->>Azure MySQL DB: Valida Hash
+    Azure MySQL DB-->>Azure App Service (Spring): OK
+    Azure App Service (Spring)-->>Cliente (SPA): Emite JWT Token
+    
+    Cliente (SPA)->>Azure App Service (Spring): Paga Orden (Checkout) + Bearer Token
+    Azure App Service (Spring)->>Azure MySQL DB: Modifica Stock (Descuento VNet)
+    Azure MySQL DB-->>Azure App Service (Spring): Transaction Commit OK
+    Azure App Service (Spring)-->>Cliente (SPA): 200 OK - Pagado
+    
+    Cliente (SPA)->>Azure App Service (Spring): Pregunta Chat IA "¿Hay envíos expresos?"
+    Azure App Service (Spring)->>Azure MySQL DB: Obtiene / Actualiza Historial Conversado
+    Azure App Service (Spring)->>Open AI (Chat): Petición LLM con Contexto Extraído
+    Open AI (Chat)-->>Azure App Service (Spring): "Sí, manejamos guías premium."
+    Azure App Service (Spring)-->>Cliente (SPA): String Chat Rendeada en Widget
+```
+
+---
+
+### Estrategia de Mejora Futura (Roadmap): Implementación de Azure Blob Storage para Assets e Imágenes
+
+Actualmente, las portadas y capturas asociadas a cada Producto en el eCommerce se proveen insertando ligas o *URLs absolutos* que enlazan a servidores independientes o imágenes esparcidas por la internet (como *unsplash*). Aunque este modelo distribuye la latencia a nivel multinube, a largo plazo presenta fragilidad extrema: si los dueños originales eliminan las fotos, el eCommerce reflejará eslabones rotos masivamente (`HTTP 404`).
+
+Para brindar aislamiento, propiedad autárquica y una plataforma lista para cargas administradas por la corporación, **el roadmap dicta la anexión forzada del componente `Azure Blob Storage`.** 
+
+#### Desarrollo de la Funcionalidad (Procedimiento Detallado de Migración)
+
+Para transformar la plataforma, el desarrollador requerirá ejecutar un conjunto de alteraciones holísticas involucrando la inyección profunda del SDK propio de la nube. 
+
+**Paso 1: Proveer Ecosistema Backend**
+La dependencia estelar de Microsoft `<artifactId>azure-storage-blob</artifactId>` deberá aterrizar sobre nuestro archivo central de Maven (`pom.xml`). Automáticamente, dotará de clases maestras como `BlobServiceClientBuilder` diseñadas para conectarse al ecosistema de forma nativa. 
+
+**Paso 2: Aislamiento del Credencialismo**
+Crearemos el recurso `Storage Account` en la consola de Azure Portal. El *Connection String* fundamental se aislará en nuestro **Azure Key Vault**, inyectándolo al arranque de la aplicación Spring vía la propiedad oculta `@Value("${AZURE_STORAGE_CONNECTION_STRING}")` a la nueva clase puente: `BlobStorageService.java`.
+
+**Paso 3: Construcción del Canal de Ingesta Multipart**
+Reconfección masiva del controlador `ProductoController.java`. Introduciremos la nomenclatura Spring `@RequestParam("file") MultipartFile file` en un nuevo *Endpoint* `POST /api/productos/{id}/imagenes`. Esto faculta a la aplicación a abandonar su limitación de solo ingerir JSON mediante String y abrazar tramas binarias de imágenes directas desde la RAM del Administrador.
+
+**Paso 4: Tuberia Upload a Azure (Service Layer)**
+Una vez que el Controlador capture el binario `MultipartFile`, su byte-array será delegado a `BlobStorageService` invocando `.upload(inputStream)`. Azure responderá mediante confirmaciones HTTP emitiendo un **URL público y absoluto de solo lectura** perteneciente a nuestros clústeres empresariales privados. 
+Ese URL inquebrantable será entonces insertado formalmente a nuestra tabla `producto_imagenes` de la Base de Datos asociándolo inmediatamente al catálogo. 
+
+**Paso 5: Reforma Frontend (La Perspectiva del Administrador)**
+La vista interna corporativa `productos.html` actualmente pide "Ingresar enlace web de imagen". Modificaremos drásticamente su DOM agregando un elemento `<input type="file" accept="image/png, image/jpeg" multiple />`. 
+El orquestador en Vanilla JavaScript será enmendado utilizando el objeto asíncrono nativo `FormData`. La función inyectará el binario del Administrador empaquetado y forzará la ráfaga REST hacia nuestro servidor proxy local.
+
+**Paso 6: Caché de Entrega (Opcional - CDN)**
+A pesar de que el Azure Storage sirve archivos crudos ultra-rápido, el Roadmap definitivo estipula cruzar a todos los visitantes contra nodos periféricos (CDN). El App Service entregará el URL del Blob a los clientes de la tienda y sus navegadores recargables (Edge, Chrome, Safari) los absorberán mediante el `Azure Content Delivery Network` optimizando costos de latencia global.
+
+Bajo este panorama completo, el ciclo productivo transitará hacia una nube central absoluta bajo administración autónoma, erradicando al 100% dependencias visuales foráneas. Tolerará catálogos colosales sin comprometer un solo mega extra del servidor de operaciones.

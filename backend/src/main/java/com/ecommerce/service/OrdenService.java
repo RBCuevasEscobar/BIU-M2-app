@@ -1,5 +1,9 @@
 package com.ecommerce.service;
 
+import com.ecommerce.exception.AccesoDenegadoException;
+import com.ecommerce.exception.CarritoVacioException;
+import com.ecommerce.exception.OrdenNoValidaException;
+import com.ecommerce.exception.UsuarioNoEncontradoException;
 import com.ecommerce.config.ConfiguracionSistema;
 import com.ecommerce.dto.OrdenDTO;
 import com.ecommerce.dto.OrdenDetalleDTO;
@@ -57,11 +61,14 @@ public class OrdenService {
     @Autowired
     private ProcesoPagoFactory pagoFactory;
 
+    @Autowired
+    private ConfiguracionSistemaService configService;
+
     private Usuario getUsuarioActual() {
         String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()
                 .getName();
-        System.out.println("Email: " + email);
-        return usuarioRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new UsuarioNoEncontradoException(email));
     }
 
     /**
@@ -73,20 +80,20 @@ public class OrdenService {
     public OrdenDTO crearOrdenDesdeCarrito(Long direccionId) {
         Usuario usuario = getUsuarioActual();
         Carrito carrito = carritoRepository.findByUsuario(usuario)
-                .orElseThrow(() -> new RuntimeException("Carrito no encontrado"));
+                .orElseThrow(CarritoVacioException::new);
 
         if (carrito.getProductos().isEmpty()) {
-            throw new RuntimeException("El carrito está vacío");
+            throw new CarritoVacioException();
         }
 
         // Validar máximo de ítems por orden (Req. 10)
-        ConfiguracionSistema config = ConfiguracionSistema.getInstance();
+        ConfiguracionSistema config = configService.getConfiguracionSistema();
         int maxItems = config.getMaxProductosOrden();
         int totalItems = carrito.getProductos().size();
-        if (totalItems >= maxItems) {
+        if (totalItems > maxItems) {
             // Publicar evento para notificación al ADMIN
             eventPublisher.publishEvent(new MaxItemsExcedidoEvent(this, usuario, totalItems, maxItems));
-            throw new RuntimeException("MAX_ITEMS_EXCEDIDO:" + totalItems + ":" + maxItems);
+            throw OrdenNoValidaException.maxItemsExcedido(totalItems, maxItems);
         }
 
         Orden orden = new Orden();
@@ -95,9 +102,9 @@ public class OrdenService {
 
         if (direccionId != null) {
             Direccion direccion = direccionRepository.findById(direccionId)
-                    .orElseThrow(() -> new RuntimeException("Dirección no encontrada"));
+                    .orElseThrow(OrdenNoValidaException::direccionInvalida);
             if (!direccion.getUsuario().getId().equals(usuario.getId())) {
-                throw new RuntimeException("La dirección no pertenece a este usuario");
+                throw OrdenNoValidaException.direccionInvalida();
             }
             orden.setDireccionEnvio(direccion);
         }
@@ -140,24 +147,24 @@ public class OrdenService {
     @Transactional
     public OrdenDTO procesarPago(Long ordenId, String metodoPago, Long direccionId) {
         Orden orden = ordenRepository.findById(ordenId)
-                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+                .orElseThrow(() -> OrdenNoValidaException.noEncontrada(ordenId));
 
         if (direccionId != null) {
             Direccion direccion = direccionRepository.findById(direccionId)
-                    .orElseThrow(() -> new RuntimeException("Dirección no encontrada"));
+                    .orElseThrow(OrdenNoValidaException::direccionInvalida);
             if (!direccion.getUsuario().getId().equals(orden.getUsuario().getId())) {
-                throw new RuntimeException("La dirección no pertenece al propietario de la orden");
+                throw OrdenNoValidaException.direccionInvalida();
             }
             orden.setDireccionEnvio(direccion);
         }
 
-        // Validaciones Máquina de Estados
+        // Validaciones Máquina de Estados — SIN modificar la lógica de estados
         if (orden.getEstado() == EstadoOrden.PAID || orden.getEstado() == EstadoOrden.SHIPPED
                 || orden.getEstado() == EstadoOrden.DELIVERED) {
-            throw new RuntimeException("La orden ya fue pagada o procesada.");
+            throw OrdenNoValidaException.transicionInvalida(orden.getEstado().name(), "pago");
         }
         if (orden.getEstado() == EstadoOrden.CANCELLED) {
-            throw new RuntimeException("La orden está cancelada.");
+            throw OrdenNoValidaException.transicionInvalida("CANCELLED", "pago");
         }
 
         // 1. Verificar Stock Múltiple (OOP Abstraction)
@@ -172,14 +179,18 @@ public class OrdenService {
 
         if (!hasStock) {
             orden.setEstado(EstadoOrden.OUT_OF_STOCK);
+            eventPublisher.publishEvent(new com.ecommerce.observer.events.OrdenSinStockEvent(this, orden));
             return toDTO(ordenRepository.save(orden));
         }
 
         // Transición a Payment Pending si hay stock
-        orden.setEstado(EstadoOrden.PAYMENT_PENDING);
+        if (orden.getEstado() != EstadoOrden.PAYMENT_PENDING) {
+            orden.setEstado(EstadoOrden.PAYMENT_PENDING);
+            eventPublisher.publishEvent(new com.ecommerce.observer.events.OrdenPagoPendienteEvent(this, orden));
+        }
 
         // 2. Actualizar ivaTasa si cambió desde la creación de la orden (Req. 2, 6)
-        ConfiguracionSistema configActual = ConfiguracionSistema.getInstance();
+        ConfiguracionSistema configActual = configService.getConfiguracionSistema();
         double ivaTasaActual = configActual.getIva();
         if (orden.getIvaTasa() == null || Double.compare(orden.getIvaTasa(), ivaTasaActual) != 0) {
             // La tasa cambió — recalcular total con nueva tasa
@@ -226,14 +237,15 @@ public class OrdenService {
     @Transactional
     public OrdenDTO marcarComoPendiente(Long ordenId) {
         Orden orden = ordenRepository.findById(ordenId)
-                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+                .orElseThrow(() -> OrdenNoValidaException.noEncontrada(ordenId));
 
         validarPropietarioOAdmin(orden);
 
         if (orden.getEstado() == EstadoOrden.CREATED) {
             orden.setEstado(EstadoOrden.PAYMENT_PENDING);
+            eventPublisher.publishEvent(new com.ecommerce.observer.events.OrdenPagoPendienteEvent(this, orden));
         } else if (orden.getEstado() != EstadoOrden.PAYMENT_PENDING) {
-            throw new RuntimeException("La orden debe estar en estado CREATED para iniciar el pago.");
+            throw OrdenNoValidaException.transicionInvalida(orden.getEstado().name(), "marcar pendiente");
         }
 
         return toDTO(ordenRepository.save(orden));
@@ -245,13 +257,13 @@ public class OrdenService {
     @Transactional
     public OrdenDTO cancelarOrden(Long ordenId) {
         Orden orden = ordenRepository.findById(ordenId)
-                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+                .orElseThrow(() -> OrdenNoValidaException.noEncontrada(ordenId));
 
         validarPropietarioOAdmin(orden);
 
         if (orden.getEstado() == EstadoOrden.PAID || orden.getEstado() == EstadoOrden.SHIPPED
                 || orden.getEstado() == EstadoOrden.DELIVERED) {
-            throw new RuntimeException("No se puede cancelar en estado: " + orden.getEstado());
+            throw OrdenNoValidaException.transicionInvalida(orden.getEstado().name(), "cancelar");
         }
 
         orden.setEstado(EstadoOrden.CANCELLED);
@@ -268,10 +280,10 @@ public class OrdenService {
     @Transactional
     public OrdenDTO despacharOrden(Long ordenId, String courier, String trackingNumber) {
         Orden orden = ordenRepository.findById(ordenId)
-                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+                .orElseThrow(() -> OrdenNoValidaException.noEncontrada(ordenId));
 
         if (orden.getEstado() != EstadoOrden.PAID) {
-            throw new RuntimeException("Despacho permitido solo si estado = PAID");
+            throw OrdenNoValidaException.transicionInvalida(orden.getEstado().name(), "despachar");
         }
 
         Shipment shipment = new Shipment(LocalDateTime.now(), courier, trackingNumber);
@@ -292,10 +304,10 @@ public class OrdenService {
     @Transactional
     public OrdenDTO entregarOrden(Long ordenId) {
         Orden orden = ordenRepository.findById(ordenId)
-                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+                .orElseThrow(() -> OrdenNoValidaException.noEncontrada(ordenId));
 
         if (orden.getEstado() != EstadoOrden.SHIPPED) {
-            throw new RuntimeException("La orden debe estar despachada (SHIPPED)");
+            throw OrdenNoValidaException.transicionInvalida(orden.getEstado().name(), "entregar");
         }
 
         if (orden.getShipment() != null) {
@@ -314,13 +326,13 @@ public class OrdenService {
                 .getContext().getAuthentication();
         boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         if (!isAdmin && !orden.getUsuario().getEmail().equals(auth.getName())) {
-            throw new RuntimeException("No tiene permisos sobre esta orden.");
+            throw new AccesoDenegadoException("orden #" + orden.getId());
         }
     }
 
     public List<OrdenDTO> listarOrdenesUsuario(Long usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new UsuarioNoEncontradoException(usuarioId));
         return ordenRepository.findByUsuario(usuario).stream().map(this::toDTO).toList();
     }
 
@@ -329,7 +341,8 @@ public class OrdenService {
     }
 
     /**
-     * Calcula el subtotal de productos desde los detalles (fallback para órdenes antiguas
+     * Calcula el subtotal de productos desde los detalles (fallback para órdenes
+     * antiguas
      * que no tienen subtotalProductos persistido).
      */
     private double calcularSubtotalProductos(Orden orden) {
@@ -354,16 +367,18 @@ public class OrdenService {
             dto.setUsuarioRfcCurp(cliente.getRfcCurp());
         }
 
-        // Subtotal de productos (sin IVA) — calcula desde detalles si aún no está persistido
+        // Subtotal de productos (sin IVA) — calcula desde detalles si aún no está
+        // persistido
         double subtotalProductos = orden.getSubtotalProductos() != null
                 ? orden.getSubtotalProductos()
                 : calcularSubtotalProductos(orden);
         dto.setSubtotalProductos(subtotalProductos);
 
-        // IVA: usa la guardada en la orden; si no existe (órdenes antiguas) usa la del sistema
+        // IVA: usa la guardada en la orden; si no existe (órdenes antiguas) usa la del
+        // sistema
         double ivaTasa = orden.getIvaTasa() != null
                 ? orden.getIvaTasa()
-                : ConfiguracionSistema.getInstance().getIva();
+                : configService.getConfiguracionSistema().getIva();
         dto.setIvaTasa(ivaTasa);
         dto.setMontoImpuestos(subtotalProductos * ivaTasa);
 
@@ -382,6 +397,13 @@ public class OrdenService {
                     det.setProductoNombre(d.getProducto().getNombre());
                     det.setSubtotal(d.getSubtotal());
                     det.setCantidad(d.getCantidad());
+                    
+                    if (d.getProducto() instanceof com.ecommerce.model.ProductoDigital pd) {
+                        det.setTipoProducto("DIGITAL");
+                        det.setUrlDescarga(pd.getUrlDescarga());
+                    } else {
+                        det.setTipoProducto("FISICO");
+                    }
                     return det;
                 }).toList());
 

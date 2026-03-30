@@ -79,9 +79,7 @@ public class UsuarioController {
             }
         }
 
-        return usuarioService.listarUsuario(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(usuarioService.buscarPorId(id));
     }
 
     @PutMapping("/{id}")

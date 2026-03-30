@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: spectral-oort-backend
+  datasource:
+    # URL dinámica inyectada desde App Service, apuntando al Flexible Server
+    url: jdbc:mysql://${MYSQL_SERVER_NAME}.mysql.database.azure.com:3306/${MYSQL_DATABASE_NAME}?serverTimezone=UTC&useSSL=true&requireSSL=true
+    username: ${MYSQL_ADMIN_USER}
+    password: ${MYSQL_ADMIN_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: validate # Protección: Nunca realizar update/create-drop en prod.
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  # Spring AI - OpenAI Configuration
+  ai:
+    openai:
+      # GAP CUBIERTO: La llave hardcodeada en locale se reemplaza por inyección desde KeyVault/AppService env
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.7
+
+# Security / JWT Secret Hardcode Mitigation
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expirationMs: 3600000 # 1 Hora para entorno productivo
+
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: never
+    include-stacktrace: never # Zero Trust: Fuga de información bloqueada
+
+# Observabilidad: Azure Application Insights via Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+  metrics:
+    export:
+      azuremonitor:
+        enabled: true

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from './config.js';
 import Api from './api.js';
 
 const Auth = {
@@ -35,7 +36,7 @@ const Auth = {
         // Notificar al servidor para limpiar el historial en memoria del ChatMemoryService
         // (fire-and-forget: no bloqueamos el redirect si falla)
         if (tokenParaLimpieza) {
-            fetch('http://localhost:8080/api/chat/historial', {
+            fetch(`${API_BASE_URL}/chat/historial`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${tokenParaLimpieza}` }
             }).catch(() => { /* silencio si falla */ });

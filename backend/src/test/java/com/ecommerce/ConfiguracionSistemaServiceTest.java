@@ -1,6 +1,5 @@
 package com.ecommerce;
 
-import com.ecommerce.config.ConfiguracionSistema;
 import com.ecommerce.model.SystemConfig;
 import com.ecommerce.repository.SystemConfigRepository;
 import com.ecommerce.security.JwtConfig;
@@ -45,7 +44,7 @@ class ConfiguracionSistemaServiceTest {
 
         service.cargarDesdeDB();
 
-        assertEquals(0.19, ConfiguracionSistema.getInstance().getIva(), 0.001);
+        assertEquals(0.19, service.getConfiguracionSistema().getIva(), 0.001);
     }
 
     @Test
@@ -69,11 +68,11 @@ class ConfiguracionSistemaServiceTest {
     void testCargarDesdeDB_tablaVacia_conservaDefaults() {
         when(mockRepo.findById(anyString())).thenReturn(Optional.empty());
 
-        double ivaAntes = ConfiguracionSistema.getInstance().getIva();
+        double ivaAntes = service.getConfiguracionSistema().getIva();
         service.cargarDesdeDB();
 
         // Si no hay valores en DB, el Singleton no cambia
-        assertEquals(ivaAntes, ConfiguracionSistema.getInstance().getIva(), 0.001);
+        assertEquals(ivaAntes, service.getConfiguracionSistema().getIva(), 0.001);
     }
 
     @Test

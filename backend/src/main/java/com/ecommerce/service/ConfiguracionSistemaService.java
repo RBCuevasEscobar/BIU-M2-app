@@ -40,27 +40,26 @@ public class ConfiguracionSistemaService {
     }
 
     /**
-     * Carga todos los parámetros de la tabla system_config
-     * y los aplica al Singleton ConfiguracionSistema y a JwtConfig.
-     * Llamado por ConfiguracionSistemaLoader al arranque.
+     * Devuelve una nueva instancia de ConfiguracionSistema con los valores actuales de la DB.
      */
     @Transactional(readOnly = true)
-    public void cargarDesdeDB() {
-        ConfiguracionSistema cs = ConfiguracionSistema.getInstance();
-
+    public ConfiguracionSistema getConfiguracionSistema() {
+        ConfiguracionSistema cs = new ConfiguracionSistema();
         leerDouble(KEY_IVA).ifPresent(cs::setIva);
         leerString(KEY_MONEDA).ifPresent(cs::setMonedaSistema);
         leerInt(KEY_STOCK_MINIMO).ifPresent(cs::setStockMinimo);
         leerBoolean(KEY_MODO_DEBUG).ifPresent(cs::setModoDebug);
         leerInt(KEY_MAX_PRODUCTOS).ifPresent(cs::setMaxProductosOrden);
-        leerLong(KEY_JWT_EXPIRATION).ifPresent(jwtConfig::setExpirationTime);
+        return cs;
+    }
 
-        System.out.println("[CONFIG-LOADER] Configuración cargada desde DB. IVA=" + cs.getIva()
-                + " Moneda=" + cs.getMonedaSistema()
-                + " Stock Minimo=" + cs.getStockMinimo()
-                + " Max Productos Orden=" + cs.getMaxProductosOrden()
-                + " Modo Debug=" + cs.isModoDebug()
-                + " JWT.exp=" + jwtConfig.getExpirationTime() + "ms");
+    /**
+     * Carga todos los parámetros JWT.
+     * Llamado por ConfiguracionSistemaLoader al arranque.
+     */
+    @Transactional(readOnly = true)
+    public void cargarDesdeDB() {
+        leerLong(KEY_JWT_EXPIRATION).ifPresent(jwtConfig::setExpirationTime);
     }
 
     /**

@@ -26,7 +26,7 @@ public class ConfigSistemaController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getConfiguracion() {
-        ConfiguracionSistema cs = ConfiguracionSistema.getInstance();
+        ConfiguracionSistema cs = configService.getConfiguracionSistema();
         return ResponseEntity.ok(Map.of(
                 "iva", cs.getIva(),
                 "monedaSistema", cs.getMonedaSistema(),
@@ -43,7 +43,7 @@ public class ConfigSistemaController {
      */
     @GetMapping("/publica")
     public ResponseEntity<Map<String, Object>> getConfiguracionPublica() {
-        ConfiguracionSistema cs = ConfiguracionSistema.getInstance();
+        ConfiguracionSistema cs = configService.getConfiguracionSistema();
         return ResponseEntity.ok(Map.of(
                 "iva", cs.getIva(),
                 "monedaSistema", cs.getMonedaSistema(),
@@ -55,7 +55,7 @@ public class ConfigSistemaController {
     @PutMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> updateConfiguracion(@RequestBody Map<String, Object> body) {
-        ConfiguracionSistema cs = ConfiguracionSistema.getInstance();
+        ConfiguracionSistema cs = configService.getConfiguracionSistema();
 
         // 1. Actualizar Singleton en memoria (lógica original preservada)
         if (body.containsKey("iva")) {

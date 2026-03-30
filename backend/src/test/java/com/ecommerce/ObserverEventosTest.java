@@ -12,6 +12,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.context.ApplicationEventPublisher;
+import com.ecommerce.repository.ProductoRepository;
+import com.ecommerce.service.ConfiguracionSistemaService;
+import com.ecommerce.config.ConfiguracionSistema;
 
 import static org.mockito.Mockito.*;
 
@@ -22,6 +25,12 @@ public class ObserverEventosTest {
 
     @Mock
     private ApplicationEventPublisher publisher;
+
+    @Mock
+    private ConfiguracionSistemaService configService;
+
+    @Mock
+    private ProductoRepository productoRepository;
 
     @InjectMocks
     private InventarioObserver inventarioObserver;
@@ -58,6 +67,10 @@ public class ObserverEventosTest {
         ordenMock.setId(201L);
 
         OrdenPagadaEvent evento = new OrdenPagadaEvent(this, ordenMock);
+
+        ConfiguracionSistema csMock = new ConfiguracionSistema();
+        csMock.setStockMinimo(5);
+        when(configService.getConfiguracionSistema()).thenReturn(csMock);
 
         // Llamada a logica observer
         inventarioObserver.onOrdenPagada(evento);

@@ -10,7 +10,10 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
+import org.springframework.context.annotation.Profile;
+
 @Component
+@Profile("!prod")
 public class DataSeeder implements CommandLineRunner {
 
         private final UsuarioRepository usuarioRepository;

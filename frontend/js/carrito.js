@@ -110,6 +110,9 @@ function renderizarCarrito(carrito) {
             </tr>
         `;
 
+        const maxItemsWarning = document.getElementById('maxItemsWarning');
+        if (maxItemsWarning) maxItemsWarning.classList.add('hidden');
+
         actualizarTotales(0);
         actualizarEstadoAccionesCarrito(false);
         return;
@@ -149,7 +152,7 @@ function renderizarCarrito(carrito) {
             </td>
             <td class="py-3 px-6 text-right font-bold">${UI.formatCurrency(totalProducto)}</td>
             <td class="py-3 px-6 text-center">
-                <button class="text-red-500 hover:text-red-700" onclick="window.eliminarDelCarrito(${p.id})">
+                <button class="text-red-500 hover:text-red-700" onclick="window.eliminarDelCarritoCompleto(${p.id})">
                     <i class="fas fa-trash-alt"></i>
                 </button>
             </td>
@@ -157,16 +160,21 @@ function renderizarCarrito(carrito) {
         tbody.appendChild(row);
     });
 
+    actualizarTotales(subtotal);
+    actualizarEstadoAccionesCarrito(true);
+
     // Validar máximo de ítems (Req. 10)
     const cantidadTotal = productos.length;
     const maxItemsWarning = document.getElementById('maxItemsWarning');
     const maxItemsMsg = document.getElementById('maxItemsMsg');
     const btnOrder = document.getElementById('btnOrder');
 
-    if (cantidadTotal >= maxProductosOrden) {
+    if (cantidadTotal > maxProductosOrden) {
         if (maxItemsWarning) maxItemsWarning.classList.remove('hidden');
-        if (maxItemsMsg) maxItemsMsg.textContent =
-            `El carrito tiene ${cantidadTotal} ítems. El máximo permitido por orden es ${maxProductosOrden}. Por favor reduce la cantidad.`;
+        if (maxItemsMsg) {
+            maxItemsMsg.textContent =
+                `El carrito tiene ${cantidadTotal} ítems. El máximo permitido por orden es ${maxProductosOrden}. Por favor reduce la cantidad.`;
+        }
         if (btnOrder) {
             btnOrder.disabled = true;
             btnOrder.classList.add('opacity-50', 'cursor-not-allowed');
@@ -178,9 +186,6 @@ function renderizarCarrito(carrito) {
             btnOrder.classList.remove('opacity-50', 'cursor-not-allowed');
         }
     }
-
-    actualizarTotales(subtotal);
-    actualizarEstadoAccionesCarrito(true);
 }
 
 function actualizarTotales(subtotal) {
@@ -212,9 +217,20 @@ window.eliminarDelCarrito = async (productoId) => {
         await Api.delete(`/carrito/productos/${productoId}`);
         cargarCarrito();
         UI.updateCartBadge();
-        UI.showNotification('Producto eliminado');
+        UI.showNotification('Producto reducido');
     } catch (error) {
         UI.showNotification('Error al eliminar', 'error');
+    }
+};
+
+window.eliminarDelCarritoCompleto = async (productoId) => {
+    try {
+        await Api.delete(`/carrito/productos/${productoId}/todos`);
+        cargarCarrito();
+        UI.updateCartBadge();
+        UI.showNotification('Producto eliminado completamente');
+    } catch (error) {
+        UI.showNotification('Error al eliminar producto', 'error');
     }
 };
 

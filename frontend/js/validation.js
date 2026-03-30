@@ -221,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (type === "proveedor") payload.empresa = document.getElementById("empresa").value;
 
             try {
-                const response = await fetch(`http://localhost:8080/api/usuarios/${type}`, {
+                const response = await fetch(`${window.API_BASE_URL || 'http://localhost:8080/api'}/usuarios/${type}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)

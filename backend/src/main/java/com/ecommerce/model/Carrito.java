@@ -87,6 +87,10 @@ public class Carrito {
         this.productos.remove(producto);
     }
 
+    public void eliminarProductoCompleto(Producto producto) {
+        this.productos.removeIf(p -> p.getId().equals(producto.getId()));
+    }
+
     public Double getTotal() {
         return productos.stream().mapToDouble(Producto::getPrecio).sum();
     }

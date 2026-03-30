@@ -278,6 +278,7 @@ function abrirFormDir(dir = null) {
         document.getElementById('adirNumInt').value = dir.numeroInterior || '';
         document.getElementById('adirRef').value = dir.referencia || '';
         document.getElementById('adirColonia').value = dir.colonia || '';
+        document.getElementById('adirCiudad').value = dir.ciudad || '';
         document.getElementById('adirMunicipio').value = dir.municipio || '';
         document.getElementById('adirEstado').value = dir.estado || '';
         document.getElementById('adirCP').value = dir.codigoPostal || '';
@@ -352,6 +353,7 @@ async function guardarDireccionAdmin(e) {
         numeroInterior: document.getElementById('adirNumInt').value.trim() || null,
         referencia: document.getElementById('adirRef').value.trim() || null,
         colonia: document.getElementById('adirColonia').value.trim(),
+        ciudad: document.getElementById('adirCiudad').value.trim(),
         municipio: document.getElementById('adirMunicipio').value.trim(),
         estado: document.getElementById('adirEstado').value.trim(),
         codigoPostal: cp,

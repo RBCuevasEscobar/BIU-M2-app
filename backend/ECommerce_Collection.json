@@ -1,12 +1,23 @@
 {
   "info": {
-    "name": "E-Commerce API Tests Phase 3",
-    "description": "Pruebas de CRUD de usuarios, productos, y ciclo completo de orden y checkout.",
+    "name": "E-Commerce API – Colección Completa",
+    "_postman_id": "ecommerce-api-collection-v5",
+    "description": "Colección completa de endpoints REST para la API E-Commerce v5.0. Incluye Auth, Usuarios, Productos, Carrito, Órdenes, Pagos, Envíos, Direcciones, Configuración, Chatbot y Notificaciones.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api", "type": "string" },
+    { "key": "tokenAdmin", "value": "", "type": "string" },
+    { "key": "tokenCustomer", "value": "", "type": "string" },
+    { "key": "tokenSupplier", "value": "", "type": "string" },
+    { "key": "productoId", "value": "1", "type": "string" },
+    { "key": "ordenId", "value": "1", "type": "string" },
+    { "key": "direccionId", "value": "1", "type": "string" },
+    { "key": "usuarioId", "value": "2", "type": "string" }
+  ],
   "item": [
     {
-      "name": "Auth",
+      "name": "1. Autenticación",
       "item": [
         {
           "name": "Login Admin",
@@ -15,9 +26,10 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
-                  "var jsonData = pm.response.json();",
-                  "pm.environment.set(\"admin_token\", jsonData.token);"
+                  "var json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('tokenAdmin', json.token); }",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Token recibido', () => pm.expect(json.token).to.be.a('string'));"
                 ],
                 "type": "text/javascript"
               }
@@ -25,27 +37,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+              "raw": "{\n  \"email\": \"admin@ecommerce.com\",\n  \"password\": \"admin123\"\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            }
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
           }
         },
         {
@@ -55,9 +52,9 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
-                  "var jsonData = pm.response.json();",
-                  "pm.environment.set(\"customer_token\", jsonData.token);"
+                  "var json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('tokenCustomer', json.token); }",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
                 ],
                 "type": "text/javascript"
               }
@@ -65,556 +62,776 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"customer123\"\n}"
+              "raw": "{\n  \"email\": \"cliente@ecommerce.com\",\n  \"password\": \"cliente123\"\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            }
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
           }
-        }
-      ]
-    },
-    {
-      "name": "Usuario CRUD",
-      "item": [
+        },
         {
-          "name": "1. GET All Usuarios",
+          "name": "Login Supplier",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                  "var json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('tokenSupplier', json.token); }",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
                 ],
                 "type": "text/javascript"
               }
             }
           ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"proveedor@ecommerce.com\",\n  \"password\": \"proveedor123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login Credenciales Inválidas (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401', () => pm.response.to.have.status(401));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"noexiste@test.com\",\n  \"password\": \"wrongpass\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Usuarios",
+      "item": [
+        {
+          "name": "Registrar Cliente (Público)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Rol CUSTOMER', () => pm.expect(pm.response.json().role).to.eql('CUSTOMER'));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Juan Pérez\",\n  \"email\": \"juan.perez@test.com\",\n  \"password\": \"password123\",\n  \"fechaNacimiento\": \"1990-05-15\",\n  \"rfcCurp\": \"PEPJ900515H\"\n}" },
+            "url": { "raw": "{{baseUrl}}/usuarios/cliente", "host": ["{{baseUrl}}"], "path": ["usuarios", "cliente"] }
+          }
+        },
+        {
+          "name": "Registrar Proveedor (Público)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Rol SUPPLIER', () => pm.expect(pm.response.json().role).to.eql('SUPPLIER'));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Proveedor SA\",\n  \"email\": \"proveedor.nuevo@test.com\",\n  \"password\": \"password123\",\n  \"empresa\": \"Tech Supplies SA de CV\",\n  \"fechaNacimiento\": \"2000-01-01\"\n}" },
+            "url": { "raw": "{{baseUrl}}/usuarios/proveedor", "host": ["{{baseUrl}}"], "path": ["usuarios", "proveedor"] }
+          }
+        },
+        {
+          "name": "Registrar Admin (Solo ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Nuevo Admin\",\n  \"email\": \"admin.nuevo@test.com\",\n  \"password\": \"admin456\",\n  \"fechaNacimiento\": \"1985-03-10\",\n  \"validoHasta\": \"2027-12-31\"\n}" },
+            "url": { "raw": "{{baseUrl}}/usuarios/admin", "host": ["{{baseUrl}}"], "path": ["usuarios", "admin"] }
+          }
+        },
+        {
+          "name": "Listar Todos los Usuarios (ADMIN)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Es array', () => pm.expect(pm.response.json()).to.be.an('array'));"], "type": "text/javascript" } }],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/usuarios",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "usuarios"
-              ]
-            }
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/usuarios", "host": ["{{baseUrl}}"], "path": ["usuarios"] }
           }
         },
         {
-          "name": "2. CREATE Usuario",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200/201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Test User\",\n  \"email\": \"test@user.com\",\n  \"password\": \"password\",\n  \"role\": \"CUSTOMER\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/usuarios/cliente",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "usuarios",
-                "cliente"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Producto CRUD",
-      "item": [
-        {
-          "name": "1. GET All Productos",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
-                  "var data = pm.response.json();",
-                  "if(data.length > 0) { pm.environment.set('producto_id', data[0].id); }"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Obtener Usuario por ID (ADMIN)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
           "request": {
             "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/productos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "productos"
-              ]
-            }
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/usuarios/{{usuarioId}}", "host": ["{{baseUrl}}"], "path": ["usuarios", "{{usuarioId}}"] }
           }
         },
         {
-          "name": "2. CREATE Producto",
+          "name": "Actualizar Usuario (ADMIN)",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"type\": \"Fisico\",\n  \"nombre\": \"Nuevo Teclado\",\n  \"descripcion\": \"Teclado\",\n  \"precio\": 500,\n  \"proveedor\": \"Logitech\",\n  \"stock\": 10,\n  \"peso\": 1.2\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/productos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "productos"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Direccion CRUD",
-      "item": [
-        {
-          "name": "1. CREATE Direccion",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200/201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
-                  "var data = pm.response.json();",
-                  "pm.environment.set(\"direccion_id\", data.id);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{customer_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"calle\": \"Av. Universitaria\",\n  \"numeroExterior\": \"452\",\n  \"colonia\": \"Norte\",\n  \"municipio\": \"Zapopan\",\n  \"estado\": \"Jalisco\",\n  \"codigoPostal\": \"45130\",\n  \"telefonos\": [\"3312345678\"],\n  \"preferida\": true\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/direcciones",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "direcciones"
-              ]
-            }
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Juan Pérez Actualizado\",\n  \"email\": \"juan.actualizado@test.com\"\n}" },
+            "url": { "raw": "{{baseUrl}}/usuarios/{{usuarioId}}", "host": ["{{baseUrl}}"], "path": ["usuarios", "{{usuarioId}}"] }
           }
         },
         {
-          "name": "2. GET Mis Direcciones",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{customer_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/direcciones/mis-direcciones",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "direcciones",
-                "mis-direcciones"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Checkout Flow",
-      "item": [
-        {
-          "name": "1. ADD Item",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{customer_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/carrito/productos/{{producto_id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "carrito",
-                "productos",
-                "{{producto_id}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "2. CHECKOUT",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
-                  "var data = pm.response.json();",
-                  "pm.environment.set(\"orden_id\", data.id);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{customer_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/ordenes/checkout?direccionId={{direccion_id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "ordenes",
-                "checkout"
-              ],
-              "query": [
-                {
-                  "key": "direccionId",
-                  "value": "{{direccion_id}}"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "3. PAY",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{customer_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"ordenId\": {{orden_id}},\n  \"metodoPago\": \"Tarjeta\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/payments/procesar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "payments",
-                "procesar"
-              ]
-            }
-          }
-        },
-        {
-          "name": "4. DISPATCH (Admin)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"courier\": \"FedEx\",\n  \"trackingNumber\": \"TRK123\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/shipments/despachar/{{orden_id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "shipments",
-                "despachar",
-                "{{orden_id}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "5. DELIVER (Admin)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/shipments/entregar/{{orden_id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "shipments",
-                "entregar",
-                "{{orden_id}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Carrito Extra Endpoints",
-      "item": [
-        {
-          "name": "1. GET Carrito",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{customer_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/carrito",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "carrito"
-              ]
-            }
-          }
-        },
-        {
-          "name": "2. DELETE Producto",
+          "name": "Eliminar Usuario (ADMIN)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
           "request": {
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{customer_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/carrito/productos/{{producto_id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "carrito",
-                "productos",
-                "{{producto_id}}"
-              ]
-            }
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/usuarios/{{usuarioId}}", "host": ["{{baseUrl}}"], "path": ["usuarios", "{{usuarioId}}"] }
           }
         },
         {
-          "name": "3. DELETE Vaciar",
+          "name": "Listar Usuarios sin Token (403)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 403 o 401', () => { pm.expect(pm.response.code).to.be.oneOf([401, 403]); });"], "type": "text/javascript" } }],
           "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{customer_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/carrito",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "carrito"
-              ]
-            }
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/usuarios", "host": ["{{baseUrl}}"], "path": ["usuarios"] }
           }
         }
       ]
     },
     {
-      "name": "Ordenes Extra Endpoints",
+      "name": "3. Productos",
       "item": [
         {
-          "name": "1. GET Mis Ordenes",
+          "name": "Listar Productos (Público)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Array de productos', () => pm.expect(pm.response.json()).to.be.an('array'));"], "type": "text/javascript" } }],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{customer_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/ordenes",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "ordenes"
-              ]
-            }
+            "url": { "raw": "{{baseUrl}}/productos", "host": ["{{baseUrl}}"], "path": ["productos"] }
           }
         },
         {
-          "name": "2. GET Todas Las Ordenes (Admin)",
+          "name": "Obtener Producto por ID",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "var json = pm.response.json();", "pm.test('Tiene nombre', () => pm.expect(json.nombre).to.be.a('string'));"], "type": "text/javascript" } }],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/ordenes",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "ordenes"
-              ]
-            }
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/productos/{{productoId}}", "host": ["{{baseUrl}}"], "path": ["productos", "{{productoId}}"] }
           }
         },
         {
-          "name": "3. POST Cancelar Orden",
+          "name": "Crear Producto Físico (ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('productoId', json.id.toString()); }",
+                  "pm.test('Tipo FISICO', () => pm.expect(json.tipo).to.eql('FISICO'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{customer_token}}"
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Laptop Gaming Pro\",\n  \"precio\": 25000.00,\n  \"descripcion\": \"Laptop de alto rendimiento para gaming\",\n  \"proveedor\": \"TechSupplies SA\",\n  \"tipo\": \"FISICO\",\n  \"stock\": 10,\n  \"peso\": 2.5,\n  \"imagenesUrls\": [\"https://example.com/laptop.jpg\"],\n  \"defaultImageIndex\": 0\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/productos", "host": ["{{baseUrl}}"], "path": ["productos"] }
+          }
+        },
+        {
+          "name": "Crear Producto Digital (ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Tipo DIGITAL', () => pm.expect(pm.response.json().tipo).to.eql('DIGITAL'));"
+                ],
+                "type": "text/javascript"
               }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/ordenes/{{orden_id}}/cancelar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "ordenes",
-                "{{orden_id}}",
-                "cancelar"
-              ]
             }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ebook Java Avanzado\",\n  \"precio\": 299.99,\n  \"descripcion\": \"Libro digital sobre Java 21\",\n  \"proveedor\": \"Editorial Tech\",\n  \"tipo\": \"DIGITAL\",\n  \"urlDescarga\": \"https://downloads.example.com/java-avanzado.pdf\",\n  \"diasExpiracion\": 365,\n  \"imagenesUrls\": [\"https://example.com/ebook.jpg\"],\n  \"defaultImageIndex\": 0\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/productos", "host": ["{{baseUrl}}"], "path": ["productos"] }
+          }
+        },
+        {
+          "name": "Actualizar Producto (ADMIN o SUPPLIER)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Laptop Gaming Pro v2\",\n  \"precio\": 27000.00,\n  \"descripcion\": \"Versión actualizada\",\n  \"proveedor\": \"TechSupplies SA\",\n  \"tipo\": \"FISICO\",\n  \"stock\": 8,\n  \"peso\": 2.3,\n  \"imagenesUrls\": [\"https://example.com/laptop-v2.jpg\"],\n  \"defaultImageIndex\": 0\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/productos/{{productoId}}", "host": ["{{baseUrl}}"], "path": ["productos", "{{productoId}}"] }
+          }
+        },
+        {
+          "name": "Eliminar Producto (ADMIN)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/productos/{{productoId}}", "host": ["{{baseUrl}}"], "path": ["productos", "{{productoId}}"] }
           }
         }
       ]
-    }
-  ],
-  "variable": [
+    },
     {
-      "key": "baseUrl",
-      "value": "http://localhost:8080"
+      "name": "4. Carrito",
+      "item": [
+        {
+          "name": "Obtener Carrito Actual",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Tiene campo productos', () => pm.expect(pm.response.json()).to.have.property('productos'));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/carrito", "host": ["{{baseUrl}}"], "path": ["carrito"] }
+          }
+        },
+        {
+          "name": "Agregar Producto al Carrito",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/carrito/productos/{{productoId}}", "host": ["{{baseUrl}}"], "path": ["carrito", "productos", "{{productoId}}"] }
+          }
+        },
+        {
+          "name": "Eliminar 1 Unidad del Carrito",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/carrito/productos/{{productoId}}", "host": ["{{baseUrl}}"], "path": ["carrito", "productos", "{{productoId}}"] }
+          }
+        },
+        {
+          "name": "Eliminar Producto Completo del Carrito (Trash)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/carrito/productos/{{productoId}}/todos", "host": ["{{baseUrl}}"], "path": ["carrito", "productos", "{{productoId}}", "todos"] }
+          }
+        },
+        {
+          "name": "Vaciar Carrito Completo (CUSTOMER)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/carrito", "host": ["{{baseUrl}}"], "path": ["carrito"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Órdenes",
+      "item": [
+        {
+          "name": "Crear Orden desde Carrito (Checkout)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('ordenId', json.id.toString()); }",
+                  "pm.test('Estado CREATED', () => pm.expect(json.estado).to.eql('CREATED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/ordenes/checkout?direccionId={{direccionId}}", "host": ["{{baseUrl}}"], "path": ["ordenes", "checkout"], "query": [{ "key": "direccionId", "value": "{{direccionId}}" }] }
+          }
+        },
+        {
+          "name": "Checkout sin Dirección",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/ordenes/checkout", "host": ["{{baseUrl}}"], "path": ["ordenes", "checkout"] }
+          }
+        },
+        {
+          "name": "Listar Órdenes (ADMIN - todas / CUSTOMER - propias)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Es array', () => pm.expect(pm.response.json()).to.be.an('array'));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/ordenes", "host": ["{{baseUrl}}"], "path": ["ordenes"] }
+          }
+        },
+        {
+          "name": "Listar Órdenes Como Customer",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/ordenes", "host": ["{{baseUrl}}"], "path": ["ordenes"] }
+          }
+        },
+        {
+          "name": "Listar Órdenes por Usuario (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/ordenes/usuario/{{usuarioId}}", "host": ["{{baseUrl}}"], "path": ["ordenes", "usuario", "{{usuarioId}}"] }
+          }
+        },
+        {
+          "name": "Marcar Orden como Pendiente",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/ordenes/{{ordenId}}/pending", "host": ["{{baseUrl}}"], "path": ["ordenes", "{{ordenId}}", "pending"] }
+          }
+        },
+        {
+          "name": "Cancelar Orden",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Estado CANCELLED', () => pm.expect(pm.response.json().estado).to.eql('CANCELLED'));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/ordenes/{{ordenId}}/cancelar", "host": ["{{baseUrl}}"], "path": ["ordenes", "{{ordenId}}", "cancelar"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Pagos",
+      "item": [
+        {
+          "name": "Procesar Pago con Tarjeta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Estado PAID u OUT_OF_STOCK', () => { pm.expect(['PAID','OUT_OF_STOCK','PAYMENT_PENDING']).to.include(json.estado); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ordenId\": {{ordenId}},\n  \"metodoPago\": \"Tarjeta\",\n  \"direccionId\": {{direccionId}}\n}" },
+            "url": { "raw": "{{baseUrl}}/payments/procesar", "host": ["{{baseUrl}}"], "path": ["payments", "procesar"] }
+          }
+        },
+        {
+          "name": "Procesar Pago con PayPal",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ordenId\": {{ordenId}},\n  \"metodoPago\": \"PayPal\"\n}" },
+            "url": { "raw": "{{baseUrl}}/payments/procesar", "host": ["{{baseUrl}}"], "path": ["payments", "procesar"] }
+          }
+        },
+        {
+          "name": "Procesar Pago con Transferencia",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ordenId\": {{ordenId}},\n  \"metodoPago\": \"Transferencia\"\n}" },
+            "url": { "raw": "{{baseUrl}}/payments/procesar", "host": ["{{baseUrl}}"], "path": ["payments", "procesar"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Envíos (Shipments)",
+      "item": [
+        {
+          "name": "Despachar Orden (ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado SHIPPED', () => pm.expect(pm.response.json().estado).to.eql('SHIPPED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"courier\": \"FedEx\",\n  \"trackingNumber\": \"FX123456789MX\"\n}" },
+            "url": { "raw": "{{baseUrl}}/shipments/despachar/{{ordenId}}", "host": ["{{baseUrl}}"], "path": ["shipments", "despachar", "{{ordenId}}"] }
+          }
+        },
+        {
+          "name": "Marcar Entregada (ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado DELIVERED', () => pm.expect(pm.response.json().estado).to.eql('DELIVERED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/shipments/entregar/{{ordenId}}", "host": ["{{baseUrl}}"], "path": ["shipments", "entregar", "{{ordenId}}"] }
+          }
+        },
+        {
+          "name": "Despachar sin Token (403)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Acceso denegado', () => { pm.expect(pm.response.code).to.be.oneOf([401, 403]); });"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"courier\": \"DHL\",\n  \"trackingNumber\": \"DH999\"\n}" },
+            "url": { "raw": "{{baseUrl}}/shipments/despachar/{{ordenId}}", "host": ["{{baseUrl}}"], "path": ["shipments", "despachar", "{{ordenId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Direcciones",
+      "item": [
+        {
+          "name": "Crear Mi Dirección (Autenticado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('direccionId', json.id.toString()); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alias\": \"Casa\",\n  \"preferida\": true,\n  \"calle\": \"Av. Insurgentes\",\n  \"numeroExterior\": \"1234\",\n  \"numeroInterior\": \"5B\",\n  \"referencia\": \"Frente al parque\",\n  \"colonia\": \"Del Valle\",\n  \"ciudad\": \"Ciudad de México\",\n  \"municipio\": \"Benito Juárez\",\n  \"estado\": \"CDMX\",\n  \"codigoPostal\": \"03100\",\n  \"telefonos\": [\"5512345678\"]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/direcciones", "host": ["{{baseUrl}}"], "path": ["direcciones"] }
+          }
+        },
+        {
+          "name": "Listar Mis Direcciones",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Es array', () => pm.expect(pm.response.json()).to.be.an('array'));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/direcciones/mis-direcciones", "host": ["{{baseUrl}}"], "path": ["direcciones", "mis-direcciones"] }
+          }
+        },
+        {
+          "name": "Obtener Dirección por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/direcciones/{{direccionId}}", "host": ["{{baseUrl}}"], "path": ["direcciones", "{{direccionId}}"] }
+          }
+        },
+        {
+          "name": "Listar Todas las Direcciones (ADMIN)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/direcciones", "host": ["{{baseUrl}}"], "path": ["direcciones"] }
+          }
+        },
+        {
+          "name": "Listar Direcciones por Usuario (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/direcciones/usuario/{{usuarioId}}", "host": ["{{baseUrl}}"], "path": ["direcciones", "usuario", "{{usuarioId}}"] }
+          }
+        },
+        {
+          "name": "Actualizar Dirección",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alias\": \"Casa Principal\",\n  \"preferida\": true,\n  \"calle\": \"Av. Insurgentes Sur\",\n  \"numeroExterior\": \"1234\",\n  \"colonia\": \"Del Valle Centro\",\n  \"ciudad\": \"Ciudad de México\",\n  \"municipio\": \"Benito Juárez\",\n  \"estado\": \"CDMX\",\n  \"codigoPostal\": \"03100\",\n  \"telefonos\": [\"5512345678\", \"5598765432\"]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/direcciones/{{direccionId}}", "host": ["{{baseUrl}}"], "path": ["direcciones", "{{direccionId}}"] }
+          }
+        },
+        {
+          "name": "Crear Dirección para Otro Usuario (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alias\": \"Trabajo\",\n  \"preferida\": false,\n  \"calle\": \"Paseo de la Reforma\",\n  \"numeroExterior\": \"500\",\n  \"colonia\": \"Cuauhtémoc\",\n  \"ciudad\": \"Ciudad de México\",\n  \"municipio\": \"Cuauhtémoc\",\n  \"estado\": \"CDMX\",\n  \"codigoPostal\": \"06600\",\n  \"telefonos\": [\"5511223344\"]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/direcciones/usuario/{{usuarioId}}", "host": ["{{baseUrl}}"], "path": ["direcciones", "usuario", "{{usuarioId}}"] }
+          }
+        },
+        {
+          "name": "Eliminar Dirección",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/direcciones/{{direccionId}}", "host": ["{{baseUrl}}"], "path": ["direcciones", "{{direccionId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Configuración del Sistema",
+      "item": [
+        {
+          "name": "Obtener Config JWT (ADMIN)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Tiene expirationTime', () => pm.expect(pm.response.json()).to.have.property('expirationTime'));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/config/jwt", "host": ["{{baseUrl}}"], "path": ["config", "jwt"] }
+          }
+        },
+        {
+          "name": "Actualizar Config JWT (ADMIN)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"expirationTime\": 7200000\n}" },
+            "url": { "raw": "{{baseUrl}}/config/jwt", "host": ["{{baseUrl}}"], "path": ["config", "jwt"] }
+          }
+        },
+        {
+          "name": "Obtener Config Sistema (ADMIN)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "var json = pm.response.json();", "pm.test('Tiene IVA', () => pm.expect(json).to.have.property('iva'));", "pm.test('Tiene maxProductosOrden', () => pm.expect(json).to.have.property('maxProductosOrden'));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/config/sistema", "host": ["{{baseUrl}}"], "path": ["config", "sistema"] }
+          }
+        },
+        {
+          "name": "Obtener Config Pública (Sin Auth)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Tiene iva y moneda', () => { var j = pm.response.json(); pm.expect(j).to.have.property('iva'); pm.expect(j).to.have.property('monedaSistema'); });"], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/config/sistema/publica", "host": ["{{baseUrl}}"], "path": ["config", "sistema", "publica"] }
+          }
+        },
+        {
+          "name": "Actualizar Config Sistema (ADMIN)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"iva\": 0.16,\n  \"monedaSistema\": \"MXN\",\n  \"stockMinimo\": 5,\n  \"modoDebug\": false,\n  \"maxProductosOrden\": 10\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/config/sistema", "host": ["{{baseUrl}}"], "path": ["config", "sistema"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Chatbot IA",
+      "item": [
+        {
+          "name": "Enviar Mensaje al Chatbot",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Tiene message en respuesta', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"¿Qué productos tienen disponibles?\"\n}" },
+            "url": { "raw": "{{baseUrl}}/chat", "host": ["{{baseUrl}}"], "path": ["chat"] }
+          }
+        },
+        {
+          "name": "Chatbot – Pregunta sobre Orden",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"¿Cuál es el estado de mi última orden?\"\n}" },
+            "url": { "raw": "{{baseUrl}}/chat", "host": ["{{baseUrl}}"], "path": ["chat"] }
+          }
+        },
+        {
+          "name": "Chatbot – Pregunta sobre Pagos",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"¿Qué métodos de pago aceptan?\"\n}" },
+            "url": { "raw": "{{baseUrl}}/chat", "host": ["{{baseUrl}}"], "path": ["chat"] }
+          }
+        },
+        {
+          "name": "Limpiar Historial del Chat (Logout)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/chat/historial", "host": ["{{baseUrl}}"], "path": ["chat", "historial"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Notificaciones (ADMIN)",
+      "item": [
+        {
+          "name": "Obtener Notificaciones Pendientes",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('Es array', () => pm.expect(pm.response.json()).to.be.an('array'));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/notificaciones/pendientes", "host": ["{{baseUrl}}"], "path": ["notificaciones", "pendientes"] }
+          }
+        },
+        {
+          "name": "Marcar Notificaciones como Leídas (ACK)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ids\": [1, 2, 3]\n}" },
+            "url": { "raw": "{{baseUrl}}/notificaciones/ack", "host": ["{{baseUrl}}"], "path": ["notificaciones", "ack"] }
+          }
+        },
+        {
+          "name": "Notificaciones sin Token (403)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Acceso denegado', () => { pm.expect(pm.response.code).to.be.oneOf([401, 403]); });"], "type": "text/javascript" } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/notificaciones/pendientes", "host": ["{{baseUrl}}"], "path": ["notificaciones", "pendientes"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Flujo Completo E2E",
+      "item": [
+        {
+          "name": "E2E-1: Login Customer",
+          "event": [{ "listen": "test", "script": { "exec": ["var json = pm.response.json();", "if (json.token) { pm.collectionVariables.set('tokenCustomer', json.token); }", "pm.test('Login exitoso', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"cliente@ecommerce.com\",\n  \"password\": \"cliente123\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "E2E-2: Ver Productos",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/productos", "host": ["{{baseUrl}}"], "path": ["productos"] }
+          }
+        },
+        {
+          "name": "E2E-3: Agregar Producto al Carrito",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/carrito/productos/1", "host": ["{{baseUrl}}"], "path": ["carrito", "productos", "1"] }
+          }
+        },
+        {
+          "name": "E2E-4: Hacer Checkout",
+          "event": [{ "listen": "test", "script": { "exec": ["var j = pm.response.json();", "if (j.id) pm.collectionVariables.set('ordenId', j.id.toString());"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "url": { "raw": "{{baseUrl}}/ordenes/checkout", "host": ["{{baseUrl}}"], "path": ["ordenes", "checkout"] }
+          }
+        },
+        {
+          "name": "E2E-5: Procesar Pago",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenCustomer}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ordenId\": {{ordenId}},\n  \"metodoPago\": \"Tarjeta\"\n}" },
+            "url": { "raw": "{{baseUrl}}/payments/procesar", "host": ["{{baseUrl}}"], "path": ["payments", "procesar"] }
+          }
+        },
+        {
+          "name": "E2E-6: Login Admin",
+          "event": [{ "listen": "test", "script": { "exec": ["var j = pm.response.json();", "if (j.token) pm.collectionVariables.set('tokenAdmin', j.token);"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@ecommerce.com\",\n  \"password\": \"admin123\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "E2E-7: Despachar Orden",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"courier\": \"DHL\",\n  \"trackingNumber\": \"DH-0001-MX\"\n}" },
+            "url": { "raw": "{{baseUrl}}/shipments/despachar/{{ordenId}}", "host": ["{{baseUrl}}"], "path": ["shipments", "despachar", "{{ordenId}}"] }
+          }
+        },
+        {
+          "name": "E2E-8: Entregar Orden",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/shipments/entregar/{{ordenId}}", "host": ["{{baseUrl}}"], "path": ["shipments", "entregar", "{{ordenId}}"] }
+          }
+        }
+      ]
     }
   ]
 }

@@ -260,11 +260,12 @@ function getActionHTML(orden) {
                      </button>`;
         }
 
-        if (estado === 'PAID') {
+        const hasPhysicalProducts = orden.detalles && orden.detalles.some(d => d.tipoProducto === 'FISICO');
+        if (hasPhysicalProducts && estado === 'PAID') {
             html += `<button onclick="window.abrirModalDespacho(${orden.id})" class="text-blue-500 hover:text-blue-700 p-1" title="Despachar">
                         <i class="fas fa-truck"></i> Despachar
                      </button>`;
-        } else if (estado === 'SHIPPED') {
+        } else if (hasPhysicalProducts && estado === 'SHIPPED') {
             html += `<button onclick="window.marcarEntregado(${orden.id})" class="text-purple-500 hover:text-purple-700 p-1" title="Marcar Entregado">
                         <i class="fas fa-box-open"></i> Entregar
                      </button>`;
@@ -395,6 +396,27 @@ window.verDetalles = (id) => {
                     <p><span class="font-medium">Despachado:</span> ${new Date(shp.dateDispatch).toLocaleString('es-ES')}</p>
                     <p><span class="font-medium">Entregado:</span> ${shp.dateDelivered ? new Date(shp.dateDelivered).toLocaleString('es-ES') : '<span class="italic text-gray-500">Pendiente</span>'}</p>
                 </div>
+            </div>
+        `;
+    }
+
+    const digitalProducts = orden.detalles.filter(d => d.tipoProducto === 'DIGITAL' && d.urlDescarga);
+    if (digitalProducts.length > 0) {
+        html += `
+            <div class="bg-indigo-50 p-4 rounded-lg mb-4 text-sm border border-indigo-100">
+                <h4 class="font-bold text-indigo-800 mb-2 border-b border-indigo-200 pb-1"><i class="fas fa-cloud-download-alt mr-2"></i> Descargas Digitales</h4>
+                <ul class="space-y-1">
+        `;
+        digitalProducts.forEach(d => {
+            html += `
+                    <li class="flex justify-between items-center py-1 border-b border-indigo-100 last:border-0">
+                        <span class="font-medium text-gray-800">${getNombreProducto(d)}</span>
+                        ${esPagada ? `<a href="${d.urlDescarga}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-xs transition"><i class="fas fa-download mr-1"></i> Descargar</a>` : `<span class="text-xs text-gray-500 italic">Disponible tras pago</span>`}
+                    </li>
+            `;
+        });
+        html += `
+                </ul>
             </div>
         `;
     }

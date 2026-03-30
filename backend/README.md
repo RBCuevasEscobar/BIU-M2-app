@@ -1,4 +1,4 @@
-# E-Commerce Backend v4.0
+# E-Commerce Backend v5.0
 
 ## 🎯 Propósito del Backend
 
@@ -764,6 +764,168 @@ La aplicación se conecta a una base de datos relacional **MySQL** e implementa 
 
 ---
 
+## 🛡️ Fase 5 - Manejo de Excepciones Empresarial
+
+La aplicación implementa una arquitectura robusta para el manejo de excepciones centralizado. Todas las excepciones de negocio heredan de una clase base común, lo que permite que el `GlobalExceptionHandler` (basado en `@RestControllerAdvice`) las intercepte y construya respuestas JSON estandarizadas en lugar de exponer los *stack traces* nativos de Java o Tomcat.
+
+### Diagrama C4 (Component Layer)
+
+```mermaid
+C4Component
+    title Component Diagram: Exception Handling
+
+    %% Declarar el cliente primero lo sitúa arriba
+    Person_Ext(client, "Cliente / Consumidor", "App Móvil o Web")
+
+    Container_Boundary(api, "Backend Application") {
+        Component(controller, "REST Controllers", "Spring @RestController", "Recibe peticiones HTTP")
+        Component(service, "Services", "Spring @Service", "Lógica de negocio")
+        Component(errorHandler, "GlobalExceptionHandler", "@RestControllerAdvice", "Intercepta excepciones")
+
+        %% Rel_D (Down) fuerza al controlador a estar justo debajo del cliente
+        Rel_D(client, controller, "1. Petición HTTP", "JSON")
+        
+        Rel_D(controller, service, "2. Delega ejecución")
+        
+        %% Usamos Rel_R (Right) para mover el handler a un lado y no bajo el servicio
+        Rel_R(service, errorHandler, "3. Lanza Exception")
+        
+        %% Usamos Rel (sin dirección forzada) para que Mermaid decida la ruta más limpia
+        Rel(errorHandler, client, "4. Retorna ErrorResponse", "HTTP 4xx/5xx")
+}
+```
+
+### Jerarquía de Excepciones (UML)
+
+```mermaid
+classDiagram
+    RuntimeException <|-- EcommerceException
+    
+    EcommerceException <|-- ProductoNoEncontradoException
+    EcommerceException <|-- UsuarioNoEncontradoException
+    EcommerceException <|-- CarritoVacioException
+    EcommerceException <|-- InventarioInsuficienteException
+    EcommerceException <|-- OrdenNoValidaException
+    EcommerceException <|-- PagoFallidoException
+    EcommerceException <|-- AccesoDenegadoException
+    EcommerceException <|-- ConfiguracionInvalidaException
+    
+    class EcommerceException {
+        <<abstract>>
+        -String codigo
+        -int httpStatus
+        +getCodigo()
+        +getHttpStatus()
+    }
+    
+    class ProductoNoEncontradoException {
+        +ProductoNoEncontradoException(Long id)
+    }
+    
+    class OrdenNoValidaException {
+        +static noEncontrada(Long id)
+        +static maxItemsExcedido(int actual, int max)
+        +static transicionInvalida(String estado, String accion)
+    }
+```
+
+### Flujo de Error: Checkout Fallido (Diagrama de Secuencia)
+
+```mermaid
+sequenceDiagram
+    actor Cliente
+    participant OrdenController
+    participant OrdenService
+    participant GlobalExceptionHandler
+    
+    Cliente->>OrdenController: POST /api/ordenes/{id}/pago
+    OrdenController->>OrdenService: procesarPago(id)
+    alt Orden ya fue pagada
+        OrdenService-->>GlobalExceptionHandler: throws OrdenNoValidaException.transicionInvalida()
+    end
+    GlobalExceptionHandler->>GlobalExceptionHandler: Construye ErrorResponse DTO
+    GlobalExceptionHandler-->>Cliente: 409 Conflict (JSON Normalizado)
+```
+
+### JSON de Respuesta Estándar
+
+Cualquier error en el sistema arrojará **siempre** esta estructura:
+
+```json
+{
+  "timestamp": "2026-03-28T20:00:00.123",
+  "codigo": "ORD_003",
+  "mensaje": "Transición inválida: No se puede aplicar acción 'pago' en estado PAID",
+  "path": "/api/ordenes/5/pago"
+}
+```
+
+---
+
+## 🧪 Fase 5 - Pruebas Unitarias (JUnit / Mockito)
+
+El backend incluye una **Suite Completa de Pruebas Unitarias** para garantizar la integridad de la lógica de negocio sin depender de una base de datos real.
+
+### Framework y Herramientas
+- **JUnit 5 (Jupiter)**: Motor de pruebas.
+- **Mockito**: Mocking de dependencias (`@Mock`, `@InjectMocks`).
+- **Spring Boot Test**: Integración pura (`ReflectionTestUtils`), aunque la mayoría de los tests se ejecutan **sin levantar el contexto de Spring** para garantizar una ejecución ultra-rápida (aislamiento absoluto).
+
+### Estrategia de Testing (Categorías)
+
+1. **Pruebas de Modelos (Domain Logic):**
+   - Validación de polimorfismo (`ProductoModelTest`).
+   - Validación de constructores y lógicas internas.
+   - Testeo de **Sobrecarga de Métodos** (Method Overloading) en el modelo (`CarritoModelTest`).
+
+2. **Pruebas de Jerarquía de Excepciones:**
+   - Verificación de herencia.
+   - Validación de extracción de HTTP Status y mapeos internos de Código UUID (`EcommerceExceptionTest`).
+
+3. **Pruebas de Servicios (Capa de Negocio):**
+   - Simulación de repositorios y factores vía Mockito (`when().thenReturn()`).
+   - Pruebas del **Ciclo de Orden Completo y Máquina de Estados** garantizando que sea a prueba de fallos (`OrdenServiceTest`).
+   - Validaciones de *Security Context* interceptado artificialmente.
+
+### Ejemplo de Bloque Unitario Independiente
+```java
+@ExtendWith(MockitoExtension.class)
+class OrdenServiceTest {
+    @Mock private OrdenRepository ordenRepository;
+    @InjectMocks private OrdenService ordenService;
+
+    @Test
+    @DisplayName("procesarPago: estado PAID → OrdenNoValidaException (ORD_003)")
+    void procesarPago_yaFuePagada() {
+        // Arrange
+        orden.setEstado(EstadoOrden.PAID);
+        when(ordenRepository.findById(1L)).thenReturn(Optional.of(orden));
+
+        // Act & Assert
+        OrdenNoValidaException ex = assertThrows(OrdenNoValidaException.class, 
+                () -> ordenService.procesarPago(1L, "Tarjeta", null));
+                
+        assertEquals("ORD_003", ex.getCodigo());
+        assertEquals(409, ex.getHttpStatus());
+    }
+}
+```
+
+### Cómo Ejecutar las Pruebas
+
+Para correr las 92 pruebas automatizadas desde la raíz del backend:
+
+```bash
+# Navegar al directorio del backend
+cd backend
+
+# Ejecutar framework Surefire (JUnit)
+mvn clean test
+```
+*Si todo está correcto, se visualizará un mensaje similar a: `[INFO] Tests run: 92, Failures: 0, Errors: 0, Skipped: 0` y `BUILD SUCCESS`.*
+
+---
+
 ## 📦 Gestión de Órdenes y Transición de Estados
 
 El ciclo de vida de la orden está modelado bajo una estricta **Máquina de Estados**, dictada por las operaciones del dominio según el rol del usuario utilizando anotaciones de autorización (`@PreAuthorize("hasRole('...')")`).
@@ -1031,7 +1193,7 @@ C4Component
 ```
 * **Nivel 4 (Código)**: *(Revisar sección 5. Modelo de Clases UML detallado arriba para implementaciones locales)*.
 
-### 7. Patrones de Diseño Enterprise Estructurales y de Comportamiento
+### Fase 4 - Patrones de Diseño Enterprise Estructurales y de Comportamiento
 
 Para solidificar la integridad y escalabilidad de los servicios C4 declarados anteriormente, se implementó una serie de Patrones de Diseño formales orientados a transacciones seguras bajo concurrencia Spring Boot:
 
@@ -1117,7 +1279,7 @@ public class AuditoriaObserver {
 }
 ```
 
-### 8. Ciclo de Vida de una Orden (Secuencia Completa)
+### Fase 4 - Ciclo de Vida de una Orden (Secuencia Completa)
 
 ```mermaid
 sequenceDiagram
@@ -1154,17 +1316,76 @@ sequenceDiagram
     BACK->>BD: Sella ciclo logístico. Orden->DELIVERED.
 ```
 
-### 9. Análisis y Documentación de Postman (Flujos Automatizados)
+### Fase 4 - Análisis y Documentación de Postman (Flujos Automatizados)
 
-El ciclo vital de la API se modeló exhaustivamente dentro del archivo generado `backend/ECommerce_Collection.json`.
-* **CREATE / POST**: Probado en la ruta de Usuarios, Inicio de Sesión y Conversión de Carrito a Checkout.
-* **READ / GET**: Validado en la inspección de catálogo universal de Productos y listados de Admin.
-* **UPDATE / PATCH/PUT**: El Mutador principal de estado ocurre durante Posteos iterativos:
-  1. Pago: El endpoint de transacción actualiza el Enum State y resta stock en `ProductoFisico`.
-  2. Envíos: Los endpoints logísticos crean las firmas de mensajería alterando la Orden base preexistente.
-* El archivo de Postman incluye secuencias JavaScript reactivas (*Scripts `Tests`*) capaces de inyectar los tokens de autorización transparentemente entre endpoints.
+La colección Postman completa se encuentra en `backend/ECommerce_Collection.json`. Puede importarse directamente desde Postman con **File → Import**. Cubre **12 grupos** con más de **45 requests** que prueban todos los controladores REST disponibles en la implementación.
 
-### 10. Especificación Reconstruida OpenAPI / Swagger
+#### Variables de Colección
+
+| Variable | Descripción | Valor por defecto |
+|---|---|---|
+| `baseUrl` | URL base del backend | `http://localhost:8080/api` |
+| `tokenAdmin` | JWT del ADMIN (auto-inyectado) | *(vacío — se llena al hacer Login Admin)* |
+| `tokenCustomer` | JWT del CUSTOMER (auto-inyectado) | *(vacío — se llena al hacer Login Customer)* |
+| `tokenSupplier` | JWT del SUPPLIER (auto-inyectado) | *(vacío)* |
+| `productoId` | ID de producto activo en pruebas | `1` |
+| `ordenId` | ID de orden activa en pruebas | `1` |
+| `direccionId` | ID de dirección activa en pruebas | `1` |
+| `usuarioId` | ID de usuario objetivo (pruebas Admin) | `2` |
+
+> **Flujo recomendado**: Ejecutar primero **Login Admin** y **Login Customer** para poblar los tokens. Los scripts `Tests` de cada login los inyectan automáticamente en las variables de colección.
+
+#### Grupos de Endpoints
+
+| # | Grupo | Endpoints | Roles Cubiertos |
+|---|---|---|---|
+| 1 | **Autenticación** | Login Admin, Login Customer, Login Supplier, Login Inválido (401) | Público |
+| 2 | **Usuarios** | Registrar Cliente/Proveedor/Admin, Listar, Obtener por ID, Actualizar, Eliminar, Acceso denegado (403) | Público / ADMIN |
+| 3 | **Productos** | Listar (público), Obtener por ID, Crear Físico, Crear Digital, Actualizar, Eliminar | Público / ADMIN / SUPPLIER |
+| 4 | **Carrito** | Obtener carrito, Agregar producto, Eliminar 1 unidad, Eliminar completo (trash), Vaciar carrito | CUSTOMER |
+| 5 | **Órdenes** | Checkout con/sin dirección, Listar (ADMIN/CUSTOMER), Listar por usuario, Marcar pendiente, Cancelar | CUSTOMER / ADMIN |
+| 6 | **Pagos** | Procesar con Tarjeta, PayPal y Transferencia | CUSTOMER / ADMIN |
+| 7 | **Envíos** | Despachar, Marcar entregada, Intento sin permiso (403) | ADMIN |
+| 8 | **Direcciones** | Crear propia, Listar mis direcciones, Obtener por ID, Listar todas (ADMIN), Listar por usuario, Actualizar, Crear para otro usuario (ADMIN), Eliminar | CUSTOMER / ADMIN / SUPPLIER |
+| 9 | **Configuración** | GET/PUT Config JWT, GET/PUT Config Sistema, GET Config Pública (sin auth) | Público / ADMIN |
+| 10 | **Chatbot IA** | Enviar mensaje, Pregunta sobre órdenes, Pregunta sobre pagos, Limpiar historial | CUSTOMER |
+| 11 | **Notificaciones** | Obtener pendientes (ADMIN), ACK (marcar leídas), Intento sin permiso (403) | ADMIN |
+| 12 | **Flujo E2E Completo** | Login → Ver Productos → Agregar al Carrito → Checkout → Pago → Despacho → Entrega | CUSTOMER + ADMIN |
+
+#### Scripts de Prueba Automatizados
+
+Cada request incluye un bloque `Tests` en JavaScript de Postman con las siguientes validaciones:
+
+```javascript
+// Ejemplo: Login Admin — captura token automáticamente
+var json = pm.response.json();
+if (json.token) { pm.collectionVariables.set('tokenAdmin', json.token); }
+pm.test('Status 200', () => pm.response.to.have.status(200));
+pm.test('Token recibido', () => pm.expect(json.token).to.be.a('string'));
+
+// Ejemplo: Checkout — guarda el ID de la orden para usar en Pago y Envío
+var json = pm.response.json();
+if (json.id) { pm.collectionVariables.set('ordenId', json.id.toString()); }
+pm.test('Estado CREATED', () => pm.expect(json.estado).to.eql('CREATED'));
+
+// Ejemplo: Pago — valida transición de estado correcta
+pm.test('Estado válido', () => {
+  pm.expect(['PAID','OUT_OF_STOCK','PAYMENT_PENDING']).to.include(pm.response.json().estado);
+});
+```
+
+#### Casos de Seguridad Incluidos
+
+| Escenario | Endpoint | Código Esperado |
+|---|---|---|
+| Login con credenciales incorrectas | `POST /auth/login` | `401` |
+| Listar usuarios sin token | `GET /usuarios` | `401` / `403` |
+| Despachar orden como CUSTOMER | `POST /shipments/despachar/{id}` | `403` |
+| Ver notificaciones como CUSTOMER | `GET /notificaciones/pendientes` | `403` |
+
+Para ejecutar todos los casos en lote, utiliza **Collection Runner** en Postman indicando el orden de los grupos del 1 al 12. El grupo 12 (E2E) reproduce el ciclo de vida completo de una compra de principio a fin.
+
+### Fase 4 - Especificación Reconstruida OpenAPI / Swagger
 
 Referencia estática OpenAPI `3.0.0` extraída desde la arquitectura de controladores Spring.
 ```yaml
@@ -1213,7 +1434,7 @@ components:
       bearerFormat: JWT
 ```
 
-### 11. Interfaces de Pago
+### Fase 3 - Interfaces de Pago
 
 El patrón *Strategy / Factory* se manifiesta bajo el paquete `payment`.
 * `ProcesoPago` es la super-interface central definiendo firmas lógicas: `iniciarPago(Orden)`, `verificarPago(Orden)`, `confirmarPago(Orden)`.
@@ -1334,7 +1555,7 @@ public class ProcesoPagoFactory {
     }
 ```
 
-### 12. Seguridad y Manejo de Sesiones Avanzadas
+### Fase 4 - Seguridad y Manejo de Sesiones Avanzadas
 
 El motor Java subyacente implementa autenticación completamente **Stateless**.
 * **Protección Criptográfica**: Las contraseñas se ofuscan en la base de datos tras una vía de escape unidireccional por `BCryptPasswordEncoder`, blindando frente a exfiltraciones relacionales.

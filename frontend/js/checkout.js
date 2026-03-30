@@ -322,11 +322,16 @@ const Checkout = {
                 direccionId: this.direccion
             })
 
-            if (res.estado === "PAID" || res.estado === "PAYMENT_PENDING") {
+            if (res.estado === "PAID") {
                 UI.showNotification("Proceso completado", "success")
                 setTimeout(() => {
                     window.location.href = "ordenes.html"
                 }, 1500)
+            } else if (res.estado === "PAYMENT_PENDING") {
+                UI.showNotification("Lo sentimos, su pago no pudo ser procesado. Reintente nuevamente o seleccione otro método de pago.", "error")
+                setTimeout(() => {
+                    window.location.href = "checkout.html"
+                }, 2000)
             } else if (res.estado === "OUT_OF_STOCK") {
                 UI.showNotification("Lo sentimos, no hay inventario suficiente.", "error")
                 setTimeout(() => {

@@ -1,5 +1,7 @@
 package com.ecommerce.service;
 
+import com.ecommerce.exception.ProductoNoEncontradoException;
+import com.ecommerce.exception.UsuarioNoEncontradoException;
 import com.ecommerce.model.Carrito;
 import com.ecommerce.model.Producto;
 import com.ecommerce.model.Usuario;
@@ -53,7 +55,7 @@ public class CarritoService {
         String email = org.springframework.security.core.context.SecurityContextHolder
                 .getContext().getAuthentication().getName();
         return usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new UsuarioNoEncontradoException(email));
     }
 
     @Transactional
@@ -77,7 +79,7 @@ public class CarritoService {
     public Carrito agregarProducto(Long productoId) {
         Carrito carrito = obtenerCarritoActual();
         Producto producto = productoRepository.findById(productoId)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                .orElseThrow(() -> new ProductoNoEncontradoException(productoId));
 
         carrito.agregarProducto(producto); // Llama a SOBRECARGA 1 del modelo
         return carritoRepository.save(carrito);
@@ -113,9 +115,20 @@ public class CarritoService {
     public Carrito eliminarProducto(Long productoId) {
         Carrito carrito = obtenerCarritoActual();
         Producto producto = productoRepository.findById(productoId)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                .orElseThrow(() -> new ProductoNoEncontradoException(productoId));
 
         carrito.eliminarProducto(producto);
+        return carritoRepository.save(carrito);
+    }
+
+    @SuppressWarnings("null")
+    @Transactional
+    public Carrito eliminarProductoCompleto(Long productoId) {
+        Carrito carrito = obtenerCarritoActual();
+        Producto producto = productoRepository.findById(productoId)
+                .orElseThrow(() -> new ProductoNoEncontradoException(productoId));
+
+        carrito.eliminarProductoCompleto(producto);
         return carritoRepository.save(carrito);
     }
 

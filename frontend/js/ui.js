@@ -1,3 +1,4 @@
+import { API_BASE_URL } from './config.js';
 export const UI = {
 
     renderNavBar({ containerId, context }) {
@@ -245,7 +246,7 @@ export const UI = {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch('http://localhost:8080/api/carrito', {
+            const response = await fetch(`${API_BASE_URL}/carrito`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 

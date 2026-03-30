@@ -1,58 +1,34 @@
 package com.ecommerce.config;
 
 import org.springframework.stereotype.Component;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Singleton de Configuracion Global.
- * Utilizado para acceder concurrentemente a parametros core del sistema eCommerce.
- * Es Thread-Safe utilizando objetos Atomicos que evitan Race Conditions.
+ * Modelo DTO de Configuracion Global.
+ * Convertido para ser compatible en ambientes Cloud-Native.
  */
 @Component
 public class ConfiguracionSistema {
 
-    private static volatile ConfiguracionSistema instance;
+    private Double iva = 0.16;
+    private String monedaSistema = "MXN";
+    private int stockMinimo = 5;
+    private boolean modoDebug = false;
+    private int maxProductosOrden = 50;
 
-    // Parametros Centrales del E-Commerce (Thread-Safe state)
-    private final AtomicReference<Double> iva = new AtomicReference<>(0.16);
-    private final AtomicReference<String> monedaSistema = new AtomicReference<>("MXN");
-    private final AtomicInteger stockMinimo = new AtomicInteger(5);
-    private final AtomicBoolean modoDebug = new AtomicBoolean(false);
-    private final AtomicInteger maxProductosOrden = new AtomicInteger(50);
+    public ConfiguracionSistema() {}
 
-    // Constructor privado para impedir instanciacion directa
-    private ConfiguracionSistema() {}
+    public Double getIva() { return iva; }
+    public void setIva(Double iva) { this.iva = iva; }
 
-    /**
-     * DCL Double-Checked Locking initialization 
-     */
-    public static ConfiguracionSistema getInstance() {
-        if (instance == null) {
-            synchronized (ConfiguracionSistema.class) {
-                if (instance == null) {
-                    instance = new ConfiguracionSistema();
-                }
-            }
-        }
-        return instance;
-    }
+    public String getMonedaSistema() { return monedaSistema; }
+    public void setMonedaSistema(String monedaSistema) { this.monedaSistema = monedaSistema; }
 
-    // --- Getters y Setters Concurrencia ---
+    public int getStockMinimo() { return stockMinimo; }
+    public void setStockMinimo(int stockMinimo) { this.stockMinimo = stockMinimo; }
 
-    public Double getIva() { return iva.get(); }
-    public void setIva(Double iva) { this.iva.set(iva); }
+    public boolean isModoDebug() { return modoDebug; }
+    public void setModoDebug(boolean modoDebug) { this.modoDebug = modoDebug; }
 
-    public String getMonedaSistema() { return monedaSistema.get(); }
-    public void setMonedaSistema(String monedaSistema) { this.monedaSistema.set(monedaSistema); }
-
-    public int getStockMinimo() { return stockMinimo.get(); }
-    public void setStockMinimo(int stockMinimo) { this.stockMinimo.set(stockMinimo); }
-
-    public boolean isModoDebug() { return modoDebug.get(); }
-    public void setModoDebug(boolean modoDebug) { this.modoDebug.set(modoDebug); }
-
-    public int getMaxProductosOrden() { return maxProductosOrden.get(); }
-    public void setMaxProductosOrden(int maxProductosOrden) { this.maxProductosOrden.set(maxProductosOrden); }
+    public int getMaxProductosOrden() { return maxProductosOrden; }
+    public void setMaxProductosOrden(int maxProductosOrden) { this.maxProductosOrden = maxProductosOrden; }
 }

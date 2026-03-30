@@ -9,4 +9,6 @@ public class OrdenDetalleDTO {
     private String productoNombre;
     private Double subtotal;
     private Integer cantidad;
+    private String tipoProducto;
+    private String urlDescarga;
 }

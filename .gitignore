@@ -1,0 +1,66 @@
+# ==============================================================================
+# ECOMMERCE PROJECT - GIT IGNORE
+# ==============================================================================
+
+# --- JAVA & MAVEN (Backend) ---
+**/target/
+**/build/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# Evitar subir el wrapper de Maven si no es necesario (opcional)
+#!.mvn/wrapper/maven-wrapper.jar
+
+# --- FRONTEND (JS / Web) ---
+**/node_modules/
+**/dist/
+**/out/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# --- IDEs & EDITORS ---
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Otros
+.history/
+.DS_Store
+Thumbs.db
+*.txt
+
+# --- AZURE & DEPLOYMENT ---
+.azure/
+**/azure-pipelines.yml
+**/publish/
+bin/
+obj/
+
+# --- BASE DE DATOS LOCAL ---
+*.sql
+*.sqlite
+**/mysql-data/
+
+# --- SECRETOS (CRÍTICO) ---
+# Nunca subir archivos que contengan API Keys o Passwords
+credentials.json
+*.pem
+*.key
+application-prod.properties
+application-local.properties

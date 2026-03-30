@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const productList = document.getElementById('product-list');
 
     try {
-        const response = await fetch('http://localhost:8080/api/productos');
+        const response = await fetch(`${window.API_BASE_URL || 'http://localhost:8080/api'}/productos`);
         if (!response.ok) throw new Error('Error fetching products');
 
         const products = await response.json();

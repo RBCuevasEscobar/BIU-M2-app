@@ -1,5 +1,7 @@
 package com.ecommerce.service;
 
+import com.ecommerce.exception.ConfiguracionInvalidaException;
+import com.ecommerce.exception.UsuarioNoEncontradoException;
 import com.ecommerce.dto.UsuarioUpdateRequest;
 import com.ecommerce.model.Cliente;
 import com.ecommerce.model.Usuario;
@@ -28,7 +30,7 @@ public class UsuarioService {
     @Transactional
     public Usuario registrarUsuario(Usuario usuario) {
         if (usuarioRepository.existsByEmail(usuario.getEmail())) {
-            throw new RuntimeException("El email ya está registrado");
+            throw UsuarioNoEncontradoException.emailDuplicado(usuario.getEmail());
         }
 
         if (usuario instanceof Cliente cliente) {
@@ -43,15 +45,6 @@ public class UsuarioService {
         return usuarioRepository.findAll();
     }
 
-    @SuppressWarnings("null")
-    public Optional<Usuario> listarUsuario(Long id) {
-        return usuarioRepository.findById(id);
-    }
-
-    @SuppressWarnings("null")
-    public Optional<Usuario> obtenerUsuario(Long id) {
-        return usuarioRepository.findById(id);
-    }
 
     /**
      * Busca un usuario por ID; lanza excepción si no existe.
@@ -61,7 +54,7 @@ public class UsuarioService {
     @SuppressWarnings("null")
     public Usuario buscarPorId(Long id) {
         return usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
+                .orElseThrow(() -> new UsuarioNoEncontradoException(id));
     }
 
     // @SuppressWarnings("null")
@@ -71,17 +64,17 @@ public class UsuarioService {
 
     public com.ecommerce.dto.LoginResponse login(com.ecommerce.dto.LoginRequest request) {
         Usuario usuario = usuarioRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> UsuarioNoEncontradoException.credencialesInvalidas());
 
-        System.out.println("Las credenciales ingresadas son: " + request.email() + " " + request.password());
+        System.out.println("Ingreso al sistema, el usuario: " + request.email());
 
         if (!passwordEncoder.matches(request.password(), usuario.getPassword())) {
-            throw new RuntimeException("Credenciales inválidas");
+            throw UsuarioNoEncontradoException.credencialesInvalidas();
         }
 
         // Generate rigorous JSON Web Token using Provider
         String token = jwtProvider.generateToken(usuario.getEmail(), usuario.getId(), usuario.getRole().name());
-        
+
         return new com.ecommerce.dto.LoginResponse(usuario.getId(), usuario.getNombre(), usuario.getRole(), token);
     }
 
@@ -89,7 +82,7 @@ public class UsuarioService {
     @Transactional
     public Usuario actualizarUsuario(Long id, UsuarioUpdateRequest datosActualizados) {
         Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new UsuarioNoEncontradoException(id));
 
         // Update basic fields
         if (datosActualizados.nombre() != null) {
@@ -99,7 +92,7 @@ public class UsuarioService {
         if (datosActualizados.email() != null && !datosActualizados.email().equals(usuario.getEmail())) {
             // Check if new email already exists
             if (usuarioRepository.existsByEmail(datosActualizados.email())) {
-                throw new RuntimeException("El email ya está registrado");
+                throw UsuarioNoEncontradoException.emailDuplicado(datosActualizados.email());
             }
             usuario.setEmail(datosActualizados.email());
         }
@@ -157,11 +150,11 @@ public class UsuarioService {
         String value = cliente.getRfcCurp();
 
         if (value == null || value.isBlank())
-            throw new RuntimeException("RFC/CURP es obligatorio");
+            throw ConfiguracionInvalidaException.rfcCurpInvalido("RFC/CURP es obligatorio para clientes");
 
         if (!(RFC_PATTERN.matcher(value).matches() ||
                 CURP_PATTERN.matcher(value).matches()))
-            throw new RuntimeException("RFC/CURP inválido");
+            throw ConfiguracionInvalidaException.rfcCurpInvalido("Formato de RFC/CURP inválido: " + value);
 
         String fechaNacimiento = cliente.getFechaNacimiento()
                 .format(DateTimeFormatter.ofPattern("yyMMdd"));
@@ -169,7 +162,7 @@ public class UsuarioService {
         String fechaDocumento = value.substring(4, 10);
 
         if (!fechaNacimiento.equals(fechaDocumento))
-            throw new RuntimeException(
-                    "La fecha en RFC/CURP no coincide con la fecha de nacimiento");
+            throw ConfiguracionInvalidaException.rfcCurpInvalido(
+                    "La fecha en RFC/CURP no coincide con la fecha de nacimiento del cliente");
     }
 }

@@ -1,5 +1,11 @@
-com\ecommerce\SystemConfigRepositoryTest.class
-com\ecommerce\ConfiguracionSistemaTest.class
+com\ecommerce\ProductoServiceTest.class
+com\ecommerce\CarritoModelTest.class
 com\ecommerce\ObserverEventosTest.class
+com\ecommerce\UsuarioServiceTest.class
+com\ecommerce\SystemConfigRepositoryTest.class
+com\ecommerce\EcommerceExceptionTest.class
+com\ecommerce\ProductoModelTest.class
+com\ecommerce\OrdenServiceTest.class
+com\ecommerce\CarritoServiceTest.class
 com\ecommerce\ConfiguracionSistemaServiceTest.class
 com\ecommerce\FabricaEntidadesTest.class
