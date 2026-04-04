@@ -12,7 +12,7 @@ import java.util.List;
 @Configuration
 public class WebConfig {
 
-    @Value("#{'${app.cors.allowed-origins:http://localhost:5500,http://127.0.0.1:5500,http://localhost:8080,http://127.0.0.1:8080,null}'.split(',')}")
+    @Value("#{'${app.cors.allowed-origins:https://orange-river-0f5dbc910.7.azurestaticapps.net, https://ecommerce-app-backend-g7esd5gpfnekadcx.centralus-01.azurewebsites.net}'.split(',')}")
     private List<String> allowedOrigins;
 
     @Bean
@@ -20,7 +20,8 @@ public class WebConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -6,11 +6,13 @@
  * esta vista. El usuario debe iniciar sesión para comprar.
  * ─────────────────────────────────────────────────────────────
  */
+import { API_BASE_URL } from './config.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
     const productList = document.getElementById('product-list');
 
     try {
-        const response = await fetch(`${window.API_BASE_URL || 'http://localhost:8080/api'}/productos`);
+        const response = await fetch(`${API_BASE_URL}/productos`);
         if (!response.ok) throw new Error('Error fetching products');
 
         const products = await response.json();

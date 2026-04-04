@@ -1,5 +1,5 @@
 // Global Config for API. Update this for Azure Deployment
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'https://ecommerce-app-backend-g7esd5gpfnekadcx.centralus-01.azurewebsites.net/api';
 
 // For ES Modules
 export { API_BASE_URL };

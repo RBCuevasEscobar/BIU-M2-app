@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json.schemastore.org/staticwebapp.config.json",
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/css/*", "/js/*", "*.{png,jpg,gif,ico,svg,webp}"]
+  },
+  "routes": [
+    {
+      "route": "/login",
+      "rewrite": "/login.html"
+    },
+    {
+      "route": "/register",
+      "rewrite": "/register.html"
+    },
+    {
+      "route": "/productos",
+      "rewrite": "/productos.html"
+    },
+    {
+      "route": "/carrito",
+      "rewrite": "/carrito.html"
+    },
+    {
+      "route": "/checkout",
+      "rewrite": "/checkout.html"
+    },
+    {
+      "route": "/ordenes",
+      "rewrite": "/ordenes.html"
+    },
+    {
+      "route": "/usuarios",
+      "rewrite": "/usuarios.html"
+    },
+    {
+      "route": "/direcciones",
+      "rewrite": "/direcciones.html"
+    },
+    {
+      "route": "/config-auth",
+      "rewrite": "/config-auth.html"
+    },
+    {
+      "route": "/config-sistema",
+      "rewrite": "/config-sistema.html"
+    }
+  ],
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html",
+      "statusCode": 200
+    }
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+  },
+  "mimeTypes": {
+    ".json": "application/json",
+    ".css": "text/css",
+    ".js": "application/javascript"
+  }
+}

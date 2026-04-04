@@ -39,15 +39,21 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             @org.springframework.lang.NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
+        // 🔥 CRÍTICO: ignorar preflight
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
 
             if (jwtProvider.validateToken(token)) {
-                String email  = jwtProvider.extractEmail(token);
-                Long   userId = jwtProvider.extractUserId(token);
-                String role   = jwtProvider.extractClaims(token).get("role", String.class);
+                String email = jwtProvider.extractEmail(token);
+                Long userId = jwtProvider.extractUserId(token);
+                String role = jwtProvider.extractClaims(token).get("role", String.class);
 
                 // Verificar que el usuario siga activo en BD
                 Usuario usuario = usuarioRepository.findById(userId).orElse(null);
@@ -61,14 +67,13 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                     UsuarioSecurity usuarioSecurity = new UsuarioSecurity(
                             userId,
                             email,
-                            null,          // password no necesaria post-auth
+                            null, // password no necesaria post-auth
                             Collections.singletonList(authority));
 
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    usuarioSecurity,
-                                    null,
-                                    Collections.singletonList(authority));
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            usuarioSecurity,
+                            null,
+                            Collections.singletonList(authority));
 
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);

@@ -1,0 +1,14 @@
+# Dependencias de Node
+node_modules/
+
+# Directorio de distribución (generado por npm run build)
+# No versionar — se genera en CI/CD o localmente
+dist/
+
+# Variables de entorno locales
+.env
+.env.local
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
